@@ -11,7 +11,7 @@ HTMLファイル1つで完結し、ブラウザで直接開くだけで使える
 
 ```
 国家試験作成アプリ/
-├── pt-exam-viewer.html          ← アプリ本体（JSONデータ埋め込み済み・約53MB）
+├── pt-exam-viewer.html          ← アプリ本体（JSONデータ埋め込み済み・約11MB（画像JPEG圧縮済））
 ├── pt-exam-full-backup-2026-02-25.json  ← 元データ（バックアップ）
 ├── tp260424-08seitou.pdf        ← 第61回正答値表（参考）
 ├── .claude/
@@ -129,7 +129,8 @@ with open(json_path, 'w', encoding='utf-8') as f:
 #### 3. HTMLにJSONを再埋め込み
 
 ```python
-import json, os, re
+import json, os, re, io, base64
+from PIL import Image   # pip install Pillow
 
 base = '国家試験作成アプリ'
 html_path = f'{base}/pt-exam-viewer.html'
@@ -137,6 +138,20 @@ json_path = f'{base}/pt-exam-full-backup-2026-02-25.json'
 
 with open(json_path, 'r', encoding='utf-8') as f:
     data = json.load(f)
+
+# 【重要】画像はJPEG q85に再圧縮してから埋め込む。
+# 元はPNG中心で約39MB→約7MBに縮小。HTMLが55MB→約11MBになり、
+# モバイル回線でも確実に起動する（巨大ファイルだと読込ループ/メモリ不足の原因）。
+for q in data:
+    if q.get('imageData'):
+        try:
+            raw = base64.b64decode(q['imageData'].split(',', 1)[1])
+            im = Image.open(io.BytesIO(raw)).convert('RGB')
+            buf = io.BytesIO(); im.save(buf, 'JPEG', quality=85, optimize=True)
+            q['imageData'] = 'data:image/jpeg;base64,' + base64.b64encode(buf.getvalue()).decode('ascii')
+        except Exception as e:
+            print('画像スキップ:', e)
+
 minified = json.dumps(data, ensure_ascii=False, separators=(',', ':'))
 
 with open(html_path, 'r', encoding='utf-8') as f:
@@ -245,7 +260,7 @@ print(f'完了 {os.path.getsize(html_path)/1024/1024:.1f} MB')
 
 - `file://` でSafariから開くとIndexedDBが使えない → 埋め込みデータで対応済み
 - 61A-20は採点除外問題のため解答なし
-- HTMLファイルが約53MBと大きい（画像データ含む）
+- HTMLファイルは約11MB（画像はJPEG q85圧縮で埋め込み）
 
 ---
 
