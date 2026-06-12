@@ -976,6 +976,59 @@
       animation: pwFade 0.4s ease forwards;
     }
     @keyframes pwFade { to { opacity: 0; pointer-events: none; } }
+
+    /* ── UFO イースターエッグ（約1/50の確率で出現） ── */
+    .pw-ufo {
+      position: absolute; pointer-events: none; z-index: 2;
+      display: flex; flex-direction: column; align-items: center;
+      left: 0;
+      animation-duration: 5.2s;
+      animation-timing-function: cubic-bezier(0.25,0.46,0.45,0.94);
+      animation-fill-mode: forwards;
+    }
+    .pw-ufo-ship {
+      font-size: 34px;
+      filter: drop-shadow(0 0 8px #7dd3fc) drop-shadow(0 0 20px #3b82f6) drop-shadow(0 0 40px rgba(59,130,246,0.4));
+    }
+    .pw-ufo-beam {
+      width: 0; height: 0;
+      border-left: 14px solid transparent;
+      border-right: 14px solid transparent;
+      border-top: 42px solid rgba(125,211,252,0.3);
+      animation: pwBeamPulse 0.45s ease-in-out infinite alternate;
+    }
+    .pw-ufo-alien {
+      font-size: 16px;
+      margin-top: 1px;
+      animation: pwAlienDangle 0.85s ease-in-out infinite alternate;
+    }
+    @keyframes pwBeamPulse {
+      from { opacity: 0.15; border-top-color: rgba(125,211,252,0.15); }
+      to   { opacity: 1;    border-top-color: rgba(125,211,252,0.5); }
+    }
+    @keyframes pwAlienDangle {
+      from { transform: translateY(0px) rotate(-6deg); }
+      to   { transform: translateY(6px) rotate(6deg); }
+    }
+    @keyframes ufoFlyLR {
+      0%   { transform: translateX(-90px)  translateY(0px);   opacity: 0; }
+      7%   { transform: translateX(4vw)    translateY(0px);   opacity: 1; }
+      28%  { transform: translateX(26vw)   translateY(-14px); }
+      52%  { transform: translateX(50vw)   translateY(9px);   }
+      78%  { transform: translateX(78vw)   translateY(-8px);  }
+      93%  { opacity: 1; }
+      100% { transform: translateX(112vw)  translateY(3px);   opacity: 0; }
+    }
+    @keyframes ufoFlyRL {
+      0%   { transform: translateX(112vw)  translateY(0px)   scaleX(-1); opacity: 0; }
+      7%   { transform: translateX(96vw)   translateY(0px)   scaleX(-1); opacity: 1; }
+      28%  { transform: translateX(74vw)   translateY(-14px) scaleX(-1); }
+      52%  { transform: translateX(50vw)   translateY(9px)   scaleX(-1); }
+      78%  { transform: translateX(22vw)   translateY(-8px)  scaleX(-1); }
+      93%  { opacity: 1; }
+      100% { transform: translateX(-12vw)  translateY(3px)   scaleX(-1); opacity: 0; }
+    }
+
     .pw-card {
       background: rgba(255,255,255,0.08); backdrop-filter: blur(12px);
       border: 1px solid rgba(255,255,255,0.18); border-radius: 20px;
@@ -1465,12 +1518,34 @@
       setTimeout(function() { if (el.parentNode) el.parentNode.removeChild(el); }, 1100);
     }
 
+    // UFO（🛸）イースターエッグ — パスワード画面のみ、約1/50の確率
+    function spawnUFO(container) {
+      var ufo = document.createElement('div');
+      ufo.className = 'pw-ufo';
+      var fromLeft = Math.random() < 0.5;
+      ufo.style.top = (10 + Math.random() * 35).toFixed(1) + '%';
+      ufo.style.animationName = fromLeft ? 'ufoFlyLR' : 'ufoFlyRL';
+      // 40%の確率で宇宙人も一緒に出現
+      var hasAlien = Math.random() < 0.4;
+      ufo.innerHTML =
+        '<div class="pw-ufo-ship">🛸</div>' +
+        '<div class="pw-ufo-beam"></div>' +
+        (hasAlien ? '<div class="pw-ufo-alien">👽</div>' : '');
+      container.appendChild(ufo);
+      setTimeout(function() { if (ufo.parentNode) ufo.parentNode.removeChild(ufo); }, 5800);
+    }
+
     function scheduleShoot(container) {
       setTimeout(function() {
         // コンテナの親画面が表示中のときだけ発射
         if (container.parentNode && container.parentNode.style.display !== 'none') {
-          spawnShoot(container);
-          if (Math.random() < 0.25) setTimeout(function(){ spawnShoot(container); }, 300 + Math.random()*300);
+          // パスワード画面では約1/50の確率でUFOが出現
+          if (container.id === 'pwStars' && Math.random() < 0.02) {
+            spawnUFO(container);
+          } else {
+            spawnShoot(container);
+            if (Math.random() < 0.25) setTimeout(function(){ spawnShoot(container); }, 300 + Math.random()*300);
+          }
         }
         scheduleShoot(container);
       }, 3000 + Math.random() * 4000);
