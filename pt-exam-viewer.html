@@ -691,6 +691,72 @@
     }
     .expln-reset-btn:hover { background: #fff5f5; border-color: #fca5a5; color: #dc2626; }
 
+    /* ── 解説ボタン（ヘッダー） ── */
+    .btn-show-expl {
+      padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 700;
+      cursor: pointer; transition: all 0.2s; flex-shrink: 0; white-space: nowrap;
+      background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.85);
+      border: 1.5px solid rgba(255,255,255,0.35);
+    }
+    .btn-show-expl:hover { background: rgba(255,255,255,0.22); color: #fff; }
+    .btn-show-expl.active {
+      background: linear-gradient(135deg, #1e40af, #3b82f6);
+      border-color: transparent; color: #fff;
+      box-shadow: 0 2px 10px rgba(59,130,246,0.45);
+    }
+
+    /* ── 解説パネル（左カラム内、解答ボックス下） ── */
+    #pracExpl {
+      margin-top: 16px;
+      border-top: 2px solid #e5e7eb;
+      padding-top: 16px;
+      animation: fadeInUp 0.25s ease;
+    }
+    .expl-panel {
+      background: #f0f7ff;
+      border: 1.5px solid #bfdbfe;
+      border-radius: 14px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+    .expl-section-label {
+      font-size: 10px; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 0.12em; color: #1d4ed8; margin-bottom: 8px;
+    }
+    .expl-main-text {
+      font-size: 14px; line-height: 1.85; color: #1e293b;
+      background: #fff; border-radius: 10px; padding: 14px 16px;
+      border: 1px solid #dbeafe;
+    }
+    .expl-choices-list { display: flex; flex-direction: column; gap: 6px; }
+    .expl-choice-item {
+      display: flex; gap: 10px; align-items: flex-start;
+      padding: 9px 12px; border-radius: 9px;
+      background: #fff; border: 1px solid #e5e7eb;
+      font-size: 13px; line-height: 1.7; color: #374151;
+    }
+    .expl-choice-item.expl-correct {
+      background: #f0fdf4; border-color: #86efac;
+    }
+    .expl-choice-num {
+      font-weight: 800; min-width: 22px; flex-shrink: 0;
+      color: #9ca3af; font-size: 14px; padding-top: 1px;
+    }
+    .expl-choice-item.expl-correct .expl-choice-num { color: #16a34a; }
+    .expl-refs { display: flex; flex-direction: column; gap: 5px; }
+    .expl-ref-item {
+      font-size: 12px; color: #6b7280; background: #fff;
+      border: 1px solid #e5e7eb; border-radius: 7px; padding: 6px 10px;
+      line-height: 1.6;
+    }
+    /* モバイル（portrait）での解説パネル調整 */
+    @media (pointer: coarse) and (orientation: portrait) {
+      .btn-show-expl { padding: 7px 10px; font-size: 12px; }
+      .expl-panel { padding: 14px; gap: 14px; }
+    }
+
     /* 右カラム：画像フルサイズ */
     .expln-right { flex: 1; display: flex; overflow: hidden; background: #1a1a2e; min-width: 0; }
     .expln-img-area {
@@ -1291,6 +1357,7 @@
     <span class="expln-title">💡 解説モード</span>
     <div class="expln-meta" id="pracMeta"></div>
     <button class="btn-show-answer" id="btnShowAnswer" onclick="showAnswer()">解答を表示 ▼</button>
+    <button class="btn-show-expl" id="btnShowExpl" onclick="toggleExpl()">📖 解説</button>
     <div class="expln-nav-wrap">
       <button class="expln-nav-btn" id="pracPrevBtn" onclick="pracPrev()">‹</button>
       <span class="expln-pos" id="pracProgress">1 / 0</span>
@@ -1306,6 +1373,8 @@
       <div class="expln-qtext" id="pracText"></div>
       <div class="expln-choices" id="pracChoices"></div>
       <div id="pracResult" style="display:none"></div>
+      <!-- 解説パネル（📖 解説ボタンでトグル） -->
+      <div id="pracExpl" style="display:none"></div>
     </div>
     <!-- 右：画像（大きく表示） -->
     <div class="expln-right">
@@ -2843,6 +2912,9 @@ ${tables}
     if (elRight) elRight.scrollTop = 0;
     if (elLeft)  elLeft.scrollTop  = 0;
 
+    // 解説パネルを再描画（開いている場合は内容を更新、閉じている場合はそのまま）
+    renderExpl();
+
     renderInsertedMedia();
     requestAnimationFrame(() => initDrawCanvas());
     setTimeout(() => initDrawCanvas(), 160); // rAF未発火時のフォールバック（確実に採寸）
@@ -2854,6 +2926,81 @@ ${tables}
     practiceState[q.id].answerRevealed = true;
     if (navigator.vibrate) navigator.vibrate(20);
     renderPracQ();
+  }
+
+  // ── 解説パネル ───────────────────────────────────────────────────
+  let _explOpen = false;
+
+  function toggleExpl() {
+    _explOpen = !_explOpen;
+    renderExpl();
+    // 解説を開いた時に解説パネルまでスムーズスクロール
+    if (_explOpen) {
+      setTimeout(() => {
+        const el = document.getElementById('pracExpl');
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 60);
+    }
+  }
+
+  function renderExpl() {
+    const q   = practiceData ? practiceData[practiceIdx] : null;
+    const panel = document.getElementById('pracExpl');
+    const btn   = document.getElementById('btnShowExpl');
+    if (!panel || !btn) return;
+
+    if (!_explOpen || !q) {
+      panel.style.display = 'none';
+      btn.classList.remove('active');
+      btn.textContent = '📖 解説';
+      return;
+    }
+
+    const revealed = (practiceState[q.id] || {}).answerRevealed;
+    const answers  = String(q.answer || '').split(',').map(s => s.trim());
+
+    // ── 全体解説 ──
+    const mainHtml = q.explanation
+      ? `<div class="expl-main-text">${esc(q.explanation)}</div>`
+      : '<div class="expl-main-text" style="color:#9ca3af">（解説なし）</div>';
+
+    // ── 選択肢別解説 ──
+    const ce = Array.isArray(q.choiceExplanations) ? q.choiceExplanations : [];
+    const choicesHtml = ce.length ? ce.map((text, i) => {
+      const num = String(i + 1);
+      const isCorrect = revealed && answers.includes(num);
+      return `<div class="expl-choice-item${isCorrect ? ' expl-correct' : ''}">
+        <span class="expl-choice-num">${PCIR[i] || num}</span>
+        <span>${esc(String(text))}</span>
+      </div>`;
+    }).join('') : '<div style="color:#9ca3af;font-size:13px">（選択肢解説なし）</div>';
+
+    // ── 参考文献 ──
+    const refs = Array.isArray(q.references) ? q.references.filter(r => r && (r.book || r.title)) : [];
+    const refsHtml = refs.length ? refs.map(r => {
+      const parts = [r.book || r.title, r.series, r.publisher,
+        r.year ? r.year + '年' : '', r.page ? 'p.' + r.page : ''].filter(Boolean);
+      return `<div class="expl-ref-item">📚 ${esc(parts.join('・'))}</div>`;
+    }).join('') : '';
+
+    panel.innerHTML = `<div class="expl-panel">
+      <div>
+        <div class="expl-section-label">✏️ 解説</div>
+        ${mainHtml}
+      </div>
+      <div>
+        <div class="expl-section-label">🔢 選択肢別解説${!revealed ? '　<span style="color:#f59e0b;font-weight:600;font-size:10px">（解答を表示すると正答がわかります）</span>' : ''}</div>
+        <div class="expl-choices-list">${choicesHtml}</div>
+      </div>
+      ${refsHtml ? `<div>
+        <div class="expl-section-label">📚 参考文献</div>
+        <div class="expl-refs">${refsHtml}</div>
+      </div>` : ''}
+    </div>`;
+
+    panel.style.display = 'block';
+    btn.classList.add('active');
+    btn.textContent = '📖 解説を閉じる';
   }
 
   function selectPracAnswer(num) {
@@ -2888,6 +3035,7 @@ ${tables}
     delete practiceState[qId];
     delete drawUndoStacks[qId];
     delete fsUndoStack[qId];
+    _explOpen = false; // 解説パネルも閉じる
     renderInsertedMedia();
     renderPracQ();
   }
