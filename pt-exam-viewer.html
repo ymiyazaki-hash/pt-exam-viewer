@@ -2988,7 +2988,7 @@ ${tables}
   function showAnswer() {
     const q = practiceData[practiceIdx];
     if (!practiceState[q.id]) practiceState[q.id] = {};
-    practiceState[q.id].answerRevealed = true;
+    practiceState[q.id].answerRevealed = !practiceState[q.id].answerRevealed;
     if (navigator.vibrate) navigator.vibrate(20);
     renderPracQ();
   }
