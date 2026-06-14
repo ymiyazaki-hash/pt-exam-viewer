@@ -357,6 +357,19 @@
       background: #fff7ed; border-left: 3px solid #f97316;
       font-size: 11.5px; color: #7c2d12; line-height: 1.5;
     }
+    .excl-none { color: #b45309 !important; font-weight: 600; }
+    .excl-rate { color: #b45309 !important; font-weight: 600; }
+    .expln-ans-original { font-size: 11px; color: #92400e; margin-top: 2px; }
+    .expln-excluded-reason {
+      margin-top: 6px; padding: 5px 8px; border-radius: 6px;
+      background: #fff7ed; border-left: 3px solid #f97316;
+      font-size: 11.5px; color: #7c2d12; line-height: 1.5;
+    }
+    .modal-excluded-note {
+      margin-top: 8px; padding: 6px 10px; border-radius: 8px;
+      background: #fff7ed; border-left: 3px solid #f97316;
+      font-size: 12px; color: #7c2d12; line-height: 1.5;
+    }
     .card-id { font-size: 11px; color: #cbd5e0; margin-left: auto; font-family: monospace; }
     .card-text {
       font-size: 13px; color: #374151; line-height: 1.65;
@@ -2058,6 +2071,7 @@
     const color      = accColor(rate);
     const answerLabel = answers.join('・');
     const answerTexts = answers.map(a => (q.choices || [])[parseInt(a) - 1]).filter(Boolean);
+    const modalIsExcluded = q.excludedHandling && q.excludedHandling.includes('除外');
 
     // 解説
     const explPCIR = ['①','②','③','④','⑤'];
@@ -2091,14 +2105,22 @@
         <div class="answer-grid">
           <div class="answer-item">
             <div class="answer-label">正答</div>
-            <div class="answer-value">${esc(answerLabel)}</div>
-            <div class="answer-text">${esc(answerTexts.join('・'))}</div>
+            ${modalIsExcluded
+              ? `<div class="answer-value excl-none">採点対象から除外（正答なし）</div>
+                 <div class="answer-text"><small>元の想定正答：${esc(answerLabel)}番　${esc(answerTexts.join('・'))}</small></div>`
+              : `<div class="answer-value">${esc(answerLabel)}</div>
+                 <div class="answer-text">${esc(answerTexts.join('・'))}</div>`
+            }
           </div>
           <div class="answer-item">
             <div class="answer-label">正答率</div>
-            <div class="answer-value" style="color:${color}">${rate.toFixed(1)}%</div>
+            ${modalIsExcluded
+              ? '<div class="answer-value excl-rate">採点除外（全員得点）</div>'
+              : `<div class="answer-value" style="color:${color}">${rate.toFixed(1)}%</div>`
+            }
           </div>
         </div>
+        ${q.excludedHandling ? `<div class="modal-excluded-note">【採点上の取扱い】${esc(q.excludedHandling)}${q.excludedReason ? '<br>【理由】' + esc(q.excludedReason) : ''}</div>` : ''}
       </div>
       <div class="expl-panel" style="margin-top:16px">
         <div>
@@ -2174,11 +2196,14 @@
     const parts = [];
 
     // ヘッダー（N問 + 設問ID + 分類 + 正答率）
+    const wIsExcl = q.excludedHandling && q.excludedHandling.includes('除外');
+    const wIsMulti = q.excludedHandling && !wIsExcl;
     parts.push(pEl(
       rEl(qNum + '問', {b:true, col:'FFFFFF', sz:22}) +
       rEl('  ' + q.id, {b:true, col:'D6E4FF', sz:21}) +
       rEl('  ' + q.examSession + '  ' + q.category + (q.field ? '  ' + q.field : ''), {col:'BDD0F8', sz:21}) +
-      rEl('  ' + rate + '%', {col:'C7D8FA', sz:19}),
+      rEl('  ' + rate + '%', {col:'C7D8FA', sz:19}) +
+      (q.excludedHandling ? rEl('  ⚠採点除外', {b:true, col:'FED7AA', sz:19}) : ''),
       {kn:true, fill:'1A4A8A', bl:{sz:20,c:'0C2461'}, sb:140, sa:40, ind:60}
     ));
 
@@ -2197,12 +2222,35 @@
       parts.push(pEl(rEl(CIR[i] + '　' + c, {sz:21}), {kl:true, kn, sb:18, sa:18, ind:180}));
     });
 
-    // 正答（解答付き）
+    // 正答（解答付き）or 解答なし不適切マーク
     if (wa) {
-      const at = ch[parseInt(q.answer)-1] || '';
+      const wAnswers = Array.isArray(q.answer) ? q.answer.map(String) : String(q.answer||'').split(',').map(s=>s.trim());
+      if (wIsExcl) {
+        const origAns   = wAnswers.join('・');
+        const origTexts = wAnswers.map(a => ch[parseInt(a)-1]||'').filter(Boolean).join('・');
+        parts.push(pEl(
+          rEl('⚠ 採点対象から除外（正答なし）　採点除外（全員得点）', {b:true, col:'B45309', sz:21}) +
+          rEl('　元の想定正答：' + origAns + '番　' + origTexts, {col:'92400E', sz:19}),
+          {fill:'FFFBEB', bl:{sz:18,c:'F59E0B'}, sb:40, sa:40, ind:80}
+        ));
+        if (q.excludedReason) {
+          parts.push(pEl(
+            rEl('【理由】' + q.excludedReason, {col:'7C2D12', sz:18}),
+            {fill:'FFFBEB', sb:16, sa:16, ind:80}
+          ));
+        }
+      } else {
+        const at = wAnswers.map(a => ch[parseInt(a)-1]||'').filter(Boolean).join('・');
+        const multiLabel = wIsMulti ? '　【複数正解】' : '';
+        parts.push(pEl(
+          rEl('正答：' + wAnswers.join('・') + '　' + at + '　' + rate + '%' + multiLabel, {b:true, col:'276749', sz:21}),
+          {fill:'F0FFF4', bl:{sz:18,c:'38A169'}, sb:40, sa:40, ind:80}
+        ));
+      }
+    } else if (q.excludedHandling) {
       parts.push(pEl(
-        rEl('正答：' + q.answer + '　' + at + '　' + rate + '%', {b:true, col:'276749', sz:21}),
-        {fill:'F0FFF4', bl:{sz:18,c:'38A169'}, sb:40, sa:40, ind:80}
+        rEl('＊不適切問題', {b:true, col:'B45309', sz:18}),
+        {fill:'FFFBEB', sb:20, sa:20, ind:80}
       ));
     }
 
@@ -2357,9 +2405,13 @@
           const q   = data[idx];
           const pb  = needsPageBreak && g === 0;
           if (q) {
-            return tcEl(String(idx+1),           WN, {center:true,  fill:bg, sz:16, col:'1A4A8A', b:true, pageBreak:pb}) +
-                   tcEl(String(q.answer || ''), WA, {center:true,  fill:bg, sz:18, col:'111827', b:true}) +
-                   tcEl(q.id,                   WI, {center:false, fill:bg, sz:14, col:'4A5568'});
+            const klIsExcl = q.excludedHandling && q.excludedHandling.includes('除外');
+            const klAns    = klIsExcl ? '除外' : String(q.answer || '');
+            const klAnsCol = klIsExcl ? 'B45309' : '111827';
+            const klFill   = klIsExcl ? 'FFFBEB' : bg;
+            return tcEl(String(idx+1), WN, {center:true,  fill:bg,     sz:16, col:'1A4A8A', b:true, pageBreak:pb}) +
+                   tcEl(klAns,         WA, {center:true,  fill:klFill, sz:18, col:klAnsCol, b:true}) +
+                   tcEl(q.id,          WI, {center:false, fill:bg,     sz:14, col:'4A5568'});
           }
           return tcEl('', WN, {fill:bg, pageBreak:pb}) + tcEl('', WA, {fill:bg}) + tcEl('', WI, {fill:bg});
         }).join('');
@@ -2589,12 +2641,27 @@ ${imgRelXml}
         const imgHtml = q.imageData
           ? `<img class="qimg" src="${q.imageData}" alt="問題画像">`
           : '';
-        const correctText = choices[parseInt(q.answer)-1] || '';
-        const ansHtml = wa && q.answer
-          ? `<div class="ans">正解：${_e(q.answer)}　${_e(correctText)}</div>`
-          : '';
+        const pdfAnswers = Array.isArray(q.answer) ? q.answer.map(String) : String(q.answer||'').split(',').map(s=>s.trim());
+        const pdfIsExcl  = q.excludedHandling && q.excludedHandling.includes('除外');
+        const pdfIsMulti = q.excludedHandling && !pdfIsExcl;
+        let ansHtml = '';
+        if (wa) {
+          if (pdfIsExcl) {
+            const origAns   = pdfAnswers.join('・');
+            const origTexts = pdfAnswers.map(a => choices[parseInt(a)-1]||'').filter(Boolean).join('・');
+            const reasonPart = q.excludedReason ? `<div class="ans-reason">【理由】${_e(q.excludedReason)}</div>` : '';
+            ansHtml = `<div class="ans excl">⚠ 採点対象から除外（正答なし）　採点除外（全員得点）<span class="orig-ans">　元の想定正答：${_e(origAns)}番　${_e(origTexts)}</span></div>${reasonPart}`;
+          } else if (q.answer) {
+            const ansTexts = pdfAnswers.map(a => choices[parseInt(a)-1]||'').filter(Boolean).join('・');
+            const multiLabel = pdfIsMulti ? '　【複数正解】' : '';
+            ansHtml = `<div class="ans">正解：${_e(pdfAnswers.join('・'))}　${_e(ansTexts)}${multiLabel}</div>`;
+          }
+        } else if (q.excludedHandling) {
+          ansHtml = '<div class="ans-badge">＊不適切問題</div>';
+        }
+        const exclBadge = q.excludedHandling ? ' <span class="excl-badge">⚠採点除外</span>' : '';
         return `<div class="q">
-<div class="qh"><span class="qnum">${num}問</span>　<span class="qid">${_e(q.id||'')}</span>　<span class="qmeta">${_e(q.examSession||'')}　${_e(q.category||'')}${q.field?'　'+_e(q.field):''}</span>　<span class="qpct">${rate}%</span></div>
+<div class="qh"><span class="qnum">${num}問</span>　<span class="qid">${_e(q.id||'')}</span>　<span class="qmeta">${_e(q.examSession||'')}　${_e(q.category||'')}${q.field?'　'+_e(q.field):''}</span>　<span class="qpct">${rate}%</span>${exclBadge}</div>
 <div class="qt">${_e(q.text||'')}</div>
 ${imgHtml}<div class="opts">${optsHtml}</div>${ansHtml}
 </div>`;
@@ -2747,6 +2814,11 @@ body{font-family:"游明朝","Yu Mincho","Hiragino Mincho Pro W3","ヒラギノ�
 .qimg{display:block;width:100%;height:auto;max-height:111mm;object-fit:contain;margin:2pt 0}
 .ans{font-size:10.5pt;font-weight:bold;border-top:.4pt solid #333;
      margin-top:2pt;padding-top:1pt;color:#1a5c30}
+.ans.excl{color:#b45309;border-top-color:#f59e0b;background:#fffbeb;padding:3pt 5pt;border-radius:3pt}
+.ans-reason{font-size:8.5pt;color:#7c2d12;padding:1pt 5pt;background:#fffbeb}
+.ans-badge{font-size:8.5pt;font-weight:800;color:#b45309;border-top:.4pt solid #f59e0b;margin-top:2pt;padding-top:1pt}
+.orig-ans{font-size:8.5pt;font-weight:500}
+.excl-badge{font-size:7.5pt;font-weight:700;color:#9a3412;background:#fed7aa;border:.4pt solid #fdba74;border-radius:2pt;padding:0 3pt;margin-left:4pt}
 /* ── 操作バー（画面のみ。印刷では非表示）── */
 .toolbar{position:fixed;top:0;left:0;right:0;z-index:99999;display:flex;gap:10px;
   justify-content:center;align-items:center;padding:10px;background:#0c2461;
@@ -2837,9 +2909,11 @@ function closeBack(){
           // 縦優先インデックス（Wordと同じ計算）
           const idx = p * QUESTIONS_PER_PAGE + r + g * ROWS_PER_PAGE;
           const q   = data[idx];
-          return q
-            ? `<td class="qnum">${idx+1}</td><td class="ans">${eh(String(q.answer||''))}</td><td class="qid">${eh(q.id)}</td>`
-            : '<td class="empty"></td><td class="empty"></td><td class="empty"></td>';
+          if (!q) return '<td class="empty"></td><td class="empty"></td><td class="empty"></td>';
+          const pklIsExcl = q.excludedHandling && q.excludedHandling.includes('除外');
+          const pklAns    = pklIsExcl ? '除外' : eh(String(q.answer||''));
+          const pklCls    = pklIsExcl ? 'ans excl-ans' : 'ans';
+          return `<td class="qnum">${idx+1}</td><td class="${pklCls}">${pklAns}</td><td class="qid">${eh(q.id)}</td>`;
         }).join('');
         return `<tr class="${even ? 'odd' : 'even'}">${cells}</tr>`;
       }).join('');
@@ -2864,6 +2938,7 @@ tr.even td{background:#eef2f7}
 tr.odd  td{background:#ffffff}
 td.qnum{font-weight:800;color:#1a4a8a;text-align:center}
 td.ans{font-weight:900;color:#111827;font-size:11pt;text-align:center}
+td.excl-ans{font-weight:900;color:#b45309;font-size:9pt;text-align:center;background:#fffbeb!important}
 td.qid{color:#4a5568;font-size:7.5pt}
 td.empty{background:#f8fafc}
 th.hn{width:4.5%}th.ha{width:5.5%}th.hi{width:8%}
@@ -2930,9 +3005,12 @@ ${tables}
     document.getElementById('pracText').textContent = q.text;
 
     // 選択肢（解答表示後は正解をハイライト）
+    const pracAnswers = Array.isArray(q.answer)
+      ? q.answer.map(String)
+      : String(q.answer || '').split(',').map(s => s.trim());
     document.getElementById('pracChoices').innerHTML = (q.choices || []).map((c, i) => {
       const num     = i + 1;
-      const correct = revealed && String(num) === String(q.answer);
+      const correct = revealed && pracAnswers.includes(String(num));
       return `<div class="expln-choice${correct ? ' correct' : ''}">
         <span class="expln-choice-num">${PCIR[i]}</span>
         <span>${esc(c)}</span>
@@ -2944,13 +3022,32 @@ ${tables}
     const showBtn   = document.getElementById('btnShowAnswer');
     if (revealed) {
       const rate    = (q.accuracyRate || 0).toFixed(1);
-      const ansText = (q.choices || [])[parseInt(q.answer) - 1] || '';
       const col     = accColor(q.accuracyRate || 0);
+      const isExcluded = q.excludedHandling && q.excludedHandling.includes('除外');
       resultEl.className = 'expln-answer-box';
-      resultEl.innerHTML = `
-        <div class="expln-answer-label">正答</div>
-        <div class="expln-answer-value">${esc(String(q.answer))}番　${esc(ansText)}</div>
-        <div class="expln-accuracy" style="color:${col}">正答率 ${rate}%</div>`;
+      if (isExcluded) {
+        const origAns   = pracAnswers.join('・');
+        const origTexts = pracAnswers.map(a => (q.choices || [])[parseInt(a) - 1]).filter(Boolean).join('・');
+        const exclNote  = q.excludedHandling
+          ? `<div class="expln-excluded-reason">【採点上の取扱い】${esc(q.excludedHandling)}${q.excludedReason ? '<br>【理由】' + esc(q.excludedReason) : ''}</div>`
+          : '';
+        resultEl.innerHTML = `
+          <div class="expln-answer-label">正答</div>
+          <div class="expln-answer-value excl-none">採点対象から除外（正答なし）</div>
+          <div class="expln-ans-original">元の想定正答：${esc(origAns)}番　${esc(origTexts)}</div>
+          <div class="expln-accuracy excl-rate">採点除外（全員得点）</div>
+          ${exclNote}`;
+      } else {
+        const answerTexts = pracAnswers.map(a => (q.choices || [])[parseInt(a) - 1]).filter(Boolean).join('・');
+        const exclNote    = q.excludedHandling
+          ? `<div class="expln-excluded-reason">【採点上の取扱い】${esc(q.excludedHandling)}${q.excludedReason ? '<br>【理由】' + esc(q.excludedReason) : ''}</div>`
+          : '';
+        resultEl.innerHTML = `
+          <div class="expln-answer-label">正答</div>
+          <div class="expln-answer-value">${esc(pracAnswers.join('・'))}番　${esc(answerTexts)}</div>
+          <div class="expln-accuracy" style="color:${col}">正答率 ${rate}%</div>
+          ${exclNote}`;
+      }
       resultEl.style.display = 'block';
       showBtn.textContent = '✓ 解答表示中';
       showBtn.classList.add('revealed');
