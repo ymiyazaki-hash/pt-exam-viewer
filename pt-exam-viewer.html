@@ -1253,8 +1253,8 @@
       <div class="filter-section">
         <h3>並び替え</h3>
         <select class="sort-select" id="sortSelect" onchange="applyFilters()">
-          <option value="id-asc">ID順（昇順）</option>
-          <option value="id-desc">ID順（降順）</option>
+          <option value="id-asc">試験順（51回→61回）</option>
+          <option value="id-desc">試験順（61回→51回）</option>
           <option value="acc-asc">正答率（低い順）</option>
           <option value="acc-desc">正答率（高い順）</option>
         </select>
@@ -1871,11 +1871,21 @@
       return true;
     });
 
+    // ID を (回数, AM/PM, 問番号) の数値タプルに分解して比較
+    function parseQId(id) {
+      const m = String(id).match(/^(\d+)([AP])-(\d+)$/);
+      return m ? [parseInt(m[1]), m[2] === 'A' ? 0 : 1, parseInt(m[3])] : [999, 9, 999];
+    }
+    function cmpId(a, b) {
+      const [aR, aS, aN] = parseQId(a.id);
+      const [bR, bS, bN] = parseQId(b.id);
+      return aR !== bR ? aR - bR : aS !== bS ? aS - bS : aN - bN;
+    }
     filteredData.sort((a, b) => {
       if (sortVal === 'acc-asc')  return (a.accuracyRate ?? 0) - (b.accuracyRate ?? 0);
       if (sortVal === 'acc-desc') return (b.accuracyRate ?? 0) - (a.accuracyRate ?? 0);
-      if (sortVal === 'id-desc')  return b.id.localeCompare(a.id, 'ja');
-      return a.id.localeCompare(b.id, 'ja');
+      if (sortVal === 'id-desc')  return cmpId(b, a);
+      return cmpId(a, b);
     });
 
     currentPage = 1;
