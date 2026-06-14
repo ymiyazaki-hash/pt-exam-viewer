@@ -2008,9 +2008,12 @@
       <span style="font-size:11px;color:#a0aec0;margin-left:6px">ID: ${esc(q.id)}</span>`;
 
     const imageHtml  = q.imageData ? `<img class="question-image" src="${q.imageData}" alt="問題図">` : '';
+    const answers    = Array.isArray(q.answer)
+      ? q.answer.map(String)
+      : String(q.answer || '').split(',').map(s => s.trim());
     const choicesHtml = (q.choices || []).map((c, i) => {
-      const num     = i + 1;
-      const correct = String(num) === String(q.answer);
+      const num     = String(i + 1);
+      const correct = answers.includes(num);
       return `
         <li class="choice ${correct ? 'correct' : ''}">
           <span class="choice-num">${num}</span>
@@ -2021,7 +2024,32 @@
 
     const rate       = q.accuracyRate ?? 0;
     const color      = accColor(rate);
-    const answerText = (q.choices || [])[parseInt(q.answer) - 1] || '';
+    const answerLabel = answers.join('・');
+    const answerTexts = answers.map(a => (q.choices || [])[parseInt(a) - 1]).filter(Boolean);
+
+    // 解説
+    const explPCIR = ['①','②','③','④','⑤'];
+    const mainExpl = q.explanation
+      ? `<div class="expl-main-text">${esc(q.explanation)}</div>`
+      : '<div class="expl-main-text" style="color:#9ca3af">（解説なし）</div>';
+    const ce = Array.isArray(q.choiceExplanations) ? q.choiceExplanations : [];
+    const ceHtml = ce.length
+      ? ce.map((text, i) => {
+          const isCorrect = answers.includes(String(i + 1));
+          return `<div class="expl-choice-item${isCorrect ? ' expl-correct' : ''}">
+            <span class="expl-choice-num">${explPCIR[i] || (i+1)}</span>
+            <span>${esc(String(text))}</span>
+          </div>`;
+        }).join('')
+      : '<div style="color:#9ca3af;font-size:13px">（選択肢解説なし）</div>';
+    const refs = Array.isArray(q.references) ? q.references.filter(r => r && (r.book || r.title)) : [];
+    const refsHtml = refs.length
+      ? `<div><div class="expl-section-label">📚 参考文献</div><div class="expl-refs">${
+          refs.map(r => {
+            const parts = [r.book || r.title, r.series, r.publisher,
+              r.year ? r.year + '年' : '', r.page ? 'p.' + r.page : ''].filter(Boolean);
+            return `<div class="expl-ref-item">📚 ${esc(parts.join('・'))}</div>`;
+          }).join('')}</div></div>` : '';
 
     document.getElementById('modalBody').innerHTML = `
       <div class="question-text">${esc(q.text)}</div>
@@ -2031,14 +2059,25 @@
         <div class="answer-grid">
           <div class="answer-item">
             <div class="answer-label">正答</div>
-            <div class="answer-value">${esc(String(q.answer))}</div>
-            <div class="answer-text">${esc(answerText)}</div>
+            <div class="answer-value">${esc(answerLabel)}</div>
+            <div class="answer-text">${esc(answerTexts.join('・'))}</div>
           </div>
           <div class="answer-item">
             <div class="answer-label">正答率</div>
             <div class="answer-value" style="color:${color}">${rate.toFixed(1)}%</div>
           </div>
         </div>
+      </div>
+      <div class="expl-panel" style="margin-top:16px">
+        <div>
+          <div class="expl-section-label">✏️ 解説</div>
+          ${mainExpl}
+        </div>
+        <div>
+          <div class="expl-section-label">🔢 選択肢別解説</div>
+          <div class="expl-choices-list">${ceHtml}</div>
+        </div>
+        ${refsHtml}
       </div>`;
 
     document.getElementById('prevBtn').disabled = globalIdx === 0;
