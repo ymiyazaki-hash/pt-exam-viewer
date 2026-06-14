@@ -351,6 +351,12 @@
     .badge-category-基礎 { background: linear-gradient(135deg, #fff5f5, #fed7d7); color: #991b1b; }
     .badge-category-専門 { background: linear-gradient(135deg, #faf5ff, #e9d8fd); color: #5b21b6; }
     .badge-field { background: linear-gradient(135deg, #fffbeb, #fde68a); color: #78350f; }
+    .badge-excluded { background: linear-gradient(135deg, #fff7ed, #fed7aa); color: #9a3412; border: 1px solid #fdba74; }
+    .card-excluded-note {
+      margin-top: 8px; padding: 6px 10px; border-radius: 8px;
+      background: #fff7ed; border-left: 3px solid #f97316;
+      font-size: 11.5px; color: #7c2d12; line-height: 1.5;
+    }
     .card-id { font-size: 11px; color: #cbd5e0; margin-left: auto; font-family: monospace; }
     .card-text {
       font-size: 13px; color: #374151; line-height: 1.65;
@@ -1952,16 +1958,20 @@
     const rate     = q.accuracyRate ?? 0;
     const color    = accColor(rate);
     const catClass = 'badge-category-' + (q.category || '');
-    const imgBadge = q.imageData ? '<span class="img-badge">📷 画像</span>' : '';
+    const imgBadge  = q.imageData ? '<span class="img-badge">📷 画像</span>' : '';
+    const exclBadge = q.excludedHandling ? '<span class="badge badge-excluded">⚠ 採点除外</span>' : '';
     const preview  = esc(q.text.substring(0, 110)) + (q.text.length > 110 ? '\u2026' : '');
     const delay    = (globalIdx % PAGE_SIZE) * 0.04;
+    const exclNote = q.excludedHandling
+      ? `<div class="card-excluded-note">【採点上の取扱い】${esc(q.excludedHandling)}${q.excludedReason ? '<br>【理由】' + esc(q.excludedReason) : ''}</div>`
+      : '';
     return `
       <div class="question-card" style="animation-delay:${delay}s" onclick="openModal(${globalIdx})">
         <div class="card-meta">
           <span class="badge badge-session">${esc(q.examSession)}</span>
           <span class="badge ${catClass}">${esc(q.category || '\u2015')}</span>
           <span class="badge badge-field">${esc(q.field || '\u2015')}</span>
-          ${imgBadge}
+          ${imgBadge}${exclBadge}
           <span class="card-id">${esc(q.id)}</span>
         </div>
         <div class="card-text">${preview}</div>
@@ -1971,6 +1981,7 @@
           </div>
           <span class="accuracy-text">正答率 ${rate.toFixed(1)}%</span>
         </div>
+        ${exclNote}
       </div>`;
   }
 
