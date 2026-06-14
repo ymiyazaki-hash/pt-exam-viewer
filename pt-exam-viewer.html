@@ -1807,13 +1807,15 @@
   // ── Init ──────────────────────────────────────────────────────────
   function initApp() {
     const sessions = [...new Set(allData.map(d => d.examSession))].sort();
-    const fields   = [...new Set(allData.map(d => d.field).filter(Boolean))].sort();
+    const fieldSet = new Set();
+    allData.forEach(d => { if (d.field) d.field.split(',').forEach(f => fieldSet.add(f.trim())); });
+    const fields = [...fieldSet].sort();
     const categories = [...new Set(allData.map(d => d.category).filter(Boolean))].sort();
 
     const counts = {};
     allData.forEach(d => {
       counts[d.examSession] = (counts[d.examSession] || 0) + 1;
-      if (d.field)     counts[d.field]     = (counts[d.field]     || 0) + 1;
+      if (d.field) d.field.split(',').forEach(f => { const k = f.trim(); counts[k] = (counts[k] || 0) + 1; });
       if (d.category)  counts[d.category]  = (counts[d.category]  || 0) + 1;
     });
 
@@ -1861,7 +1863,10 @@
 
     filteredData = allData.filter(q => {
       if (checkedSessions.length   && !checkedSessions.includes(q.examSession))   return false;
-      if (checkedFields.length     && !checkedFields.includes(q.field))           return false;
+      if (checkedFields.length) {
+        const qFields = q.field ? q.field.split(',').map(f => f.trim()) : [];
+        if (!checkedFields.some(cf => qFields.includes(cf))) return false;
+      }
       if (checkedCategories.length && !checkedCategories.includes(q.category))    return false;
       const rate = q.accuracyRate ?? 0;
       if (rate < accMin || rate > accMax) return false;
