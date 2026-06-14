@@ -573,11 +573,17 @@
       .expln-header { padding: 8px 10px; gap: 6px; flex-wrap: nowrap; }
       .expln-title { display: none; }
       .expln-meta { display: none; }
-      .expln-nav-btn { width: 42px; height: 42px; font-size: 22px; flex-shrink: 0; }
-      .expln-nav-wrap { gap: 4px; flex-shrink: 0; }
-      .expln-pos { font-size: 12px; min-width: 52px; }
-      .btn-show-answer { padding: 7px 10px; font-size: 12px; flex-shrink: 0; white-space: nowrap; }
-      .expln-back { padding: 7px 10px; font-size: 12px; flex-shrink: 0; white-space: nowrap; }
+      .expln-nav-btn { width: 40px; height: 38px; font-size: 22px; flex-shrink: 0; }
+      .expln-nav-wrap { gap: 2px; flex-shrink: 0; margin-left: auto; }
+      .expln-pos { font-size: 12px; min-width: 52px; text-align: center; }
+      /* 戻る・解答・解説ボタン：文字を非表示にして::beforeで短縮表示 */
+      .expln-back       { font-size: 0 !important; padding: 6px 10px; flex-shrink: 0; }
+      .expln-back::before { content: '\2190'; font-size: 16px; }
+      .btn-show-answer  { font-size: 0 !important; padding: 6px 9px; flex-shrink: 0; }
+      .btn-show-answer::before  { content: '解答\25BC'; font-size: 11px; }
+      .btn-show-answer.revealed::before { content: '\2713解答'; font-size: 11px; }
+      .btn-show-expl    { font-size: 0 !important; padding: 6px 9px; flex-shrink: 0; }
+      .btn-show-expl::before    { content: '\1F4D6'; font-size: 15px; }
 
       /* 描画ツールバー：コンパクト化 */
       .draw-toolbar { padding: 6px 10px; gap: 4px; }
