@@ -5042,10 +5042,6 @@ ${body}</body></html>`;
     cfg.area.addEventListener('pointermove',   onMove);
     cfg.area.addEventListener('pointerup',     onEnd);
     cfg.area.addEventListener('pointercancel', onEnd);
-    cfg.area.addEventListener('dblclick', e => {
-      if (cfg.dblSkip && cfg.dblSkip(e)) return;
-      e.preventDefault(); cfg.reset();
-    });
   }
 
   (function initImgZoom(){
