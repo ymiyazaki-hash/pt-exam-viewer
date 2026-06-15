@@ -4854,105 +4854,105 @@ ${body}</body></html>`;
     const img = document.querySelector('#pracImg img');
     if (img) { img.style.transform = ''; img.style.cursor = ''; }
   }
+  // 共通：ズーム/パン処理（タッチ=2本指パン、マウス=1本指パン）
+  function _makeZoomHandler(cfg) {
+    // cfg: { getZ, setZ, getPX, setPX, getPY, setPY, apply, reset, maxZ, wheelStep }
+    const pts = new Map();
+    let dragging = false, sx = 0, sy = 0, px0 = 0, py0 = 0;
+    let pinchDist = 0, pinchZoom0 = 1, pinchMX = 0, pinchMY = 0, pinchPX0 = 0, pinchPY0 = 0;
+
+    function onWheel(e) {
+      if (cfg.skip && cfg.skip(e)) return;
+      e.preventDefault();
+      const z = Math.min(cfg.maxZ, Math.max(1, cfg.getZ() * (e.deltaY < 0 ? cfg.wheelStep : 1 / cfg.wheelStep)));
+      cfg.setZ(z);
+      if (z === 1) { cfg.setPX(0); cfg.setPY(0); }
+      cfg.apply();
+    }
+    function onDown(e) {
+      if (cfg.guard && cfg.guard(e)) return;
+      pts.set(e.pointerId, { x: e.clientX, y: e.clientY, type: e.pointerType });
+      if (pts.size === 2) {
+        const a = [...pts.values()];
+        pinchDist  = Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y);
+        pinchMX    = (a[0].x + a[1].x) / 2;
+        pinchMY    = (a[0].y + a[1].y) / 2;
+        pinchZoom0 = cfg.getZ();
+        pinchPX0   = cfg.getPX(); pinchPY0 = cfg.getPY();
+        dragging   = false;
+      } else if (pts.size === 1 && cfg.getZ() > 1 && e.pointerType === 'mouse') {
+        // マウスのみ1本指ドラッグでパン
+        dragging = true; sx = e.clientX; sy = e.clientY; px0 = cfg.getPX(); py0 = cfg.getPY();
+        try { cfg.area.setPointerCapture(e.pointerId); } catch(_) {}
+      }
+    }
+    function onMove(e) {
+      if (!pts.has(e.pointerId)) return;
+      pts.set(e.pointerId, { x: e.clientX, y: e.clientY, type: e.pointerType });
+      if (pts.size >= 2) {
+        const a = [...pts.values()];
+        const d  = Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y);
+        const cx = (a[0].x + a[1].x) / 2;
+        const cy = (a[0].y + a[1].y) / 2;
+        if (pinchDist > 0) {
+          // ズーム（ダンピング0.45）+ 2本指中点でパン
+          const damped = 1 + (d / pinchDist - 1) * 0.45;
+          const z = Math.min(cfg.maxZ, Math.max(1, pinchZoom0 * damped));
+          cfg.setZ(z);
+          if (z === 1) { cfg.setPX(0); cfg.setPY(0); }
+          else { cfg.setPX(pinchPX0 + (cx - pinchMX)); cfg.setPY(pinchPY0 + (cy - pinchMY)); }
+          cfg.apply();
+        }
+      } else if (dragging && cfg.getZ() > 1) {
+        // マウス1本指パン
+        cfg.setPX(px0 + (e.clientX - sx));
+        cfg.setPY(py0 + (e.clientY - sy));
+        cfg.apply();
+      }
+    }
+    function onEnd(e) {
+      pts.delete(e.pointerId);
+      if (pts.size < 2) { pinchDist = 0; }
+      if (pts.size === 0) dragging = false;
+    }
+    cfg.area.addEventListener('wheel',         onWheel, { passive: false });
+    cfg.area.addEventListener('pointerdown',   onDown);
+    cfg.area.addEventListener('pointermove',   onMove);
+    cfg.area.addEventListener('pointerup',     onEnd);
+    cfg.area.addEventListener('pointercancel', onEnd);
+    cfg.area.addEventListener('dblclick', e => {
+      if (cfg.dblSkip && cfg.dblSkip(e)) return;
+      e.preventDefault(); cfg.reset();
+    });
+  }
+
   (function initImgZoom(){
     const area = document.getElementById('pracImg');
     if (!area) return;
-    const pts = new Map();
-    let dragging = false, sx = 0, sy = 0, px0 = 0, py0 = 0, pinchDist = 0, pinchZoom0 = 1;
-    area.addEventListener('wheel', e => {
-      if (!area.querySelector('img')) return;
-      e.preventDefault();
-      _imgZ = Math.min(6, Math.max(1, _imgZ * (e.deltaY < 0 ? 1.18 : 1 / 1.18)));
-      if (_imgZ === 1) { _imgPX = 0; _imgPY = 0; }
-      _applyImgZoom();
-    }, { passive: false });
-    area.addEventListener('pointerdown', e => {
-      if (drawTool !== 'pointer' || !area.querySelector('img')) return;
-      pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
-      if (pts.size === 2) {
-        const a = [...pts.values()];
-        pinchDist = Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y);
-        pinchZoom0 = _imgZ; dragging = false;
-      } else if (pts.size === 1 && _imgZ > 1) {
-        dragging = true; sx = e.clientX; sy = e.clientY; px0 = _imgPX; py0 = _imgPY;
-        try { area.setPointerCapture(e.pointerId); } catch(_) {}
-      }
+    _makeZoomHandler({
+      area, maxZ: 6, wheelStep: 1.18,
+      getZ:  () => _imgZ,  setZ:  z => { _imgZ  = z; },
+      getPX: () => _imgPX, setPX: x => { _imgPX = x; },
+      getPY: () => _imgPY, setPY: y => { _imgPY = y; },
+      apply: _applyImgZoom, reset: _resetImgZoom,
+      guard: e => drawTool !== 'pointer' || !area.querySelector('img'),
+      skip:  e => !area.querySelector('img'),
     });
-    area.addEventListener('pointermove', e => {
-      if (!pts.has(e.pointerId)) return;
-      pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
-      if (pts.size >= 2) {
-        const a = [...pts.values()];
-        const d = Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y);
-        if (pinchDist > 0) {
-          const raw = d / pinchDist;
-          const damped = 1 + (raw - 1) * 0.45; // ピンチ速度を遅く
-          _imgZ = Math.min(6, Math.max(1, pinchZoom0 * damped));
-          if (_imgZ === 1) { _imgPX = 0; _imgPY = 0; }
-          _applyImgZoom();
-        }
-      } else if (dragging && _imgZ > 1) {
-        _imgPX = px0 + (e.clientX - sx);
-        _imgPY = py0 + (e.clientY - sy);
-        _applyImgZoom();
-      }
-    });
-    const end = e => { pts.delete(e.pointerId); if (pts.size < 2) pinchDist = 0; if (pts.size === 0) dragging = false; };
-    area.addEventListener('pointerup', end);
-    area.addEventListener('pointercancel', end);
-    area.addEventListener('dblclick', e => { e.preventDefault(); _resetImgZoom(); });
   })();
 
   // 左パネル ズーム/パン/ピンチ
   (function initLeftZoom(){
     const area = document.querySelector('.expln-left');
     if (!area) return;
-    const pts = new Map();
-    let dragging = false, sx = 0, sy = 0, px0 = 0, py0 = 0, pinchDist = 0, pinchZoom0 = 1;
-    area.addEventListener('wheel', e => {
-      if (e.target.closest('.left-expand-btn')) return;
-      e.preventDefault();
-      _leftZ = Math.min(5, Math.max(1, _leftZ * (e.deltaY < 0 ? 1.12 : 1 / 1.12)));
-      if (_leftZ === 1) { _leftPX = 0; _leftPY = 0; }
-      _applyLeftZoom();
-    }, { passive: false });
-    area.addEventListener('pointerdown', e => {
-      if (drawTool !== 'pointer' || e.target.closest('.left-expand-btn')) return;
-      pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
-      if (pts.size === 2) {
-        const a = [...pts.values()];
-        pinchDist = Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y);
-        pinchZoom0 = _leftZ; dragging = false;
-      } else if (pts.size === 1 && _leftZ > 1) {
-        dragging = true; sx = e.clientX; sy = e.clientY; px0 = _leftPX; py0 = _leftPY;
-        try { area.setPointerCapture(e.pointerId); } catch(_) {}
-      }
-    });
-    area.addEventListener('pointermove', e => {
-      if (!pts.has(e.pointerId)) return;
-      pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
-      if (pts.size >= 2) {
-        const a = [...pts.values()];
-        const d = Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y);
-        if (pinchDist > 0) {
-          const raw = d / pinchDist;
-          const damped = 1 + (raw - 1) * 0.45;
-          _leftZ = Math.min(5, Math.max(1, pinchZoom0 * damped));
-          if (_leftZ === 1) { _leftPX = 0; _leftPY = 0; }
-          _applyLeftZoom();
-        }
-      } else if (dragging && _leftZ > 1) {
-        _leftPX = px0 + (e.clientX - sx);
-        _leftPY = py0 + (e.clientY - sy);
-        _applyLeftZoom();
-      }
-    });
-    const end = e => { pts.delete(e.pointerId); if (pts.size < 2) pinchDist = 0; if (pts.size === 0) dragging = false; };
-    area.addEventListener('pointerup', end);
-    area.addEventListener('pointercancel', end);
-    area.addEventListener('dblclick', e => {
-      if (e.target.closest('.left-expand-btn')) return;
-      e.preventDefault(); _resetLeftZoom();
+    _makeZoomHandler({
+      area, maxZ: 5, wheelStep: 1.12,
+      getZ:  () => _leftZ,  setZ:  z => { _leftZ  = z; },
+      getPX: () => _leftPX, setPX: x => { _leftPX = x; },
+      getPY: () => _leftPY, setPY: y => { _leftPY = y; },
+      apply: _applyLeftZoom, reset: _resetLeftZoom,
+      guard:   e => drawTool !== 'pointer' || !!e.target.closest('.left-expand-btn'),
+      skip:    e => !!e.target.closest('.left-expand-btn'),
+      dblSkip: e => !!e.target.closest('.left-expand-btn'),
     });
   })();
 
