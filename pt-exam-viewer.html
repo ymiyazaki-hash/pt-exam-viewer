@@ -3750,7 +3750,12 @@ ${tables}
   function renderPracQ() {
     _maybeShowMoon();
     if (typeof _resetContentZoom === 'function') _resetContentZoom();
-    const q       = practiceData[practiceIdx];
+    const q = practiceData[practiceIdx];
+    // 解答・解説の継続表示：グローバルフラグが立っていたら自動で開く
+    if (_globalReveal) {
+      if (!practiceState[q.id]) practiceState[q.id] = {};
+      practiceState[q.id].answerRevealed = true;
+    }
     const state   = practiceState[q.id] || {};
     const total   = practiceData.length;
     const revealed = state.answerRevealed === true;
@@ -3984,10 +3989,14 @@ ${tables}
     }
   }
 
+  // 一度解答/解説を表示したら以降の問題でも継続するグローバルフラグ
+  let _globalReveal = false;
+
   function showAnswer() {
     const q = practiceData[practiceIdx];
     if (!practiceState[q.id]) practiceState[q.id] = {};
     practiceState[q.id].answerRevealed = !practiceState[q.id].answerRevealed;
+    _globalReveal = practiceState[q.id].answerRevealed; // 表示→継続ON、非表示→継続OFF
     if (navigator.vibrate) navigator.vibrate(20);
     renderPracQ();
   }
