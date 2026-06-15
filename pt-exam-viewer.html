@@ -158,6 +158,89 @@
     }
     .cache-badge { font-size: 11px; opacity: 0.65; margin-top: 2px; }
 
+    /* ── セッション保存・呼び出しモーダル ── */
+    #sessionModal {
+      display: none; position: fixed; inset: 0; z-index: 99999;
+      background: rgba(10,15,50,0.65); backdrop-filter: blur(6px);
+      align-items: center; justify-content: center; padding: 16px;
+    }
+    #sessionModal.open { display: flex; }
+    .sess-box {
+      background: #fff; border-radius: 24px; max-width: 520px; width: 100%;
+      max-height: 88vh; display: flex; flex-direction: column;
+      box-shadow: 0 24px 80px rgba(14,100,200,0.22), 0 0 0 1px rgba(147,197,253,0.35);
+      overflow: hidden;
+    }
+    .sess-hdr {
+      background: linear-gradient(135deg,#3b82f6,#6366f1,#8b5cf6);
+      padding: 18px 22px 14px; color: white; flex-shrink: 0;
+    }
+    .sess-hdr-top { display: flex; align-items: center; justify-content: space-between; }
+    .sess-title { font-size: 17px; font-weight: 900; letter-spacing: 0.04em; }
+    .sess-sub { font-size: 12px; opacity: 0.82; margin-top: 3px; }
+    .sess-close {
+      background: rgba(255,255,255,0.22); border: none; color: white;
+      width: 32px; height: 32px; border-radius: 50%; font-size: 16px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s; flex-shrink: 0;
+    }
+    .sess-close:hover { background: rgba(255,255,255,0.38); transform: scale(1.1); }
+    .sess-body { overflow-y: auto; padding: 18px 20px 22px; -webkit-overflow-scrolling: touch; }
+    .sess-save-area {
+      display: flex; gap: 8px; align-items: center; margin-bottom: 18px;
+    }
+    .sess-name-input {
+      flex: 1; border: 1.5px solid #bfdbfe; border-radius: 12px;
+      padding: 9px 13px; font-size: 14px; outline: none;
+      transition: border-color 0.15s;
+    }
+    .sess-name-input:focus { border-color: #6366f1; }
+    .sess-save-btn {
+      background: linear-gradient(135deg,#3b82f6,#6366f1);
+      color: white; border: none; border-radius: 12px;
+      padding: 9px 18px; font-size: 13px; font-weight: 800;
+      cursor: pointer; white-space: nowrap; transition: all 0.15s;
+    }
+    .sess-save-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(99,102,241,0.4); }
+    .sess-list-title {
+      font-size: 12px; font-weight: 800; color: #6366f1;
+      letter-spacing: 0.05em; margin-bottom: 10px;
+      border-bottom: 2px dashed #c7d2fe; padding-bottom: 5px;
+    }
+    .sess-empty { font-size: 13px; color: #9ca3af; text-align: center; padding: 20px 0; }
+    .sess-item {
+      border: 1.5px solid #e0e7ff; border-radius: 14px;
+      padding: 11px 14px; margin-bottom: 9px;
+      display: flex; align-items: center; gap: 10px;
+      transition: border-color 0.15s;
+    }
+    .sess-item:hover { border-color: #a5b4fc; }
+    .sess-item-info { flex: 1; min-width: 0; }
+    .sess-item-name {
+      font-size: 14px; font-weight: 800; color: #1e1b4b;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .sess-item-meta { font-size: 11px; color: #6b7280; margin-top: 2px; }
+    .sess-load-btn {
+      background: linear-gradient(135deg,#3b82f6,#6366f1);
+      color: white; border: none; border-radius: 10px;
+      padding: 6px 13px; font-size: 12px; font-weight: 700;
+      cursor: pointer; white-space: nowrap; transition: all 0.15s; flex-shrink: 0;
+    }
+    .sess-load-btn:hover { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(99,102,241,0.35); }
+    .sess-del-btn {
+      background: none; border: 1.5px solid #fca5a5; color: #ef4444;
+      border-radius: 10px; padding: 6px 10px; font-size: 12px;
+      cursor: pointer; white-space: nowrap; transition: all 0.15s; flex-shrink: 0;
+    }
+    .sess-del-btn:hover { background: #fee2e2; }
+    @media (max-width: 600px) {
+      .sess-box { border-radius: 18px; max-height: 92vh; }
+      .sess-hdr { padding: 14px 16px 12px; }
+      .sess-save-area { flex-wrap: wrap; }
+      .sess-name-input { min-width: 0; }
+    }
+
     /* ── ロード画面 ── */
     #loadScreen {
       display: flex; align-items: center; justify-content: center;
@@ -1507,7 +1590,7 @@
     <button class="draw-action-btn danger" onclick="clearDraw()">🗑 クリア</button>
     <input type="file" id="insertFileInput" accept="image/*,.pdf" style="display:none" onchange="handleInsertFile(this)">
     <button class="draw-action-btn" onclick="document.getElementById('insertFileInput').click()">📎 挿入</button>
-    <button class="draw-action-btn" onclick="saveAnnotations()" title="書き込みをアプリに一時保存">💾 保存</button>
+    <button class="draw-action-btn" onclick="openSessionModal()" title="セッションを名前をつけて保存・呼び出し">💾 セッション</button>
     <button class="draw-action-btn" onclick="openAnnotPdfModal()" title="書き込んだページをPDF出力">📄 PDF</button>
     <div style="flex:1"></div>
     <button class="expln-reset-btn" onclick="pracResetOne()">🔄 リセット</button>
@@ -1601,15 +1684,19 @@
 
   // ── IndexedDB キャッシュ ──────────────────────────────────────────
   const IDB_NAME  = 'pt-exam-viewer';
-  const IDB_VER   = 1;
+  const IDB_VER   = 2;   // v2: sessions ストア追加
   const IDB_STORE = 'cache';
+  const IDB_SESS  = 'sessions';
 
   function openIDB() {
     return new Promise((resolve, reject) => {
       const req = indexedDB.open(IDB_NAME, IDB_VER);
       req.onupgradeneeded = e => {
-        if (!e.target.result.objectStoreNames.contains(IDB_STORE))
-          e.target.result.createObjectStore(IDB_STORE);
+        const db = e.target.result;
+        if (!db.objectStoreNames.contains(IDB_STORE))
+          db.createObjectStore(IDB_STORE);
+        if (!db.objectStoreNames.contains(IDB_SESS))
+          db.createObjectStore(IDB_SESS);
       };
       req.onsuccess = e => resolve(e.target.result);
       req.onerror   = e => reject(e.target.error);
@@ -3732,6 +3819,138 @@ ${tables}
     } catch(e) { console.warn('注釈読込失敗', e); }
   }
 
+  // ── セッション管理（名前付き保存・呼び出し） ─────────────────────────
+  function openSessionModal() {
+    renderSessionsList();
+    document.getElementById('sessNameInput').value = '';
+    document.getElementById('sessionModal').classList.add('open');
+    setTimeout(() => document.getElementById('sessNameInput').focus(), 100);
+  }
+  function closeSessionModal() {
+    document.getElementById('sessionModal').classList.remove('open');
+  }
+
+  async function doSaveSession() {
+    try { saveDrawingState(); } catch(_) {}
+    try { saveFsDrawing(); } catch(_) {}
+    const nameInput = document.getElementById('sessNameInput');
+    const name = nameInput.value.trim();
+    if (!name) { nameInput.focus(); return; }
+    const key = 'sess_' + name;
+    const questionIds = (practiceData || []).map(q => q.id);
+    const rec = {
+      name,
+      savedAt: new Date().toISOString(),
+      questionIds,
+      practiceIdx: typeof practiceIdx === 'number' ? practiceIdx : 0,
+      state: JSON.parse(JSON.stringify(practiceState || {}))
+    };
+    try {
+      const db = await openIDB();
+      await new Promise((resolve, reject) => {
+        const tx = db.transaction(IDB_SESS, 'readwrite');
+        tx.objectStore(IDB_SESS).put(rec, key);
+        tx.oncomplete = resolve; tx.onerror = e => reject(e.target.error);
+      });
+      _toast('💾 「' + name + '」を保存しました');
+      nameInput.value = '';
+      renderSessionsList();
+    } catch(e) {
+      console.warn('セッション保存失敗', e);
+      alert('保存に失敗しました:\n' + e.message);
+    }
+  }
+
+  async function listSessions() {
+    try {
+      const db = await openIDB();
+      const all = await new Promise((resolve, reject) => {
+        const tx = db.transaction(IDB_SESS, 'readonly');
+        const req = tx.objectStore(IDB_SESS).getAll();
+        req.onsuccess = () => resolve(req.result);
+        req.onerror   = e => reject(e.target.error);
+      });
+      return all.filter(r => r && r.name).sort((a, b) => b.savedAt.localeCompare(a.savedAt));
+    } catch(e) { console.warn('セッション一覧取得失敗', e); return []; }
+  }
+
+  async function loadSession(name) {
+    const key = 'sess_' + name;
+    try {
+      const db = await openIDB();
+      const rec = await new Promise((resolve, reject) => {
+        const tx = db.transaction(IDB_SESS, 'readonly');
+        const req = tx.objectStore(IDB_SESS).get(key);
+        req.onsuccess = e => resolve(e.target.result);
+        req.onerror   = e => reject(e.target.error);
+      });
+      if (!rec) { alert('セッションが見つかりません'); return; }
+      if (rec.state && typeof rec.state === 'object') {
+        practiceState = rec.state;
+      }
+      if (Array.isArray(rec.questionIds) && rec.questionIds.length > 0 && allData && allData.length) {
+        const idSet = new Set(rec.questionIds);
+        const restored = allData.filter(q => idSet.has(q.id));
+        if (restored.length > 0) {
+          // filteredData に合わせて enterPractice が上書きしても正しい問題セットになるようにする
+          filteredData = restored;
+          const idx = Math.min(rec.practiceIdx || 0, restored.length - 1);
+          closeSessionModal();
+          enterPractice(idx);
+          _toast('📂 「' + name + '」を呼び出しました');
+          return;
+        }
+      }
+      closeSessionModal();
+      _toast('📂 「' + name + '」の書き込みを復元しました');
+    } catch(e) {
+      console.warn('セッション読込失敗', e);
+      alert('呼び出しに失敗しました:\n' + e.message);
+    }
+  }
+
+  async function deleteSession(name) {
+    if (!confirm('「' + name + '」を削除しますか？')) return;
+    const key = 'sess_' + name;
+    try {
+      const db = await openIDB();
+      await new Promise((resolve, reject) => {
+        const tx = db.transaction(IDB_SESS, 'readwrite');
+        tx.objectStore(IDB_SESS).delete(key);
+        tx.oncomplete = resolve; tx.onerror = e => reject(e.target.error);
+      });
+      renderSessionsList();
+      _toast('🗑 「' + name + '」を削除しました');
+    } catch(e) { console.warn('セッション削除失敗', e); }
+  }
+
+  async function renderSessionsList() {
+    const area = document.getElementById('sessListArea');
+    if (!area) return;
+    const items = await listSessions();
+    if (items.length === 0) {
+      area.innerHTML = '<div class="sess-empty">保存済みのセッションはありません</div>';
+      return;
+    }
+    area.innerHTML = items.map(it => {
+      const dt = new Date(it.savedAt);
+      const dateStr = dt.getFullYear() + '/' + String(dt.getMonth()+1).padStart(2,'0') + '/' +
+                      String(dt.getDate()).padStart(2,'0') + ' ' +
+                      String(dt.getHours()).padStart(2,'0') + ':' + String(dt.getMinutes()).padStart(2,'0');
+      const qCount = Array.isArray(it.questionIds) ? it.questionIds.length : '?';
+      const pos    = typeof it.practiceIdx === 'number' ? (it.practiceIdx + 1) : 1;
+      const nameE  = it.name.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+      return `<div class="sess-item">
+        <div class="sess-item-info">
+          <div class="sess-item-name">${nameE}</div>
+          <div class="sess-item-meta">${dateStr}　${qCount}問・${pos}問目</div>
+        </div>
+        <button class="sess-load-btn" onclick="loadSession(${JSON.stringify(it.name)})">呼び出し</button>
+        <button class="sess-del-btn"  onclick="deleteSession(${JSON.stringify(it.name)})">削除</button>
+      </div>`;
+    }).join('');
+  }
+
   // ── PDF出力（書き込んだページを画面まるごと再現） ─────────────────
   function _loadImg(src) {
     return new Promise(resolve => {
@@ -4778,6 +4997,29 @@ ${body}</body></html>`;
     </div><!-- /help-body -->
   </div><!-- /help-box -->
 </div><!-- /helpModal -->
+
+<!-- ── セッション保存・呼び出しモーダル ── -->
+<div id="sessionModal" onclick="if(event.target===this)closeSessionModal()">
+  <div class="sess-box">
+    <div class="sess-hdr">
+      <div class="sess-hdr-top">
+        <span class="sess-title">💾 セッション管理</span>
+        <button class="sess-close" onclick="closeSessionModal()">✕</button>
+      </div>
+      <div class="sess-sub">現在の問題・書き込みに名前をつけて保存し、あとで呼び出せます</div>
+    </div>
+    <div class="sess-body">
+      <div class="sess-save-area">
+        <input class="sess-name-input" id="sessNameInput" type="text"
+          placeholder="セッション名を入力…" maxlength="40"
+          onkeydown="if(event.key==='Enter')doSaveSession()">
+        <button class="sess-save-btn" onclick="doSaveSession()">保存</button>
+      </div>
+      <div class="sess-list-title">📂 保存済みセッション</div>
+      <div id="sessListArea"><div class="sess-empty">保存済みのセッションはありません</div></div>
+    </div>
+  </div>
+</div><!-- /sessionModal -->
 
 </body>
 </html>
