@@ -478,7 +478,6 @@
       box-shadow: 0 1px 4px rgba(0,0,0,0.04), 0 2px 8px rgba(0,0,0,0.02);
       animation: fadeInUp 0.4s cubic-bezier(0.4,0,0.2,1) both;
       transition: box-shadow 0.25s, transform 0.2s, border-color 0.2s, border-left-color 0.2s;
-      position: relative;
     }
     .question-card:hover {
       box-shadow: 0 8px 28px rgba(30,58,138,0.12), 0 2px 8px rgba(0,0,0,0.04);
@@ -1548,13 +1547,6 @@
         </div>
         <button class="btn-practice-start" onclick="enterPractice(0)">解説を始める →</button>
       </div>
-      <div id="selectionBar">
-        <span class="sel-count-badge" id="selCountBadge">0問</span>
-        <span>選択中</span>
-        <span class="sel-spacer"></span>
-        <button class="sel-bar-btn sel-all-btn"  onclick="selectAllFiltered()">全選択</button>
-        <button class="sel-bar-btn sel-none-btn" onclick="clearSelection()">解除</button>
-      </div>
       <div id="questionList"></div>
       <div class="pagination" id="pagination"></div>
     </div>
@@ -1637,6 +1629,10 @@
     <button class="draw-action-btn danger" onclick="clearDraw()">🗑 クリア</button>
     <input type="file" id="insertFileInput" accept="image/*,.pdf" style="display:none" onchange="handleInsertFile(this)">
     <button class="draw-action-btn" onclick="document.getElementById('insertFileInput').click()">📎 挿入</button>
+    <label id="sessAddLabel" title="この問題をセッション保存の対象に追加" style="display:inline-flex;align-items:center;gap:4px;cursor:pointer;padding:5px 8px;border-radius:8px;border:1.5px solid #e2e8f0;background:#fff;font-size:12px;font-weight:700;color:#374151;user-select:none;transition:background 0.15s,border-color 0.15s;">
+      <input type="checkbox" id="sessAddCheck" style="accent-color:#7c3aed;width:15px;height:15px;cursor:pointer;flex-shrink:0;" onchange="toggleSessAdd(this.checked)">
+      <span id="sessAddCount" style="min-width:3em;text-align:center;font-size:11px;color:#7c3aed;font-weight:700;display:none;"></span>
+    </label>
     <button class="draw-action-btn" onclick="openSessionModal()" title="セッションを名前をつけて保存・呼び出し">💾 セッション</button>
     <button class="draw-action-btn" onclick="openAnnotPdfModal()" title="書き込んだページをPDF出力">📄 PDF</button>
     <div style="flex:1"></div>
@@ -2181,7 +2177,6 @@
     }
     container.innerHTML = pageData.map((q, i) => renderCard(q, start + i)).join('');
     renderPagination();
-    updateSelectionBar();
   }
 
   function accColor(rate) {
@@ -2269,13 +2264,8 @@
     const exclNote = q.excludedHandling
       ? `<div class="card-excluded-note">【採点上の取扱い】${esc(q.excludedHandling)}${q.excludedReason ? '<br>【理由】' + esc(q.excludedReason) : ''}</div>`
       : '';
-    const isChecked = selectedIds.has(q.id);
     return `
-      <div class="question-card${isChecked ? ' card-checked' : ''}" style="animation-delay:${delay}s" onclick="openModal(${globalIdx})">
-        <input type="checkbox" class="card-checkbox" data-qid="${esc(q.id)}"
-          ${isChecked ? 'checked' : ''}
-          onclick="event.stopPropagation();toggleCardSelect(this.dataset.qid,this.checked)"
-          title="このカードを選択">
+      <div class="question-card" style="animation-delay:${delay}s" onclick="openModal(${globalIdx})">
         <div class="card-meta">
           <span class="badge badge-session">${esc(q.examSession)}</span>
           <span class="badge ${catClass}">${esc(q.category || '\u2015')}</span>
@@ -3451,6 +3441,44 @@ ${tables}
     renderInsertedMedia();
     requestAnimationFrame(() => initDrawCanvas());
     setTimeout(() => initDrawCanvas(), 160); // rAF未発火時のフォールバック（確実に採寸）
+
+    // セッション追加チェックボックスを現在の問題に合わせて更新
+    _syncSessAddCheck();
+  }
+
+  function _syncSessAddCheck() {
+    const cb = document.getElementById('sessAddCheck');
+    if (!cb || !practiceData) return;
+    const q = practiceData[practiceIdx];
+    if (!q) return;
+    const checked = selectedIds.has(q.id);
+    cb.checked = checked;
+    const lbl = document.getElementById('sessAddLabel');
+    if (lbl) lbl.style.background = checked ? '#ede9fe' : '#fff';
+    _updateSessCount();
+  }
+
+  function toggleSessAdd(checked) {
+    if (!practiceData) return;
+    const q = practiceData[practiceIdx];
+    if (!q) return;
+    if (checked) selectedIds.add(q.id);
+    else selectedIds.delete(q.id);
+    const lbl = document.getElementById('sessAddLabel');
+    if (lbl) lbl.style.background = checked ? '#ede9fe' : '#fff';
+    _updateSessCount();
+  }
+
+  function _updateSessCount() {
+    const el = document.getElementById('sessAddCount');
+    if (!el) return;
+    const n = selectedIds.size;
+    if (n > 0) {
+      el.textContent = n + '問';
+      el.style.display = 'inline';
+    } else {
+      el.style.display = 'none';
+    }
   }
 
   function showAnswer() {
