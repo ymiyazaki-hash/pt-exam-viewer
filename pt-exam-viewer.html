@@ -1281,6 +1281,23 @@
       display: flex; align-items: center; justify-content: center;
       font-size: 11px; color: #334;
     }
+    /* ── 挿入テキストアイテム ── */
+    .ins-item.ins-text {
+      background: rgba(255,255,245,0.96);
+      border: 2px dashed rgba(100,120,220,0.55) !important;
+      overflow: hidden;
+      min-width: 80px; min-height: 36px;
+      box-shadow: 0 3px 14px rgba(0,0,0,0.25);
+    }
+    .ins-text-content {
+      width: 100%; height: 100%;
+      padding: 8px 10px 22px;
+      word-break: break-word; white-space: pre-wrap;
+      overflow: hidden; pointer-events: none;
+      line-height: 1.55; font-family: inherit;
+      box-sizing: border-box;
+    }
+
     /* ── 挿入画像のトリミング(クロップ)エディタ ── */
     #cropEditor {
       display: none; position: fixed; inset: 0; z-index: 10050;
@@ -1979,6 +1996,7 @@
     <button class="draw-action-btn danger" onclick="clearDraw()">🗑 クリア</button>
     <input type="file" id="insertFileInput" accept="image/*,.pdf" style="display:none" onchange="handleInsertFile(this)">
     <button class="draw-action-btn" onclick="document.getElementById('insertFileInput').click()">📎 挿入</button>
+    <button class="draw-action-btn" onclick="openTextInsertModal()" title="テキストを挿入">📝 テキスト</button>
     <label id="sessAddLabel" title="チェック→セッションボタンでまとめて保存" style="display:inline-flex;align-items:center;gap:5px;cursor:pointer;padding:5px 10px;border-radius:8px;border:1.5px solid #c4b5fd;background:#fff;font-size:12px;font-weight:700;color:#5b21b6;user-select:none;transition:background 0.15s,border-color 0.15s;white-space:nowrap;">
       <input type="checkbox" id="sessAddCheck" style="accent-color:#7c3aed;width:15px;height:15px;cursor:pointer;flex-shrink:0;" onchange="toggleSessAdd(this.checked)">
       <span id="sessAddText">✅ 選択</span>
@@ -4114,6 +4132,61 @@ ${tables}
   }
 
   // ── メディア挿入（画像・PDF）────────────────────────────────────
+  // ── テキスト挿入 ─────────────────────────────────────────────────
+  let _editingTextItem = null; // 編集中のテキストアイテム（nullなら新規）
+
+  function openTextInsertModal(editItem) {
+    _editingTextItem = editItem || null;
+    const modal = document.getElementById('textInsertModal');
+    const area  = document.getElementById('textInsertArea');
+    const sel   = document.getElementById('textInsertSize');
+    if (!modal || !area) return;
+    area.value = editItem ? (editItem.text || '') : '';
+    sel.value  = editItem ? String(editItem.fontSize || 18) : '18';
+    modal.style.display = 'flex';
+    setTimeout(() => { area.focus(); area.select(); }, 80);
+  }
+
+  function closeTextModal() {
+    const modal = document.getElementById('textInsertModal');
+    if (modal) modal.style.display = 'none';
+    _editingTextItem = null;
+  }
+
+  function confirmTextInsert() {
+    const text     = (document.getElementById('textInsertArea').value || '').trim();
+    const fontSize = parseInt(document.getElementById('textInsertSize').value) || 18;
+    if (!text) { closeTextModal(); return; }
+
+    const q = practiceData[practiceIdx];
+    if (!q) return;
+    if (!practiceState[q.id]) practiceState[q.id] = {};
+    if (!practiceState[q.id].insertedMedia) practiceState[q.id].insertedMedia = [];
+
+    if (_editingTextItem) {
+      // 既存アイテムを編集
+      _editingTextItem.text     = text;
+      _editingTextItem.fontSize = fontSize;
+    } else {
+      // 新規挿入
+      const layer = document.getElementById('insertedMediaLayer');
+      const lr    = layer ? layer.getBoundingClientRect() : {width:400, height:300};
+      const w     = Math.min(280, lr.width * 0.65);
+      practiceState[q.id].insertedMedia.push({
+        id: 'ins_' + Date.now(), type: 'text',
+        text, fontSize, color: drawColor,
+        x: Math.max(10, (lr.width  - w)   / 2),
+        y: Math.max(10, (lr.height - 100) / 3),
+        w: Math.round(w), h: Math.max(48, fontSize * 2 + 20),
+        aspectRatio: null
+      });
+    }
+
+    closeTextModal();
+    renderInsertedMedia();
+    _captureDrawMeta(q);
+  }
+
   function handleInsertFile(input) {
     const file = input.files[0];
     if (!file) return;
@@ -4160,10 +4233,13 @@ ${tables}
     layer.innerHTML = '';
     items.forEach(item => {
       const el = document.createElement('div');
-      el.className = 'ins-item';
+      el.className = 'ins-item' + (item.type === 'text' ? ' ins-text' : '');
       el.id = item.id;
       el.style.cssText = `left:${item.x}px;top:${item.y}px;width:${item.w}px;height:${item.h}px`;
-      const content = item.type === 'image'
+      const safeText = (item.text || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      const content = item.type === 'text'
+        ? `<div class="ins-text-content" style="font-size:${item.fontSize||18}px;color:${item.color||'#1a1a1a'}">${safeText}</div>`
+        : item.type === 'image'
         ? `<img src="${item.src}" alt="" draggable="false">`
         : `<iframe src="${item.src}" title="PDF" allowfullscreen></iframe>`;
       el.innerHTML = `
@@ -4173,6 +4249,17 @@ ${tables}
           <button class="ins-del" data-id="${item.id}" title="削除">✕</button>
         </div>
         <div class="ins-resize" data-id="${item.id}" title="リサイズ">⤡</div>`;
+      // テキストアイテムはダブルタップ/ダブルクリックで編集
+      if (item.type === 'text') {
+        el.addEventListener('dblclick', () => openTextInsertModal(item));
+        let _tapT = 0;
+        el.addEventListener('pointerup', e => {
+          if (e.pointerType !== 'touch') return;
+          const now = Date.now();
+          if (now - _tapT < 350) openTextInsertModal(item);
+          _tapT = now;
+        });
+      }
 
       // ドラッグ（＋画像は長押しでトリミング）
       const dragArea = el.querySelector('.ins-drag-area');
@@ -5867,6 +5954,38 @@ ${body}</body></html>`;
     </div><!-- /help-body -->
   </div><!-- /help-box -->
 </div><!-- /helpModal -->
+
+<!-- ── テキスト挿入モーダル ── -->
+<div id="textInsertModal" onclick="if(event.target===this)closeTextModal()"
+  style="display:none;position:fixed;inset:0;z-index:800;background:rgba(0,0,0,0.45);
+         align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:18px;padding:24px 20px;width:min(92vw,400px);
+              display:flex;flex-direction:column;gap:14px;box-shadow:0 10px 48px rgba(0,0,0,0.35)">
+    <div style="font-weight:700;font-size:16px;color:#1e3a8a">📝 テキスト挿入</div>
+    <textarea id="textInsertArea" rows="5" placeholder="テキストを入力…"
+      style="border:1.5px solid #e2e8f0;border-radius:10px;padding:10px 12px;
+             font-size:16px;resize:none;outline:none;font-family:inherit;
+             box-sizing:border-box;width:100%"></textarea>
+    <div style="display:flex;gap:10px;align-items:center">
+      <label style="font-size:13px;color:#64748b;white-space:nowrap;flex-shrink:0">文字サイズ:</label>
+      <select id="textInsertSize"
+        style="flex:1;padding:7px 10px;border-radius:8px;border:1.5px solid #e2e8f0;font-size:14px">
+        <option value="13">小 (13)</option>
+        <option value="18" selected>中 (18)</option>
+        <option value="24">大 (24)</option>
+        <option value="32">特大 (32)</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button onclick="closeTextModal()"
+        style="padding:9px 22px;border-radius:9px;border:1.5px solid #e2e8f0;
+               background:#fff;cursor:pointer;font-size:14px">キャンセル</button>
+      <button onclick="confirmTextInsert()"
+        style="padding:9px 22px;border-radius:9px;border:none;
+               background:#2563eb;color:#fff;font-weight:700;cursor:pointer;font-size:14px">挿入</button>
+    </div>
+  </div>
+</div>
 
 <!-- ── セッション保存・呼び出しモーダル ── -->
 <div id="sessionModal" onclick="if(event.target===this)closeSessionModal()">
