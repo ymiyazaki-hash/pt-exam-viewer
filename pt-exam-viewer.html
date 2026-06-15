@@ -87,9 +87,27 @@
       position: absolute; inset: 0; pointer-events: none;
       background: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Ccircle fill='%23fff' cx='20' cy='20' r='1' fill-opacity='.04'/%3E%3C/g%3E%3C/svg%3E");
     }
-    header h1 { font-size: 14px; font-weight: 700; letter-spacing: 0.01em; position: relative; line-height: 1.2; display: flex; flex-direction: column; gap: 1px; }
-    header h1 .app-name { font-size: 22px; font-weight: 900; letter-spacing: 0.06em; line-height: 1; }
-    header h1 .app-sub  { font-size: 11px; font-weight: 500; opacity: 0.75; letter-spacing: 0.03em; }
+    header h1 {
+      position: relative; display: flex; flex-direction: column; gap: 2px;
+      line-height: 1;
+    }
+    header h1 .app-name {
+      font-size: 24px; font-weight: 900; letter-spacing: 0.08em; line-height: 1;
+      background: linear-gradient(100deg, #fde68a 0%, #fff 40%, #fbbf24 70%, #fde68a 100%);
+      background-size: 200% auto;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: shimmerText 2.8s linear infinite;
+      filter: drop-shadow(0 0 6px rgba(251,191,36,0.45));
+    }
+    @keyframes shimmerText {
+      0%   { background-position: 0% center; }
+      100% { background-position: 200% center; }
+    }
+    header h1 .app-sub {
+      font-size: 10.5px; font-weight: 500; opacity: 0.7; letter-spacing: 0.04em;
+      color: #e0e7ff;
+    }
     header .stats { font-size: 12px; opacity: 0.85; text-align: right; line-height: 1.7; position: relative; }
     .header-right { display: flex; align-items: center; gap: 12px; }
     .btn-reload {
@@ -708,8 +726,8 @@
     @media (max-width: 600px) {
       /* ヘッダー */
       header { padding: 10px 12px; gap: 8px; }
-      header h1 .app-name { font-size: 17px; }
-      header h1 .app-sub  { font-size: 10px; }
+      header h1 .app-name { font-size: 18px; }
+      header h1 .app-sub  { font-size: 9.5px; }
       header .stats { font-size: 10px; line-height: 1.5; }
       .header-right { gap: 6px; }
       .btn-reload { padding: 5px 9px; font-size: 11px; }
@@ -1314,7 +1332,20 @@
       border: 1px solid rgba(255,255,255,0.18); border-radius: 20px;
       padding: 40px 48px; text-align: center; width: 340px;
     }
-    .pw-card h2 { color: #fff; font-size: 18px; margin: 0 0 6px; font-weight: 700; white-space: nowrap; }
+    .pw-card h2 { margin: 0 0 10px; }
+    .pw-card h2 .app-name {
+      display: block; font-size: 36px; font-weight: 900; letter-spacing: 0.08em; line-height: 1.1;
+      background: linear-gradient(100deg, #fde68a 0%, #fff 40%, #fbbf24 70%, #fde68a 100%);
+      background-size: 200% auto;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: shimmerText 2.8s linear infinite;
+      filter: drop-shadow(0 0 10px rgba(251,191,36,0.5));
+    }
+    .pw-card h2 .app-sub {
+      display: block; font-size: 12px; font-weight: 500;
+      color: rgba(255,255,255,0.65); letter-spacing: 0.05em; margin-top: 4px;
+    }
     /* 初期ローディング表示（JS不要・CSS アニメのみで即時表示） */
     #pwLoadingArea {
       display: flex; flex-direction: column; align-items: center; gap: 14px;
@@ -1404,7 +1435,10 @@
 <div id="passwordScreen">
   <div id="pwStars"></div>
   <div class="pw-card" style="position:relative;z-index:1">
-    <h2>📋 PT国家試験 問題抽出アプリ</h2>
+    <h2>
+      <span class="app-name">✨ 国対くん</span>
+      <span class="app-sub">PT国家試験 問題抽出アプリ</span>
+    </h2>
     <p id="pwSubText">パスワードを入力してください</p>
     <!-- 初期ローディング（JS不要・CSS spinnerで即時表示。データ準備完了後に非表示） -->
     <div id="pwLoadingArea">
