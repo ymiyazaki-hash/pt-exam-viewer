@@ -91,12 +91,71 @@
     header .stats { font-size: 12px; opacity: 0.85; text-align: right; line-height: 1.7; position: relative; }
     .header-right { display: flex; align-items: center; gap: 12px; }
     .btn-reload {
-      background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.3);
-      color: white; padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 600;
+      background: linear-gradient(135deg,rgba(255,182,193,0.35),rgba(216,180,254,0.35));
+      border: 1px solid rgba(255,192,203,0.5);
+      color: white; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 700;
       cursor: pointer; transition: all 0.2s; white-space: nowrap; backdrop-filter: blur(4px);
-      position: relative;
+      position: relative; letter-spacing: 0.03em;
     }
-    .btn-reload:hover { background: rgba(255,255,255,0.22); transform: translateY(-1px); }
+    .btn-reload:hover { background: linear-gradient(135deg,rgba(255,182,193,0.55),rgba(216,180,254,0.55)); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(255,182,193,0.4); }
+
+    /* ── 取扱説明モーダル ── */
+    #helpModal {
+      display: none; position: fixed; inset: 0; z-index: 99999;
+      background: rgba(10,15,50,0.65); backdrop-filter: blur(6px);
+      align-items: center; justify-content: center; padding: 16px;
+    }
+    #helpModal.open { display: flex; }
+    .help-box {
+      background: #fff; border-radius: 24px; max-width: 560px; width: 100%;
+      max-height: 88vh; display: flex; flex-direction: column;
+      box-shadow: 0 24px 80px rgba(100,50,200,0.25), 0 0 0 1px rgba(255,182,193,0.3);
+      overflow: hidden;
+    }
+    .help-hdr {
+      background: linear-gradient(135deg,#f472b6,#a78bfa,#60a5fa);
+      padding: 20px 22px 16px; color: white; flex-shrink: 0;
+    }
+    .help-hdr-top { display: flex; align-items: center; justify-content: space-between; }
+    .help-title { font-size: 18px; font-weight: 900; letter-spacing: 0.04em; }
+    .help-sub { font-size: 12px; opacity: 0.85; margin-top: 4px; }
+    .help-close {
+      background: rgba(255,255,255,0.25); border: none; color: white;
+      width: 32px; height: 32px; border-radius: 50%; font-size: 16px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s; flex-shrink: 0;
+    }
+    .help-close:hover { background: rgba(255,255,255,0.4); transform: scale(1.1); }
+    .help-body { overflow-y: auto; padding: 20px 22px 24px; -webkit-overflow-scrolling: touch; }
+    .help-sec { margin-bottom: 20px; }
+    .help-sec:last-child { margin-bottom: 0; }
+    .help-sec-title {
+      font-size: 13px; font-weight: 800; color: #7c3aed;
+      display: flex; align-items: center; gap: 7px;
+      border-bottom: 2px dashed #e9d5ff; padding-bottom: 6px; margin-bottom: 10px;
+    }
+    .help-sec-title .ico { font-size: 16px; }
+    .help-item { display: flex; gap: 10px; margin-bottom: 8px; align-items: flex-start; }
+    .help-badge {
+      background: linear-gradient(135deg,#f9a8d4,#c4b5fd);
+      color: white; font-size: 10px; font-weight: 800; border-radius: 20px;
+      padding: 2px 9px; white-space: nowrap; flex-shrink: 0; margin-top: 2px;
+      letter-spacing: 0.04em;
+    }
+    .help-item p { font-size: 13px; color: #374151; line-height: 1.65; margin: 0; }
+    .help-item p b { color: #7c3aed; }
+    .help-tip {
+      background: linear-gradient(135deg,#fdf4ff,#eff6ff);
+      border: 1.5px solid #e9d5ff; border-radius: 12px;
+      padding: 10px 14px; font-size: 12.5px; color: #4b5563; line-height: 1.7; margin-top: 8px;
+    }
+    .help-tip b { color: #7c3aed; }
+    @media (max-width: 600px) {
+      .help-box { border-radius: 18px; max-height: 92vh; }
+      .help-hdr { padding: 16px 18px 12px; }
+      .help-title { font-size: 16px; }
+      .help-body { padding: 16px 16px 20px; }
+    }
     .cache-badge { font-size: 11px; opacity: 0.65; margin-top: 2px; }
 
     /* ── ロード画面 ── */
@@ -1252,7 +1311,7 @@
       <div id="headerStats" class="stats"></div>
       <div id="cacheBadge" class="cache-badge" style="display:none"></div>
     </div>
-    <button class="btn-reload" id="reloadBtn" style="display:none" onclick="showFileDialog()">🔄 ファイルを更新</button>
+    <button class="btn-reload" id="reloadBtn" style="display:none" onclick="showHelpModal()">✨ 使い方</button>
   </div>
 </header>
 
@@ -4604,6 +4663,121 @@ ${body}</body></html>`;
       .replace(/&/g,'&amp;').replace(/</g,'&lt;')
       .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
+
+  // ── 取扱説明モーダル ──────────────────────────────────────────────
+  function showHelpModal() {
+    document.getElementById('helpModal').classList.add('open');
+  }
+  function closeHelpModal() {
+    document.getElementById('helpModal').classList.remove('open');
+  }
 </script>
+
+<!-- ✨ 取扱説明モーダル -->
+<div id="helpModal" onclick="if(event.target===this)closeHelpModal()">
+  <div class="help-box">
+    <div class="help-hdr">
+      <div class="help-hdr-top">
+        <div>
+          <div class="help-title">📖 かんたん使い方ガイド ✨</div>
+          <div class="help-sub">PT 国家試験 問題抽出アプリ　ぜんぶわかる！</div>
+        </div>
+        <button class="help-close" onclick="closeHelpModal()">✕</button>
+      </div>
+    </div>
+
+    <div class="help-body">
+
+      <!-- 問題を探す -->
+      <div class="help-sec">
+        <div class="help-sec-title"><span class="ico">🔍</span>問題を絞り込む</div>
+        <div class="help-item">
+          <span class="help-badge">検索</span>
+          <p>左のサイドバーで<b>キーワード・回・分類・正答率</b>を組み合わせて絞り込めます。ハンバーガーメニュー（☰）で開閉。</p>
+        </div>
+        <div class="help-item">
+          <span class="help-badge">並び替え</span>
+          <p>試験順・正答率の低い順／高い順に並び替えできます。苦手問題をまとめて確認するときに便利！</p>
+        </div>
+        <div class="help-item">
+          <span class="help-badge">選択</span>
+          <p>問題カードにチェックを入れると選択されます。ヘッダーに<b>「N問選択中」</b>と表示。</p>
+        </div>
+      </div>
+
+      <!-- プレゼンモード -->
+      <div class="help-sec">
+        <div class="help-sec-title"><span class="ico">🎯</span>プレゼンモード（スライド学習）</div>
+        <div class="help-item">
+          <span class="help-badge">開始</span>
+          <p>問題を選択して「▶ プレゼン」ボタンを押すと全画面スライドモードに切り替わります。</p>
+        </div>
+        <div class="help-item">
+          <span class="help-badge">解答表示</span>
+          <p>「解答を見る」ボタンで正解をチェック。解説ボタンで詳しい解説も表示できます。</p>
+        </div>
+        <div class="help-item">
+          <span class="help-badge">移動</span>
+          <p>画面両端の <b>‹ ›</b> ボタンで前後の問題へ移動します。</p>
+        </div>
+      </div>
+
+      <!-- ペン書き込み -->
+      <div class="help-sec">
+        <div class="help-sec-title"><span class="ico">✏️</span>ペンで書き込む</div>
+        <div class="help-item">
+          <span class="help-badge">描画</span>
+          <p>下部ツールバーの「✏ 描画」タブを選択してペンアイコンをタップ。指またはApple Pencilで自由に書き込めます。</p>
+        </div>
+        <div class="help-item">
+          <span class="help-badge">消しゴム</span>
+          <p>ツールバーの消しゴムアイコンで書き込みを消せます。「クリア」で全消去。</p>
+        </div>
+        <div class="help-item">
+          <span class="help-badge">画像挿入</span>
+          <p>📎 ボタンから写真やPDFを挿入・トリミングして問題に貼り付けできます。</p>
+        </div>
+        <div class="help-tip">
+          💡 <b>Apple Pencilを使うと</b>、手の平が触れても誤反応しない「パームリジェクション」が自動でONになります！
+        </div>
+      </div>
+
+      <!-- PDF出力 -->
+      <div class="help-sec">
+        <div class="help-sec-title"><span class="ico">📄</span>PDF保存・印刷</div>
+        <div class="help-item">
+          <span class="help-badge">PDF（書き込み）</span>
+          <p>ツールバーの「📄 PDF」ボタンで、書き込みや挿入画像ごとPDF出力できます。解答を表示中なら<b>解説も一緒に印刷</b>されます。</p>
+        </div>
+        <div class="help-item">
+          <span class="help-badge">PDF（問題集）</span>
+          <p>問題カード一覧から「🖨 PDF 問題」ボタンで選択した問題をまとめてWord形式でも出力できます。</p>
+        </div>
+        <div class="help-item">
+          <span class="help-badge">解答一覧</span>
+          <p>「📋 PDF 解答一覧」で正解と設問IDの一覧表をA4縦で印刷できます。</p>
+        </div>
+      </div>
+
+      <!-- 保存・復元 -->
+      <div class="help-sec">
+        <div class="help-sec-title"><span class="ico">💾</span>書き込みを保存する</div>
+        <div class="help-item">
+          <span class="help-badge">自動保存</span>
+          <p>書き込みはブラウザのキャッシュに<b>自動保存</b>されます。次回同じデバイスで開くと復元されます。</p>
+        </div>
+        <div class="help-item">
+          <span class="help-badge">手動保存</span>
+          <p>ツールバー「💾 保存」で確実にブラウザに記録できます。大切な書き込みは定期的に保存しましょう！</p>
+        </div>
+        <div class="help-tip">
+          ⚠️ <b>ブラウザのキャッシュを消す</b>と書き込みも消えます。大切なノートはPDF保存もしておこう 🌸
+        </div>
+      </div>
+
+    </div><!-- /help-body -->
+  </div><!-- /help-box -->
+</div><!-- /helpModal -->
+
 </body>
 </html>
