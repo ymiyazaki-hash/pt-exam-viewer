@@ -1853,6 +1853,11 @@
     <!-- 左：問題文・選択肢・解答 -->
     <div class="expln-left">
       <button class="left-expand-btn" id="leftExpandBtn" onclick="toggleLeftExpand()" title="左パネルを拡大/縮小">⛶</button>
+      <button id="leftZoomResetBtn" onclick="_resetLeftZoom()" title="ズームをリセット（等倍に戻す）"
+        style="display:none;position:absolute;top:10px;right:46px;width:30px;height:30px;
+               border-radius:7px;background:rgba(239,68,68,0.15);border:1.5px solid #fca5a5;
+               color:#ef4444;font-size:13px;cursor:pointer;align-items:center;justify-content:center;
+               z-index:3;font-weight:700">×1</button>
       <div id="leftZoomContent">
         <div class="expln-qtext" id="pracText"></div>
         <div class="expln-choices" id="pracChoices"></div>
@@ -1866,6 +1871,12 @@
     <!-- 右：画像（大きく表示） -->
     <div class="expln-right" style="position:relative">
       <button class="right-expand-btn" id="rightExpandBtn" onclick="toggleRightExpand()" title="右パネルを拡大/縮小">⛶</button>
+      <button id="imgZoomResetBtn" onclick="_resetImgZoom()" title="ズームをリセット（等倍に戻す）"
+        style="display:none;position:absolute;top:10px;right:46px;z-index:11;
+               width:30px;height:30px;border-radius:7px;
+               background:rgba(0,0,0,0.45);border:1.5px solid rgba(255,255,255,0.5);
+               color:white;font-size:13px;cursor:pointer;align-items:center;justify-content:center;
+               font-weight:700">×1</button>
       <div class="expln-img-area" id="pracImg">
         <div class="expln-right-empty">🖼</div>
       </div>
@@ -4932,6 +4943,8 @@ ${body}</body></html>`;
     img.style.transformOrigin = 'center center';
     img.style.transform = `translate(${_imgPX}px, ${_imgPY}px) scale(${_imgZ})`;
     img.style.cursor = _imgZ > 1 ? 'grab' : '';
+    const btn = document.getElementById('imgZoomResetBtn');
+    if (btn) btn.style.display = _imgZ > 1 ? 'flex' : 'none';
   }
   // 左パネル ズーム/パン
   let _leftZ = 1, _leftPX = 0, _leftPY = 0;
@@ -4941,6 +4954,8 @@ ${body}</body></html>`;
     el.style.transform = _leftZ === 1 ? '' : `translate(${_leftPX}px,${_leftPY}px) scale(${_leftZ})`;
     const panel = document.querySelector('.expln-left');
     if (panel) panel.style.overflow = _leftZ > 1 ? 'hidden' : '';
+    const btn = document.getElementById('leftZoomResetBtn');
+    if (btn) btn.style.display = _leftZ > 1 ? 'flex' : 'none';
   }
   function _resetLeftZoom() {
     _leftZ = 1; _leftPX = 0; _leftPY = 0;
@@ -4948,11 +4963,15 @@ ${body}</body></html>`;
     if (el) el.style.transform = '';
     const panel = document.querySelector('.expln-left');
     if (panel) panel.style.overflow = '';
+    const btn = document.getElementById('leftZoomResetBtn');
+    if (btn) btn.style.display = 'none';
   }
   function _resetImgZoom() {
     _imgZ = 1; _imgPX = 0; _imgPY = 0;
     const img = document.querySelector('#pracImg img');
     if (img) { img.style.transform = ''; img.style.cursor = ''; }
+    const btn = document.getElementById('imgZoomResetBtn');
+    if (btn) btn.style.display = 'none';
   }
   // 共通：ズーム/パン処理（タッチ=2本指パン、マウス=1本指パン）
   function _makeZoomHandler(cfg) {
@@ -5053,9 +5072,9 @@ ${body}</body></html>`;
       getPX: () => _leftPX, setPX: x => { _leftPX = x; },
       getPY: () => _leftPY, setPY: y => { _leftPY = y; },
       apply: _applyLeftZoom, reset: _resetLeftZoom,
-      guard:   e => drawTool !== 'pointer' || !!e.target.closest('.left-expand-btn'),
-      skip:    e => !!e.target.closest('.left-expand-btn'),
-      dblSkip: e => !!e.target.closest('.left-expand-btn'),
+      guard:   e => drawTool !== 'pointer' || !!e.target.closest('.left-expand-btn') || e.target.id === 'leftZoomResetBtn',
+      skip:    e => !!e.target.closest('.left-expand-btn') || e.target.id === 'leftZoomResetBtn',
+      dblSkip: e => !!e.target.closest('.left-expand-btn') || e.target.id === 'leftZoomResetBtn',
     });
   })();
 
