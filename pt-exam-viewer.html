@@ -5092,7 +5092,7 @@ ${body}</body></html>`;
   })();
 
   // ── 解説モード：ページ全体のピンチ拡大を抑止（上下バーが崩れるのを防ぐ）──
-  // トラックパッドのピンチは「右ペイン画像のその場ズーム」に振り向ける。
+  // ズームロジックは各パネルの_makeZoomHandlerに委譲（独立制御のため）
   (function(){
     function inPractice(){
       const pm = document.getElementById('practiceMode');
@@ -5102,34 +5102,10 @@ ${body}</body></html>`;
       const fs = document.getElementById('imgFullScreen');
       return fs && fs.classList.contains('open');
     }
-    let gStartZoom = 1, gTarget = null;
-    document.addEventListener('gesturestart', function(e){
-      if (inPractice() && !fsOpen()) {
-        e.preventDefault();
-        const onImg = !!e.target.closest('#pracImg');
-        gTarget = onImg ? 'img' : 'left';
-        gStartZoom = onImg ? _imgZ : _leftZ;
-      }
-    }, { passive:false });
-    document.addEventListener('gesturechange', function(e){
-      if (inPractice() && !fsOpen()) {
-        e.preventDefault();
-        const scale = e.scale || 1;
-        const dampedScale = scale >= 1 ? 1 + (scale - 1) * 0.15 : scale;
-        if (gTarget === 'img') {
-          _imgZ = Math.min(6, Math.max(1, gStartZoom * dampedScale));
-          if (_imgZ === 1) { _imgPX = 0; _imgPY = 0; }
-          _applyImgZoom();
-        } else {
-          _leftZ = Math.min(5, Math.max(1, gStartZoom * dampedScale));
-          if (_leftZ === 1) { _leftPX = 0; _leftPY = 0; }
-          _applyLeftZoom();
-        }
-      }
-    }, { passive:false });
-    document.addEventListener('gestureend', function(e){
-      if (inPractice() && !fsOpen()) e.preventDefault();
-    }, { passive:false });
+    // ブラウザのページ拡大を抑止するだけ（ズームは各パネルのpointerイベントで処理）
+    document.addEventListener('gesturestart',  function(e){ if (inPractice() && !fsOpen()) e.preventDefault(); }, { passive:false });
+    document.addEventListener('gesturechange', function(e){ if (inPractice() && !fsOpen()) e.preventDefault(); }, { passive:false });
+    document.addEventListener('gestureend',    function(e){ if (inPractice() && !fsOpen()) e.preventDefault(); }, { passive:false });
     // Chrome/Edge等：Ctrl+ホイール＝ページ拡大を抑止（画像ズームは #pracImg の wheel で実施）
     document.addEventListener('wheel', function(e){
       if (e.ctrlKey && inPractice() && !fsOpen()) e.preventDefault();
