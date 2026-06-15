@@ -3899,22 +3899,115 @@ ${tables}
     try {
       const idSet = new Set(ids);
       const list = _annotatedList().filter(({ q }) => idSet.has(q.id));
-      const pages = [];
-      for (const { q, num } of list) pages.push(await composePageCanvas(q, num, practiceState[q.id] || {}));
-      const body = pages.map(u =>
-        `<div class="apage"><img src="${u}"></div>`).join('\n');
-      const html = `<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><title>解説PDF</title>
-<style>@page{size:A4 landscape;margin:8mm}*{margin:0;padding:0;box-sizing:border-box}
-body{padding-top:52px}
-.toolbar{position:fixed;top:0;left:0;right:0;z-index:99;display:flex;gap:10px;justify-content:center;padding:10px;background:#0c2461;font-family:sans-serif}
+      const CIRC = ['①','②','③','④','⑤'];
+      // HTMLエスケープ（generateAnnotPdf スコープ内）
+      function _h(s) {
+        return String(s == null ? '' : s)
+          .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+      }
+
+      const sections = [];
+      for (const { q, num } of list) {
+        const st       = practiceState[q.id] || {};
+        const revealed = !!st.answerRevealed;
+        const choices  = q.choices || [];
+        const meta     = st.drawMeta || {};
+        const bodyW    = meta.bodyW || 900;
+        const bodyH    = meta.bodyH || 1280;
+
+        const rate  = (q.accuracyRate ?? 0).toFixed(1);
+        const hdrTx = `${num}問　${_h(q.id||'')}　${_h(q.examSession||'')}　${_h(q.category||'')}${q.field ? '　'+_h(q.field) : ''}　正答率${rate}%`;
+
+        const ansArr = Array.isArray(q.answer)
+          ? q.answer.map(String)
+          : String(q.answer||'').split(',').map(s => s.trim());
+
+        // 選択肢
+        const choicesHtml = choices.map((c, i) => {
+          const ok = revealed && ansArr.includes(String(i + 1));
+          return `<div class="ch${ok ? ' ok' : ''}">${CIRC[i]||(i+1)+'.'}&nbsp;${_h(c).replace(/\n/g,'<br>')}</div>`;
+        }).join('');
+
+        // 正解行
+        const ansHtml = revealed ? (() => {
+          const at = ansArr.map(a => choices[parseInt(a)-1]||'').filter(Boolean).join('・');
+          return `<div class="ans">正解：${_h(ansArr.join('・'))}　${_h(at)}</div>`;
+        })() : '';
+
+        // 解説
+        const explHtml = (revealed && q.explanation)
+          ? `<div class="expl"><b class="exh">【解説】</b><br>${_h(q.explanation).replace(/\n/g,'<br>')}</div>`
+          : '';
+
+        // 問題画像
+        const imgHtml = q.imageData
+          ? `<img src="${q.imageData}" class="qi" alt="">`
+          : '';
+
+        // 手書き透過オーバーレイ（drawCanvas は透明背景 PNG）
+        // width:100% で横幅にフィット、height:auto で縦は自然比率
+        // .qsec の overflow:hidden でコンテンツ高さにクリップ
+        const drawHtml = st.drawing
+          ? `<img src="${st.drawing}" class="drw" alt="">`
+          : '';
+
+        // 挿入メディア（%座標で近似位置に配置）
+        const mediaHtml = (Array.isArray(st.insertedMedia) && st.insertedMedia.length)
+          ? st.insertedMedia.filter(m => m.type === 'image').map(m => {
+              const lp = (m.x / bodyW * 100).toFixed(1);
+              const tp = (m.y / bodyH * 100).toFixed(1);
+              const wp = (m.w / bodyW * 100).toFixed(1);
+              return `<img src="${m.src}" class="med" style="left:${lp}%;top:${tp}%;width:${wp}%" alt="">`;
+            }).join('')
+          : '';
+
+        sections.push(
+          `<div class="qsec">${drawHtml}${mediaHtml}` +
+          `<div class="hdr">${hdrTx}</div>` +
+          `<div class="qtx">${_h(q.text||'').replace(/\n/g,'<br>')}</div>` +
+          imgHtml +
+          `<div class="chl">${choicesHtml}</div>` +
+          ansHtml + explHtml +
+          `</div>`
+        );
+      }
+
+      const html = `<!DOCTYPE html><html lang="ja"><head>
+<meta charset="UTF-8"><title>プレゼンモード PDF</title>
+<style>
+@page{size:A4 landscape;margin:8mm}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"Hiragino Sans","Yu Gothic",sans-serif;font-size:15px;line-height:1.75;background:#fff;padding-top:52px}
+.toolbar{position:fixed;top:0;left:0;right:0;z-index:99;display:flex;gap:10px;justify-content:center;padding:10px;background:#0c2461}
 .toolbar button{font-size:15px;font-weight:700;padding:11px 20px;border:none;border-radius:9px;cursor:pointer}
 .toolbar .c{background:#fff;color:#0c2461}.toolbar .p{background:#2563eb;color:#fff}
-.apage{display:block;break-inside:avoid;page-break-inside:avoid;margin-bottom:6mm}
-.apage img{width:281mm;max-width:100%;height:auto;display:block}
 @media print{.toolbar{display:none!important}body{padding-top:0}}
+/* 1問ブロック */
+.qsec{position:relative;overflow:hidden;break-inside:avoid;page-break-inside:avoid;border-bottom:2px solid #d1d5db;padding:10px 14px 14px;margin-bottom:4mm}
+/* 手書きオーバーレイ */
+.drw{position:absolute;top:0;left:0;width:100%;height:auto;pointer-events:none;z-index:10}
+/* 挿入メディア */
+.med{position:absolute;pointer-events:none;z-index:11;height:auto}
+/* ヘッダー */
+.hdr{font-size:11px;color:#1a3a8a;font-weight:700;margin-bottom:5px}
+/* 問題文 */
+.qtx{font-size:15px;margin-bottom:9px}
+/* 問題画像 */
+.qi{max-width:46%;max-height:200px;object-fit:contain;float:right;margin:0 0 8px 12px}
+/* 選択肢 */
+.chl{margin-bottom:6px}.ch{font-size:14px;padding:1px 0;color:#333}.ch.ok{color:#15803d;font-weight:700}
+/* 正解行 */
+.ans{font-size:14px;color:#15803d;font-weight:700;margin-top:6px;border-top:1px solid #d1fae5;padding-top:5px}
+/* 解説 */
+.expl{font-size:13px;color:#374151;margin-top:8px;border-top:1px dashed #e5e7eb;padding-top:6px;line-height:1.65}
+.exh{color:#1e40af;font-weight:700}
 </style></head><body>
-<div class="toolbar"><button class="c" onclick="window.close()">✕ 閉じる</button><button class="p" onclick="window.print()">🖨 印刷 / PDF保存</button></div>
-${body}</body></html>`;
+<div class="toolbar">
+  <button class="c" onclick="window.close()">✕ 閉じる</button>
+  <button class="p" onclick="window.print()">🖨 印刷 / PDF保存</button>
+</div>
+${sections.join('\n')}
+</body></html>`;
       w.document.open(); w.document.write(html); w.document.close();
       if (w.document.readyState === 'complete') setTimeout(() => { w.focus(); w.print(); }, 500);
       else w.onload = () => setTimeout(() => { w.focus(); w.print(); }, 400);
