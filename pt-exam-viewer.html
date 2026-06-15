@@ -1629,9 +1629,9 @@
     <button class="draw-action-btn danger" onclick="clearDraw()">🗑 クリア</button>
     <input type="file" id="insertFileInput" accept="image/*,.pdf" style="display:none" onchange="handleInsertFile(this)">
     <button class="draw-action-btn" onclick="document.getElementById('insertFileInput').click()">📎 挿入</button>
-    <label id="sessAddLabel" title="この問題をセッション保存の対象に追加" style="display:inline-flex;align-items:center;gap:4px;cursor:pointer;padding:5px 8px;border-radius:8px;border:1.5px solid #e2e8f0;background:#fff;font-size:12px;font-weight:700;color:#374151;user-select:none;transition:background 0.15s,border-color 0.15s;">
+    <label id="sessAddLabel" title="この問題をセッション保存の対象に追加" style="display:inline-flex;align-items:center;gap:5px;cursor:pointer;padding:5px 10px;border-radius:8px;border:1.5px solid #c4b5fd;background:#fff;font-size:12px;font-weight:700;color:#5b21b6;user-select:none;transition:background 0.15s,border-color 0.15s,color 0.15s;white-space:nowrap;">
       <input type="checkbox" id="sessAddCheck" style="accent-color:#7c3aed;width:15px;height:15px;cursor:pointer;flex-shrink:0;" onchange="toggleSessAdd(this.checked)">
-      <span id="sessAddCount" style="min-width:3em;text-align:center;font-size:11px;color:#7c3aed;font-weight:700;display:none;"></span>
+      <span id="sessAddText">この問題を保存</span><span id="sessAddCount" style="font-size:11px;color:#7c3aed;font-weight:700;display:none;"></span>
     </label>
     <button class="draw-action-btn" onclick="openSessionModal()" title="セッションを名前をつけて保存・呼び出し">💾 セッション</button>
     <button class="draw-action-btn" onclick="openAnnotPdfModal()" title="書き込んだページをPDF出力">📄 PDF</button>
@@ -3453,8 +3453,7 @@ ${tables}
     if (!q) return;
     const checked = selectedIds.has(q.id);
     cb.checked = checked;
-    const lbl = document.getElementById('sessAddLabel');
-    if (lbl) lbl.style.background = checked ? '#ede9fe' : '#fff';
+    _applySessAddStyle(checked);
     _updateSessCount();
   }
 
@@ -3464,9 +3463,25 @@ ${tables}
     if (!q) return;
     if (checked) selectedIds.add(q.id);
     else selectedIds.delete(q.id);
-    const lbl = document.getElementById('sessAddLabel');
-    if (lbl) lbl.style.background = checked ? '#ede9fe' : '#fff';
+    _applySessAddStyle(checked);
     _updateSessCount();
+  }
+
+  function _applySessAddStyle(checked) {
+    const lbl  = document.getElementById('sessAddLabel');
+    const text = document.getElementById('sessAddText');
+    if (!lbl) return;
+    if (checked) {
+      lbl.style.background    = '#ede9fe';
+      lbl.style.borderColor   = '#7c3aed';
+      lbl.style.color         = '#5b21b6';
+      if (text) text.textContent = '保存対象✓';
+    } else {
+      lbl.style.background    = '#fff';
+      lbl.style.borderColor   = '#c4b5fd';
+      lbl.style.color         = '#5b21b6';
+      if (text) text.textContent = 'この問題を保存';
+    }
   }
 
   function _updateSessCount() {
@@ -3474,7 +3489,7 @@ ${tables}
     if (!el) return;
     const n = selectedIds.size;
     if (n > 0) {
-      el.textContent = n + '問';
+      el.textContent = '（計' + n + '問）';
       el.style.display = 'inline';
     } else {
       el.style.display = 'none';
