@@ -824,6 +824,7 @@
     #practiceMode {
       position: fixed; inset: 0; z-index: 500; background: #f0f4f8;
       display: none; flex-direction: column; overflow: hidden;
+      touch-action: manipulation; /* ダブルタップズームを無効化 */
     }
     .expln-header {
       /* position:fixed でズーム時も常に画面上端へ固定。top/left/width は JS で Visual Viewport に合わせて更新 */
@@ -875,15 +876,16 @@
     }
     /* パネル分割リサイザー */
     .expln-resizer {
-      width: 6px; flex-shrink: 0; cursor: col-resize;
+      width: 18px; flex-shrink: 0; cursor: col-resize;
       background: #e2e8f0; position: relative; z-index: 5;
       transition: background 0.15s;
+      touch-action: none;
     }
-    .expln-resizer:hover, .expln-resizer.dragging { background: #93c5fd; }
+    .expln-resizer:hover, .expln-resizer.dragging { background: #bfdbfe; }
     .expln-resizer::after {
       content: ''; position: absolute; top: 50%; left: 50%;
       transform: translate(-50%, -50%);
-      width: 2px; height: 32px; border-radius: 1px;
+      width: 4px; height: 40px; border-radius: 2px;
       background: rgba(148,163,184,0.7);
     }
     .expln-resizer:hover::after, .expln-resizer.dragging::after { background: #3b82f6; }
