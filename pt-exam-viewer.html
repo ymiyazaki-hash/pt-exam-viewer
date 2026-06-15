@@ -697,12 +697,17 @@
     .expln-answer-value { font-size: 21px; font-weight: 900; color: #166534; line-height: 1.5; }
     .expln-accuracy { font-size: 13px; font-weight: 700; margin-top: 5px; }
     .expln-accepted-answers {
-      margin-top: 8px; padding: 6px 10px; border-radius: 8px;
-      background: #ecfdf5; border-left: 3px solid #10b981;
-      font-size: 12.5px; color: #065f46; line-height: 1.6;
+      margin-top: 8px; padding: 7px 10px; border-radius: 8px;
+      background: #fffbeb; border-left: 3px solid #f59e0b;
+      font-size: 12.5px; color: #78350f; line-height: 1.7;
     }
-    .aa-label { font-weight: 800; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: #059669; display: block; margin-bottom: 2px; }
-    .aa-combos { font-weight: 700; font-size: 13.5px; color: #064e3b; }
+    .aa-label { font-weight: 800; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: #b45309; display: block; margin-bottom: 4px; }
+    .aa-change-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 12.5px; }
+    .aa-orig { color: #92400e; }
+    .aa-arrow { font-size: 14px; color: #b45309; font-weight: 900; }
+    .aa-final { color: #065f46; }
+    .aa-final b { color: #064e3b; font-size: 13.5px; }
+    .aa-orig b { color: #92400e; }
 
     /* 解答ボタン（ヘッダー内コンパクト） */
     .btn-show-answer {
@@ -1992,34 +1997,60 @@
     const qText = (q.text || '') + (q.statement || '');
     const is2tsu = /2\s*つ選べ/.test(qText);
 
+    // 元の発表答えを取得
+    const origAnswers = Array.isArray(q.answer)
+      ? q.answer.map(String)
+      : String(q.answer || '').split(',').map(s => s.trim()).filter(Boolean);
+
+    // 元の発表答えの表示文字列
+    const origDisplay = is2tsu
+      ? origAnswers.map(circNum).join('と')
+      : origAnswers.map(circNum).join('または');
+
+    // 最終正解の表示文字列と比較用セット
+    let finalDisplay = '';
+    let finalSet = new Set();
+
     if (is3tori) {
-      // 2つ選べ・3通り: each aa entry is a pair [x,y]
       const combos = aa.map(pair => pair.map(circNum).join('と'));
-      return `<div class="expln-accepted-answers"><span class="aa-label">最終正解の組み合わせ（3通り）</span><span class="aa-combos">${combos.join('　または　')}</span></div>`;
-    }
-
-    if (aa.length <= 1) return '';
-
-    if (is2tsu) {
-      // 2つ選べ: single-digit entries = pair members
+      finalDisplay = combos.join('　または　');
+      aa.forEach(pair => pair.forEach(v => finalSet.add(v)));
+    } else if (is2tsu) {
+      const digits = aa.map(x => x[0]);
+      digits.forEach(v => finalSet.add(v));
       if (aa.length === 2) {
-        // one specific pair confirmed
-        const pair = aa.map(x => circNum(x[0])).join('と');
-        return `<div class="expln-accepted-answers"><span class="aa-label">最終正解の組み合わせ</span><span class="aa-combos">${pair}</span></div>`;
+        finalDisplay = digits.map(circNum).join('と');
       } else {
-        // 3+ single digits → generate all pairs
-        const digits = aa.map(x => x[0]);
         const combos = [];
         for (let i = 0; i < digits.length; i++)
           for (let j = i+1; j < digits.length; j++)
             combos.push(circNum(digits[i]) + 'と' + circNum(digits[j]));
-        return `<div class="expln-accepted-answers"><span class="aa-label">最終正解の組み合わせ</span><span class="aa-combos">${combos.join('　または　')}</span></div>`;
+        finalDisplay = combos.join('　または　');
       }
     } else {
-      // 1つ選べ: each entry is an independent correct choice
-      const choices = aa.map(x => circNum(x[0]));
-      return `<div class="expln-accepted-answers"><span class="aa-label">最終正解</span><span class="aa-combos">${choices.join('　または　')}</span></div>`;
+      const choices = aa.map(x => x[0]);
+      choices.forEach(v => finalSet.add(v));
+      finalDisplay = choices.map(circNum).join('　または　');
     }
+
+    // 元の答えと最終正解が同じかチェック
+    const origSet = new Set(origAnswers);
+    const sameAsOrig = !is3tori
+      && origSet.size === finalSet.size
+      && [...origSet].every(v => finalSet.has(v));
+
+    if (sameAsOrig) return ''; // 変化なしは表示しない
+
+    // 「当初の発表答え → 最終正解」を表示
+    const label3 = is3tori ? '（3通り）' : '';
+    return `<div class="expln-accepted-answers">
+      <span class="aa-label">採点上の変更</span>
+      <span class="aa-change-row">
+        <span class="aa-orig">当初の発表答え　<b>${origDisplay}</b></span>
+        <span class="aa-arrow">→</span>
+        <span class="aa-final">最終正解${label3}　<b>${finalDisplay}</b></span>
+      </span>
+    </div>`;
   }
 
   function renderCard(q, globalIdx) {
@@ -2102,9 +2133,15 @@
       <span style="font-size:11px;color:#a0aec0;margin-left:6px">ID: ${esc(q.id)}</span>`;
 
     const imageHtml  = q.imageData ? `<img class="question-image" src="${q.imageData}" alt="問題図">` : '';
-    const answers    = Array.isArray(q.answer)
+    // 元の発表答え
+    const origAnswers = Array.isArray(q.answer)
       ? q.answer.map(String)
-      : String(q.answer || '').split(',').map(s => s.trim());
+      : String(q.answer || '').split(',').map(s => s.trim()).filter(Boolean);
+    const modalIsExcluded = q.excludedHandling && q.excludedHandling.includes('除外');
+    // 最終正解（acceptedAnswersがある場合は全値の和集合）
+    const answers = (!modalIsExcluded && q.acceptedAnswers && q.acceptedAnswers.length > 0)
+      ? [...new Set(q.acceptedAnswers.flatMap(x => x))].sort()
+      : origAnswers;
     const choicesHtml = (q.choices || []).map((c, i) => {
       const num     = String(i + 1);
       const correct = answers.includes(num);
@@ -2118,9 +2155,8 @@
 
     const rate       = q.accuracyRate ?? 0;
     const color      = accColor(rate);
-    const answerLabel = answers.join('・');
+    const answerLabel = origAnswers.join('・');  // 除外表示の「元の想定正答」用
     const answerTexts = answers.map(a => (q.choices || [])[parseInt(a) - 1]).filter(Boolean);
-    const modalIsExcluded = q.excludedHandling && q.excludedHandling.includes('除外');
 
     // 解説
     const explPCIR = ['①','②','③','④','⑤'];
@@ -2157,7 +2193,7 @@
             ${modalIsExcluded
               ? `<div class="answer-value excl-none">採点対象から除外（正答なし）</div>
                  <div class="answer-text"><small>元の想定正答：${esc(answerLabel)}番　${esc(answerTexts.join('・'))}</small></div>`
-              : `<div class="answer-value">${esc(answerLabel)}</div>
+              : `<div class="answer-value">${esc(answers.join('・'))}</div>
                  <div class="answer-text">${esc(answerTexts.join('・'))}</div>`
             }
           </div>
@@ -2290,36 +2326,46 @@
           ));
         }
       } else {
-        const at = wAnswers.map(a => ch[parseInt(a)-1]||'').filter(Boolean).join('・');
-        const multiLabel = wIsMulti ? '　【複数正解】' : '';
+        // 最終正解（acceptedAnswers の和集合 or answer）
+        const wDisplay = (wIsMulti && q.acceptedAnswers && q.acceptedAnswers.length > 0)
+          ? [...new Set(q.acceptedAnswers.flatMap(x=>x))].sort()
+          : wAnswers;
+        const at = wDisplay.map(a => ch[parseInt(a)-1]||'').filter(Boolean).join('・');
+        const multiLabel = wIsMulti ? '　【採点変更】' : '';
         parts.push(pEl(
-          rEl('正答：' + wAnswers.join('・') + '　' + at + '　' + rate + '%' + multiLabel, {b:true, col:'276749', sz:21}),
+          rEl('正答：' + wDisplay.join('・') + '　' + at + '　' + rate + '%' + multiLabel, {b:true, col:'276749', sz:21}),
           {fill:'F0FFF4', bl:{sz:18,c:'38A169'}, sb:40, sa:40, ind:80}
         ));
-        if (wIsMulti && q.acceptedAnswers && q.acceptedAnswers.length > 1) {
+        if (wIsMulti && q.acceptedAnswers && q.acceptedAnswers.length > 0) {
           const aa = q.acceptedAnswers;
           const qText = (q.text||'')+(q.statement||'');
           const is3t = (q.excludedHandling||'').includes('３通り');
           const is2tsu = /2\s*つ選べ/.test(qText);
-          let aaText = '';
-          if (is3t) {
-            aaText = '最終正解の組み合わせ（3通り）：' + aa.map(p => p.join('と')).join(' / ');
-          } else if (is2tsu) {
-            if (aa.length === 2) {
-              aaText = '最終正解の組み合わせ：' + aa.map(x=>x[0]).join('と');
-            } else {
+          // 元の発表答えと最終正解が同じなら表示しない
+          const origSet = new Set(wAnswers);
+          const finalSet = new Set(aa.flatMap(x=>x));
+          const same = !is3t && origSet.size === finalSet.size && [...origSet].every(v=>finalSet.has(v));
+          if (!same) {
+            const origDisp = is2tsu ? wAnswers.join('と') : wAnswers.join('または');
+            let finalDisp = '';
+            if (is3t) {
+              finalDisp = aa.map(p=>p.join('と')).join(' / ') + '（3通り）';
+            } else if (is2tsu) {
               const digits = aa.map(x=>x[0]);
-              const combos = [];
-              for (let i=0;i<digits.length;i++) for(let j=i+1;j<digits.length;j++) combos.push(digits[i]+'と'+digits[j]);
-              aaText = '最終正解の組み合わせ：' + combos.join(' / ');
+              if (digits.length === 2) { finalDisp = digits.join('と'); }
+              else {
+                const cs = [];
+                for(let i=0;i<digits.length;i++) for(let j=i+1;j<digits.length;j++) cs.push(digits[i]+'と'+digits[j]);
+                finalDisp = cs.join(' / ');
+              }
+            } else {
+              finalDisp = aa.map(x=>x[0]).join('または');
             }
-          } else {
-            aaText = '最終正解：' + aa.map(x=>x[0]).join(' または ');
+            parts.push(pEl(
+              rEl('当初の発表答え　' + origDisp + '　→　最終正解　' + finalDisp, {col:'B45309', sz:18}),
+              {fill:'FFFBEB', bl:{sz:12,c:'F59E0B'}, sb:20, sa:20, ind:80}
+            ));
           }
-          parts.push(pEl(
-            rEl(aaText, {col:'065F46', sz:18}),
-            {fill:'ECFDF5', bl:{sz:12,c:'10B981'}, sb:20, sa:20, ind:80}
-          ));
         }
       }
     } else if (q.excludedHandling) {
@@ -2727,32 +2773,34 @@ ${imgRelXml}
             const reasonPart = q.excludedReason ? `<div class="ans-reason">【理由】${_e(q.excludedReason)}</div>` : '';
             ansHtml = `<div class="ans excl">⚠ 採点対象から除外（正答なし）　採点除外（全員得点）<span class="orig-ans">　元の想定正答：${_e(origAns)}番　${_e(origTexts)}</span></div>${reasonPart}`;
           } else if (q.answer) {
-            const ansTexts = pdfAnswers.map(a => choices[parseInt(a)-1]||'').filter(Boolean).join('・');
-            const multiLabel = pdfIsMulti ? '　【複数正解】' : '';
+            // 最終正解（acceptedAnswersの和集合 or answer）
+            const pdfDisplay = (pdfIsMulti && q.acceptedAnswers && q.acceptedAnswers.length > 0)
+              ? [...new Set(q.acceptedAnswers.flatMap(x=>x))].sort()
+              : pdfAnswers;
+            const ansTexts = pdfDisplay.map(a => choices[parseInt(a)-1]||'').filter(Boolean).join('・');
+            const multiLabel = pdfIsMulti ? '　【採点変更】' : '';
             let aaHtml = '';
-            if (pdfIsMulti && q.acceptedAnswers && q.acceptedAnswers.length > 1) {
+            if (pdfIsMulti && q.acceptedAnswers && q.acceptedAnswers.length > 0) {
               const aa = q.acceptedAnswers;
               const qText = (q.text||'')+(q.statement||'');
               const is3t = (q.excludedHandling||'').includes('３通り');
               const is2tsu = /2\s*つ選べ/.test(qText);
-              let aaText = '';
-              if (is3t) {
-                aaText = '正解の組み合わせ（3通り）：' + aa.map(p=>p.join('と')).join(' / ');
-              } else if (is2tsu) {
-                if (aa.length === 2) {
-                  aaText = '正解の組み合わせ：' + aa.map(x=>x[0]).join('と');
-                } else {
+              const origSet = new Set(pdfAnswers);
+              const finalSet = new Set(aa.flatMap(x=>x));
+              const same = !is3t && origSet.size===finalSet.size && [...origSet].every(v=>finalSet.has(v));
+              if (!same) {
+                const origDisp = is2tsu ? pdfAnswers.join('と') : pdfAnswers.join('または');
+                let finalDisp = '';
+                if (is3t) { finalDisp = aa.map(p=>p.join('と')).join(' / ') + '（3通り）'; }
+                else if (is2tsu) {
                   const digits = aa.map(x=>x[0]);
-                  const cs = [];
-                  for(let i=0;i<digits.length;i++) for(let j=i+1;j<digits.length;j++) cs.push(digits[i]+'と'+digits[j]);
-                  aaText = '正解の組み合わせ：' + cs.join(' / ');
-                }
-              } else {
-                aaText = '最終正解：' + aa.map(x=>x[0]).join(' または ');
+                  if (digits.length===2) { finalDisp = digits.join('と'); }
+                  else { const cs=[]; for(let i=0;i<digits.length;i++) for(let j=i+1;j<digits.length;j++) cs.push(digits[i]+'と'+digits[j]); finalDisp=cs.join(' / '); }
+                } else { finalDisp = aa.map(x=>x[0]).join('または'); }
+                aaHtml = `<div class="ans-reason" style="color:#92400e;background:#fffbeb;border-left:.4pt solid #f59e0b">当初の発表答え　${_e(origDisp)}　→　最終正解　${_e(finalDisp)}</div>`;
               }
-              aaHtml = `<div class="ans-reason" style="color:#065f46;background:#ecfdf5;border-left:.4pt solid #10b981">${_e(aaText)}</div>`;
             }
-            ansHtml = `<div class="ans">正解：${_e(pdfAnswers.join('・'))}　${_e(ansTexts)}${multiLabel}</div>${aaHtml}`;
+            ansHtml = `<div class="ans">正解：${_e(pdfDisplay.join('・'))}　${_e(ansTexts)}${multiLabel}</div>${aaHtml}`;
           }
         } else if (q.excludedHandling) {
           ansHtml = '<div class="ans-badge">＊不適切問題</div>';
@@ -3102,13 +3150,21 @@ ${tables}
 
     document.getElementById('pracText').textContent = q.text;
 
-    // 選択肢（解答表示後は正解をハイライト）
+    // 元の発表答え（除外表示・採点変更表示の「当初」に使用）
     const pracAnswers = Array.isArray(q.answer)
       ? q.answer.map(String)
-      : String(q.answer || '').split(',').map(s => s.trim());
+      : String(q.answer || '').split(',').map(s => s.trim()).filter(Boolean);
+
+    // 最終正解（ハイライト・正答表示に使用）
+    // acceptedAnswers がある場合は全値の和集合を最終正解とする
+    const isExcluded = q.excludedHandling && q.excludedHandling.includes('除外');
+    const displayAnswers = (!isExcluded && q.acceptedAnswers && q.acceptedAnswers.length > 0)
+      ? [...new Set(q.acceptedAnswers.flatMap(x => x))].sort()
+      : pracAnswers;
+
     document.getElementById('pracChoices').innerHTML = (q.choices || []).map((c, i) => {
       const num     = i + 1;
-      const correct = revealed && pracAnswers.includes(String(num));
+      const correct = revealed && displayAnswers.includes(String(num));
       return `<div class="expln-choice${correct ? ' correct' : ''}">
         <span class="expln-choice-num">${PCIR[i]}</span>
         <span>${esc(c)}</span>
@@ -3121,7 +3177,6 @@ ${tables}
     if (revealed) {
       const rate    = (q.accuracyRate || 0).toFixed(1);
       const col     = accColor(q.accuracyRate || 0);
-      const isExcluded = q.excludedHandling && q.excludedHandling.includes('除外');
       resultEl.className = 'expln-answer-box';
       if (isExcluded) {
         const origAns   = pracAnswers.join('・');
@@ -3136,14 +3191,14 @@ ${tables}
           <div class="expln-accuracy excl-rate">採点除外（全員得点）</div>
           ${exclNote}`;
       } else {
-        const answerTexts = pracAnswers.map(a => (q.choices || [])[parseInt(a) - 1]).filter(Boolean).join('・');
+        const answerTexts = displayAnswers.map(a => (q.choices || [])[parseInt(a) - 1]).filter(Boolean).join('・');
         const exclNote    = q.excludedHandling
           ? `<div class="expln-excluded-reason">【採点上の取扱い】${esc(q.excludedHandling)}${q.excludedReason ? '<br>【理由】' + esc(q.excludedReason) : ''}</div>`
           : '';
         const aaHtml = buildAcceptedAnswersHtml(q);
         resultEl.innerHTML = `
           <div class="expln-answer-label">正答</div>
-          <div class="expln-answer-value">${esc(pracAnswers.join('・'))}番　${esc(answerTexts)}</div>
+          <div class="expln-answer-value">${esc(displayAnswers.join('・'))}番　${esc(answerTexts)}</div>
           <div class="expln-accuracy" style="color:${col}">正答率 ${rate}%</div>
           ${aaHtml}
           ${exclNote}`;
