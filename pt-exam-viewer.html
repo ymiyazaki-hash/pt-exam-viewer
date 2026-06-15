@@ -478,12 +478,44 @@
       box-shadow: 0 1px 4px rgba(0,0,0,0.04), 0 2px 8px rgba(0,0,0,0.02);
       animation: fadeInUp 0.4s cubic-bezier(0.4,0,0.2,1) both;
       transition: box-shadow 0.25s, transform 0.2s, border-color 0.2s, border-left-color 0.2s;
+      position: relative;
     }
     .question-card:hover {
       box-shadow: 0 8px 28px rgba(30,58,138,0.12), 0 2px 8px rgba(0,0,0,0.04);
       transform: translateY(-3px);
       border-left-color: #2563eb; border-color: #bdd1fa;
     }
+    .question-card.card-checked {
+      border-left-color: #7c3aed; border-color: #c4b5fd;
+      background: #faf5ff;
+    }
+    .card-checkbox {
+      position: absolute; top: 12px; right: 12px;
+      width: 20px; height: 20px; cursor: pointer;
+      accent-color: #7c3aed; flex-shrink: 0;
+    }
+    /* 選択中バー */
+    #selectionBar {
+      display: none; align-items: center; gap: 10px;
+      background: linear-gradient(135deg, #ede9fe, #ddd6fe);
+      border: 1.5px solid #c4b5fd; border-radius: 12px;
+      padding: 8px 14px; margin-bottom: 10px;
+      font-size: 13px; font-weight: 600; color: #5b21b6;
+    }
+    #selectionBar.active { display: flex; }
+    .sel-count-badge {
+      background: #7c3aed; color: #fff; border-radius: 20px;
+      padding: 2px 10px; font-size: 13px; font-weight: 700;
+    }
+    .sel-bar-btn {
+      padding: 4px 12px; border-radius: 8px; border: none; cursor: pointer;
+      font-size: 12px; font-weight: 700; transition: background 0.15s;
+    }
+    .sel-all-btn  { background: #7c3aed; color: #fff; }
+    .sel-all-btn:hover  { background: #6d28d9; }
+    .sel-none-btn { background: rgba(124,58,237,0.12); color: #5b21b6; }
+    .sel-none-btn:hover { background: rgba(124,58,237,0.22); }
+    .sel-spacer { flex: 1; }
     .card-meta { display: flex; gap: 5px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
     .badge {
       padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 700;
@@ -1516,6 +1548,13 @@
         </div>
         <button class="btn-practice-start" onclick="enterPractice(0)">解説を始める →</button>
       </div>
+      <div id="selectionBar">
+        <span class="sel-count-badge" id="selCountBadge">0問</span>
+        <span>選択中</span>
+        <span class="sel-spacer"></span>
+        <button class="sel-bar-btn sel-all-btn"  onclick="selectAllFiltered()">全選択</button>
+        <button class="sel-bar-btn sel-none-btn" onclick="clearSelection()">解除</button>
+      </div>
       <div id="questionList"></div>
       <div class="pagination" id="pagination"></div>
     </div>
@@ -1688,6 +1727,7 @@
   let filteredData = [];
   let currentPage = 1;
   let currentModalIdx = -1;
+  let selectedIds = new Set();
   const PAGE_SIZE = 20;
 
   // ── IndexedDB キャッシュ ──────────────────────────────────────────
@@ -2141,6 +2181,7 @@
     }
     container.innerHTML = pageData.map((q, i) => renderCard(q, start + i)).join('');
     renderPagination();
+    updateSelectionBar();
   }
 
   function accColor(rate) {
@@ -2228,8 +2269,13 @@
     const exclNote = q.excludedHandling
       ? `<div class="card-excluded-note">【採点上の取扱い】${esc(q.excludedHandling)}${q.excludedReason ? '<br>【理由】' + esc(q.excludedReason) : ''}</div>`
       : '';
+    const isChecked = selectedIds.has(q.id);
     return `
-      <div class="question-card" style="animation-delay:${delay}s" onclick="openModal(${globalIdx})">
+      <div class="question-card${isChecked ? ' card-checked' : ''}" style="animation-delay:${delay}s" onclick="openModal(${globalIdx})">
+        <input type="checkbox" class="card-checkbox" data-qid="${esc(q.id)}"
+          ${isChecked ? 'checked' : ''}
+          onclick="event.stopPropagation();toggleCardSelect(this.dataset.qid,this.checked)"
+          title="このカードを選択">
         <div class="card-meta">
           <span class="badge badge-session">${esc(q.examSession)}</span>
           <span class="badge ${catClass}">${esc(q.category || '\u2015')}</span>
@@ -3840,6 +3886,37 @@ ${tables}
     document.getElementById('sessionModal').classList.remove('open');
   }
 
+  // ── カード選択 ────────────────────────────────────────────────────
+  function toggleCardSelect(qid, checked) {
+    if (checked) selectedIds.add(qid);
+    else selectedIds.delete(qid);
+    updateSelectionBar();
+    // カードのスタイルを即時反映
+    const card = document.querySelector(`.card-checkbox[data-qid="${CSS.escape(qid)}"]`)?.closest('.question-card');
+    if (card) card.classList.toggle('card-checked', checked);
+  }
+
+  function selectAllFiltered() {
+    filteredData.forEach(q => selectedIds.add(q.id));
+    renderPage();
+    updateSelectionBar();
+  }
+
+  function clearSelection() {
+    selectedIds.clear();
+    renderPage();
+    updateSelectionBar();
+  }
+
+  function updateSelectionBar() {
+    const bar   = document.getElementById('selectionBar');
+    const badge = document.getElementById('selCountBadge');
+    if (!bar || !badge) return;
+    const n = selectedIds.size;
+    badge.textContent = n + '問';
+    bar.classList.toggle('active', n > 0);
+  }
+
   async function doSaveSession() {
     try { saveDrawingState(); } catch(_) {}
     try { saveFsDrawing(); } catch(_) {}
@@ -3847,7 +3924,11 @@ ${tables}
     const name = nameInput.value.trim();
     if (!name) { nameInput.focus(); return; }
     const key = 'sess_' + name;
-    const questionIds = (practiceData || []).map(q => q.id);
+    // 選択中の問題があればその問題のみ、なければ filteredData 全件
+    const sourceData = selectedIds.size > 0
+      ? filteredData.filter(q => selectedIds.has(q.id))
+      : (practiceData && practiceData.length ? practiceData : filteredData);
+    const questionIds = sourceData.map(q => q.id);
     const rec = {
       name,
       savedAt: new Date().toISOString(),
@@ -3862,7 +3943,7 @@ ${tables}
         tx.objectStore(IDB_SESS).put(rec, key);
         tx.oncomplete = resolve; tx.onerror = e => reject(e.target.error);
       });
-      _toast('💾 「' + name + '」を保存しました');
+      _toast('💾 「' + name + '」を保存しました（' + questionIds.length + '問）');
       nameInput.value = '';
       renderSessionsList();
     } catch(e) {
