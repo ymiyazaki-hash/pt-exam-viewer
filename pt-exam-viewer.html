@@ -1121,6 +1121,20 @@
       .expln-img-portrait { display: block; }
     }
 
+    /* 🌝 月のイースターエッグ */
+    @keyframes moonFloat {
+      0%   { opacity:0; transform:translate(-50%,-50%) scale(0.4) rotate(-15deg); }
+      20%  { opacity:1; transform:translate(-50%,-60%) scale(1.1) rotate(8deg); }
+      60%  { opacity:1; transform:translate(-50%,-80%) scale(1)   rotate(-4deg); }
+      100% { opacity:0; transform:translate(-50%,-120%) scale(0.8) rotate(12deg); }
+    }
+    #moonEgg {
+      position:fixed; left:50%; top:50%; z-index:9999;
+      font-size:72px; pointer-events:none; user-select:none;
+      animation: moonFloat 2.8s ease-out forwards;
+      filter: drop-shadow(0 0 18px rgba(255,230,100,0.9));
+    }
+
     /* 練習モード開始バー */
     .practice-bar {
       background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
@@ -3636,7 +3650,17 @@ ${tables}
     document.body.style.overflow = '';
   }
 
+  function _maybeShowMoon() {
+    if (Math.random() >= 1/300) return;
+    const el = document.createElement('div');
+    el.id = 'moonEgg';
+    el.textContent = '🌝';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 2900);
+  }
+
   function renderPracQ() {
+    _maybeShowMoon();
     if (typeof _resetContentZoom === 'function') _resetContentZoom();
     const q       = practiceData[practiceIdx];
     const state   = practiceState[q.id] || {};
