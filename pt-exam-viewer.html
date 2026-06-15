@@ -869,9 +869,23 @@
     .expln-left {
       width: 44%; padding: 18px 20px; overflow-y: auto;
       display: flex; flex-direction: column;
-      background: white; border-right: 2px solid #e2e8f0; flex-shrink: 0;
+      background: white; flex-shrink: 0;
       -webkit-overflow-scrolling: touch; position: relative;
     }
+    /* パネル分割リサイザー */
+    .expln-resizer {
+      width: 6px; flex-shrink: 0; cursor: col-resize;
+      background: #e2e8f0; position: relative; z-index: 5;
+      transition: background 0.15s;
+    }
+    .expln-resizer:hover, .expln-resizer.dragging { background: #93c5fd; }
+    .expln-resizer::after {
+      content: ''; position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 2px; height: 32px; border-radius: 1px;
+      background: rgba(148,163,184,0.7);
+    }
+    .expln-resizer:hover::after, .expln-resizer.dragging::after { background: #3b82f6; }
     .expln-qtext { font-size: 18px; line-height: 1.9; color: #111827; font-weight: 500; }
     .expln-choices { display: flex; flex-direction: column; gap: 9px; }
     .expln-choice {
@@ -1819,6 +1833,8 @@
         <div id="pracExpl" style="display:none"></div>
       </div>
     </div>
+    <!-- パネル分割リサイザー -->
+    <div class="expln-resizer" id="explnResizer"></div>
     <!-- 右：画像（大きく表示） -->
     <div class="expln-right" style="position:relative">
       <button class="right-expand-btn" id="rightExpandBtn" onclick="toggleRightExpand()" title="右パネルを拡大/縮小">⛶</button>
@@ -3682,6 +3698,35 @@ ${tables}
     // セッション追加チェックボックスを現在の問題に合わせて更新
     _syncSessAddCheck();
   }
+
+  // パネルリサイザー
+  (function initResizer() {
+    const resizer  = document.getElementById('explnResizer');
+    if (!resizer) return;
+    let dragging = false, startX = 0, startW = 0;
+    resizer.addEventListener('pointerdown', e => {
+      const left = document.querySelector('.expln-left');
+      const body = document.querySelector('.expln-body');
+      if (!left || !body) return;
+      dragging = true;
+      startX = e.clientX;
+      startW = left.getBoundingClientRect().width;
+      resizer.classList.add('dragging');
+      resizer.setPointerCapture(e.pointerId);
+      e.preventDefault();
+    });
+    resizer.addEventListener('pointermove', e => {
+      if (!dragging) return;
+      const body = document.querySelector('.expln-body');
+      const left = document.querySelector('.expln-left');
+      if (!body || !left) return;
+      const totalW = body.getBoundingClientRect().width;
+      const newW   = Math.min(Math.max(startW + (e.clientX - startX), totalW * 0.2), totalW * 0.8);
+      left.style.width = (newW / totalW * 100).toFixed(1) + '%';
+    });
+    resizer.addEventListener('pointerup',     () => { dragging = false; resizer.classList.remove('dragging'); });
+    resizer.addEventListener('pointercancel', () => { dragging = false; resizer.classList.remove('dragging'); });
+  })();
 
   function toggleLeftExpand() {
     const body = document.querySelector('.expln-body');
