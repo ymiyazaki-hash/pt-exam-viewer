@@ -5320,6 +5320,23 @@ ${body}</body></html>`;
     if (leftPanel) leftPanel.style.overflowY = tool === 'pointer' ? 'auto' : 'hidden';
   }
 
+  // ── Apple Pencil / 指 自動モード切替 ────────────────────────────
+  (function() {
+    const pm = document.getElementById('practiceMode');
+    if (!pm) return;
+    pm.addEventListener('pointerdown', function(e) {
+      // ツールバーのボタン操作は無視（手動選択を優先）
+      if (e.target.closest('#drawToolbar')) return;
+      if (e.pointerType === 'pen') {
+        // Apple Pencil → ペンモード（消しゴム中はそのまま）
+        if (drawTool === 'pointer') setDrawTool('pen');
+      } else if (e.pointerType === 'touch') {
+        // 指 → 操作モード
+        if (drawTool !== 'pointer') setDrawTool('pointer');
+      }
+    }, { capture: true, passive: true });
+  })();
+
   function setDrawColor(color, btn) {
     drawColor = color;
     document.querySelectorAll('.color-swatch').forEach(b => b.classList.remove('active'));
