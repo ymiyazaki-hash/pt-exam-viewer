@@ -5086,19 +5086,21 @@ ${body}</body></html>`;
       const fs = document.getElementById('imgFullScreen');
       return fs && fs.classList.contains('open');
     }
-    let gStartZoom = 1;
+    let gStartZoom = 1, gTarget = null;
     document.addEventListener('gesturestart', function(e){
       if (inPractice() && !fsOpen()) {
         e.preventDefault();
-        gStartZoom = document.querySelector('#pracImg img') ? _imgZ : _leftZ;
+        const onImg = !!e.target.closest('#pracImg');
+        gTarget = onImg ? 'img' : 'left';
+        gStartZoom = onImg ? _imgZ : _leftZ;
       }
     }, { passive:false });
     document.addEventListener('gesturechange', function(e){
       if (inPractice() && !fsOpen()) {
         e.preventDefault();
         const scale = e.scale || 1;
-        const dampedScale = scale >= 1 ? 1 + (scale - 1) * 0.15 : scale; // 拡大のみダンピング
-        if (document.querySelector('#pracImg img')) {
+        const dampedScale = scale >= 1 ? 1 + (scale - 1) * 0.15 : scale;
+        if (gTarget === 'img') {
           _imgZ = Math.min(6, Math.max(1, gStartZoom * dampedScale));
           if (_imgZ === 1) { _imgPX = 0; _imgPY = 0; }
           _applyImgZoom();
