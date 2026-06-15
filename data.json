@@ -2788,7 +2788,7 @@
       "細胞質に対して核の占める割合が小さい。"
     ],
     "answer": "3",
-    "field": "基礎",
+    "field": "病理",
     "keywords": [],
     "accuracyRate": 59.2,
     "lastSyncedAt": "2026-02-14T13:40:05.242Z",
@@ -6514,7 +6514,7 @@
       "肉芽組織形成"
     ],
     "answer": "4",
-    "field": "評価",
+    "field": "病理",
     "keywords": [],
     "accuracyRate": 83.3,
     "lastSyncedAt": "2026-02-14T13:40:43.390Z",
@@ -10259,7 +10259,7 @@
       "組織の線維化"
     ],
     "answer": "5",
-    "field": "基礎",
+    "field": "病理",
     "keywords": [],
     "accuracyRate": 93.8,
     "lastSyncedAt": "2026-02-14T13:41:23.130Z",
@@ -13972,7 +13972,7 @@
       "多発性硬化症 ーー 腫瘍性疾患"
     ],
     "answer": "1",
-    "field": "評価",
+    "field": "病理",
     "keywords": [],
     "accuracyRate": 68.5,
     "lastSyncedAt": "2026-02-14T13:42:03.962Z",
@@ -14085,7 +14085,7 @@
       "分泌物が多い。"
     ],
     "answer": "3",
-    "field": "運動器",
+    "field": "病理",
     "keywords": [],
     "accuracyRate": 21.5,
     "lastSyncedAt": "2026-02-14T13:42:03.962Z",
@@ -14871,7 +14871,7 @@
       "前頭側頭型認知症 ーー 大脳皮質の腫大神経細胞"
     ],
     "answer": "2",
-    "field": "基礎",
+    "field": "病理",
     "keywords": [],
     "accuracyRate": 82.3,
     "lastSyncedAt": "2026-02-14T13:42:03.962Z",
@@ -21479,7 +21479,7 @@
       "核／細胞質比は小さい。"
     ],
     "answer": "2",
-    "field": "内部",
+    "field": "病理",
     "keywords": [],
     "accuracyRate": 94.1,
     "lastSyncedAt": "2026-02-14T13:43:37.782Z",
@@ -25284,7 +25284,7 @@
       "ヘリコバクター・ピロリ菌－胃癌"
     ],
     "answer": "1",
-    "field": "基礎",
+    "field": "病理",
     "keywords": [],
     "accuracyRate": 60.9,
     "lastSyncedAt": "2026-02-14T13:44:18.727Z",
@@ -36695,7 +36695,7 @@
       "未分化型は悪性度が高い。"
     ],
     "answer": "4",
-    "field": "基礎",
+    "field": "病理",
     "keywords": [],
     "accuracyRate": 82.6,
     "lastSyncedAt": "2026-02-14T13:46:21.709Z",
@@ -36772,7 +36772,7 @@
       "多発性骨髄腫"
     ],
     "answer": "4",
-    "field": "基礎",
+    "field": "病理",
     "keywords": [],
     "accuracyRate": 32.2,
     "lastSyncedAt": "2026-02-14T13:46:21.709Z",
@@ -44303,7 +44303,7 @@
       "血管透過性の亢進"
     ],
     "answer": "4",
-    "field": "内部",
+    "field": "病理",
     "keywords": [],
     "accuracyRate": 48.1,
     "lastSyncedAt": "2026-02-14T13:47:27.114Z",
@@ -44738,7 +44738,7 @@
       "アルカリ－－化学的原因"
     ],
     "answer": "4",
-    "field": "内部",
+    "field": "病理",
     "keywords": [],
     "accuracyRate": 14.2,
     "lastSyncedAt": "2026-02-14T13:47:27.114Z",
@@ -48013,7 +48013,7 @@
       "5. アポトーシス"
     ],
     "answer": "4",
-    "field": "基礎",
+    "field": "病理",
     "keywords": [],
     "accuracyRate": 57.4,
     "lastSyncedAt": "2026-02-14T13:48:11.509Z",
@@ -51855,7 +51855,7 @@
       "膀胱癌"
     ],
     "answer": "3",
-    "field": "基礎",
+    "field": "病理",
     "keywords": [],
     "accuracyRate": 13.9,
     "lastSyncedAt": "2026-02-14T13:48:51.584Z",
@@ -55636,7 +55636,7 @@
       "過形成"
     ],
     "answer": 1,
-    "field": "評価",
+    "field": "病理",
     "keywords": [],
     "accuracyRate": 74.2,
     "lastSyncedAt": "2026-02-14T13:50:46.787Z",
@@ -63151,7 +63151,7 @@
       "アスベスト"
     ],
     "answer": "5",
-    "field": "基礎",
+    "field": "病理",
     "keywords": [],
     "accuracyRate": 66.3,
     "lastSyncedAt": "2026-02-14T13:51:21.132Z",
@@ -66936,7 +66936,7 @@
       "多発性硬化症－－－－－－－脱髄疾患"
     ],
     "answer": "5",
-    "field": "中枢",
+    "field": "病理",
     "keywords": [],
     "accuracyRate": 96.3,
     "lastSyncedAt": "2026-02-14T13:52:05.360Z",
@@ -70794,7 +70794,7 @@
       "血管内皮細胞の損傷"
     ],
     "answer": "1,3",
-    "field": "内部",
+    "field": "病理",
     "keywords": [],
     "accuracyRate": 55.2,
     "lastSyncedAt": "2026-02-14T13:52:45.523Z",
@@ -70829,7 +70829,7 @@
       "周囲との境界が明瞭である。"
     ],
     "answer": "4",
-    "field": "内部",
+    "field": "病理",
     "keywords": [],
     "accuracyRate": 94.2,
     "lastSyncedAt": "2026-02-14T13:52:45.523Z",
@@ -78810,7 +78810,7 @@
       "ウイルスは生物学的要因です。",
       "一酸化炭素は化学物質による中毒であり、化学的要因です。"
     ],
-    "field": "リハ概",
+    "field": "病理",
     "category": "基礎",
     "examSession": "第61回AM",
     "accuracyRate": 74.5,
@@ -78851,7 +78851,7 @@
       "5徴候の一つです。",
       "5徴候の一つです。"
     ],
-    "field": "内部",
+    "field": "病理",
     "category": "基礎",
     "examSession": "第61回AM",
     "accuracyRate": 98.9,
@@ -83298,7 +83298,7 @@
       "骨強度低下による病的骨折が生じる。",
       "骨破壊により血中にカルシウムが溶出し、高カルシウム血症を生じる。"
     ],
-    "field": "リハ概",
+    "field": "病理",
     "category": "基礎",
     "examSession": "第61回PM",
     "accuracyRate": 88.0,
