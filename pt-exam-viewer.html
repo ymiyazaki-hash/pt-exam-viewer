@@ -3950,13 +3950,13 @@ ${tables}
       const qCount = Array.isArray(it.questionIds) ? it.questionIds.length : '?';
       const pos    = typeof it.practiceIdx === 'number' ? (it.practiceIdx + 1) : 1;
       const nameE  = it.name.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-      return `<div class="sess-item">
+      return `<div class="sess-item" data-sname="${nameE}">
         <div class="sess-item-info">
           <div class="sess-item-name">${nameE}</div>
           <div class="sess-item-meta">${dateStr}　${qCount}問・${pos}問目</div>
         </div>
-        <button class="sess-load-btn" onclick="loadSession(${JSON.stringify(it.name)})">呼び出し</button>
-        <button class="sess-del-btn"  onclick="deleteSession(${JSON.stringify(it.name)})">削除</button>
+        <button class="sess-load-btn" onclick="loadSession(this.closest('.sess-item').dataset.sname)">呼び出し</button>
+        <button class="sess-del-btn"  onclick="deleteSession(this.closest('.sess-item').dataset.sname)">削除</button>
       </div>`;
     }).join('');
   }
