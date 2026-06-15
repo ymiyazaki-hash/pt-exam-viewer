@@ -1441,6 +1441,14 @@
       </div>
 
       <div class="filter-section">
+        <h3>問題の種別</h3>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;padding:4px 0;">
+          <input type="checkbox" id="includeExcluded" checked onchange="applyFilters()">
+          <span>不適切問題（採点除外）を含める</span>
+        </label>
+      </div>
+
+      <div class="filter-section">
         <h3>正答率</h3>
         <div class="accuracy-range">
           <div class="range-row">
@@ -2051,8 +2059,10 @@
     const accMin = parseInt(document.getElementById('accMin').value);
     const accMax = parseInt(document.getElementById('accMax').value);
     const sortVal = document.getElementById('sortSelect').value;
+    const includeExcluded = document.getElementById('includeExcluded').checked;
 
     filteredData = allData.filter(q => {
+      if (!includeExcluded && q.excludedHandling) return false;
       if (checkedSessions.length   && !checkedSessions.includes(q.examSession))   return false;
       if (checkedFields.length) {
         const qFields = q.field ? q.field.split(',').map(f => f.trim()) : [];
