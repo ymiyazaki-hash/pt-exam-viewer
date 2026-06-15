@@ -1134,6 +1134,19 @@
       animation: moonFloat 2.8s ease-out forwards;
       filter: drop-shadow(0 0 18px rgba(255,230,100,0.9));
     }
+    @keyframes fullMoonRise {
+      0%   { opacity:0; transform:translateX(-50%) translateY(0px) scale(0.3); }
+      15%  { opacity:0.9; }
+      50%  { opacity:1; transform:translateX(-50%) translateY(-280px) scale(1); }
+      80%  { opacity:1; transform:translateX(-50%) translateY(-300px) scale(1.02); }
+      100% { opacity:0; transform:translateX(-50%) translateY(-340px) scale(0.95); }
+    }
+    #fullMoonEgg {
+      position:fixed; left:50%; bottom:0; z-index:9999;
+      font-size:120px; pointer-events:none; user-select:none;
+      animation: fullMoonRise 5s ease-in-out forwards;
+      filter: drop-shadow(0 0 40px rgba(255,240,150,1)) drop-shadow(0 0 80px rgba(255,220,80,0.6));
+    }
 
     /* 練習モード開始バー */
     .practice-bar {
@@ -3651,12 +3664,22 @@ ${tables}
   }
 
   function _maybeShowMoon() {
-    if (Math.random() >= 1/300) return;
-    const el = document.createElement('div');
-    el.id = 'moonEgg';
-    el.textContent = '🌝';
-    document.body.appendChild(el);
-    setTimeout(() => el.remove(), 2900);
+    const r = Math.random();
+    if (r < 1/500) {
+      // 満月が地平線からゆっくり昇る
+      const el = document.createElement('div');
+      el.id = 'fullMoonEgg';
+      el.textContent = '🌕';
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 5100);
+    } else if (r < 1/500 + 1/300) {
+      // 微笑む月
+      const el = document.createElement('div');
+      el.id = 'moonEgg';
+      el.textContent = '🌝';
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 2900);
+    }
   }
 
   function renderPracQ() {
