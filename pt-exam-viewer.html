@@ -1010,11 +1010,8 @@
     .expln-right { flex: 1; display: flex; overflow: hidden; background: #1a1a2e; min-width: 0; }
     /* 左パネルズームコンテンツ */
     #leftZoomContent {
-      transform-origin: 0 0;
-      will-change: transform;
       display: flex; flex-direction: column; gap: 14px;
       min-height: 100%;
-      touch-action: pan-y; /* 縦スクロールはブラウザに任せ、ピンチ・横ドラッグはJSで処理 */
     }
     /* 左パネル拡大ボタン */
     .left-expand-btn {
@@ -1052,7 +1049,6 @@
     .expln-img-area {
       display: none; align-items: center; justify-content: center;
       padding: 14px; overflow: hidden;
-      touch-action: none; /* ブラウザのネイティブ操作を無効化してポインタイベントで処理 */
     }
     .expln-img-area.has-img { display: flex; flex: 1; }
     .expln-img-area img {
@@ -1855,11 +1851,6 @@
     <!-- 左：問題文・選択肢・解答 -->
     <div class="expln-left">
       <button class="left-expand-btn" id="leftExpandBtn" onclick="toggleLeftExpand()" title="左パネルを拡大/縮小">⛶</button>
-      <button id="leftZoomResetBtn" onclick="_resetLeftZoom()" title="ズームをリセット（等倍に戻す）"
-        style="display:none;position:absolute;top:10px;right:46px;width:30px;height:30px;
-               border-radius:7px;background:rgba(239,68,68,0.15);border:1.5px solid #fca5a5;
-               color:#ef4444;font-size:13px;cursor:pointer;align-items:center;justify-content:center;
-               z-index:3;font-weight:700">×1</button>
       <div id="leftZoomContent">
         <div class="expln-qtext" id="pracText"></div>
         <div class="expln-choices" id="pracChoices"></div>
@@ -1873,12 +1864,6 @@
     <!-- 右：画像（大きく表示） -->
     <div class="expln-right" style="position:relative">
       <button class="right-expand-btn" id="rightExpandBtn" onclick="toggleRightExpand()" title="右パネルを拡大/縮小">⛶</button>
-      <button id="imgZoomResetBtn" onclick="_resetImgZoom()" title="ズームをリセット（等倍に戻す）"
-        style="display:none;position:absolute;top:10px;right:46px;z-index:11;
-               width:30px;height:30px;border-radius:7px;
-               background:rgba(0,0,0,0.45);border:1.5px solid rgba(255,255,255,0.5);
-               color:white;font-size:13px;cursor:pointer;align-items:center;justify-content:center;
-               font-weight:700">×1</button>
       <div class="expln-img-area" id="pracImg">
         <div class="expln-right-empty">🖼</div>
       </div>
@@ -3716,15 +3701,6 @@ ${tables}
       const rbtn = document.getElementById('rightExpandBtn');
       if (rbtn) { rbtn.textContent = '⛶'; rbtn.title = '右パネルを拡大'; }
     }
-    // 画像ズームは問題ごとに記憶・復元（なければリセット）
-    const savedZ = state.imgZoom;
-    if (savedZ && savedZ.z > 1) {
-      _imgZ = savedZ.z; _imgPX = savedZ.px; _imgPY = savedZ.py;
-      _applyImgZoom();
-    } else {
-      _resetImgZoom();
-    }
-    _resetLeftZoom();  // 左パネルズームは問題切替でリセット
 
     document.getElementById('pracPrevBtn').disabled = practiceIdx === 0;
     document.getElementById('pracNextBtn').disabled = practiceIdx === total - 1;
@@ -3945,22 +3921,13 @@ ${tables}
     saveDrawingState();
   }
 
-  function _saveCurrentImgZoom() {
-    const q = practiceData && practiceData[practiceIdx];
-    if (!q) return;
-    if (!practiceState[q.id]) practiceState[q.id] = {};
-    practiceState[q.id].imgZoom = { z: _imgZ, px: _imgPX, py: _imgPY };
-  }
-
   function pracNext() {
     savePracMemo();
-    _saveCurrentImgZoom();
     if (practiceIdx < practiceData.length - 1) { practiceIdx++; renderPracQ(); }
   }
 
   function pracPrev() {
     savePracMemo();
-    _saveCurrentImgZoom();
     if (practiceIdx > 0) { practiceIdx--; renderPracQ(); }
   }
 
@@ -4990,165 +4957,6 @@ ${body}</body></html>`;
   // ── 解説モード：右ペイン画像を「その場で」拡大/移動 ─────────────────
   // 画面・レイアウトはそのままで、画像だけをホイール/ピンチで拡大、ドラッグで移動、
   // ダブルクリックで元に戻す。上下のバーは拡大されない。
-  let _imgZ = 1, _imgPX = 0, _imgPY = 0;
-  function _applyImgZoom() {
-    const img = document.querySelector('#pracImg img');
-    if (!img) return;
-    img.style.transformOrigin = 'center center';
-    img.style.transform = `translate(${_imgPX}px, ${_imgPY}px) scale(${_imgZ})`;
-    img.style.cursor = _imgZ > 1 ? 'grab' : '';
-    const btn = document.getElementById('imgZoomResetBtn');
-    if (btn) btn.style.display = _imgZ > 1 ? 'flex' : 'none';
-  }
-  // 左パネル ズーム/パン
-  let _leftZ = 1, _leftPX = 0, _leftPY = 0;
-  function _applyLeftZoom() {
-    const el = document.getElementById('leftZoomContent');
-    if (!el) return;
-    el.style.transform = _leftZ === 1 ? '' : `translate(${_leftPX}px,${_leftPY}px) scale(${_leftZ})`;
-    const panel = document.querySelector('.expln-left');
-    if (panel) panel.style.overflow = _leftZ > 1 ? 'hidden' : '';
-    const btn = document.getElementById('leftZoomResetBtn');
-    if (btn) btn.style.display = _leftZ > 1 ? 'flex' : 'none';
-  }
-  function _resetLeftZoom() {
-    _leftZ = 1; _leftPX = 0; _leftPY = 0;
-    const el = document.getElementById('leftZoomContent');
-    if (el) el.style.transform = '';
-    const panel = document.querySelector('.expln-left');
-    if (panel) panel.style.overflow = '';
-    const btn = document.getElementById('leftZoomResetBtn');
-    if (btn) btn.style.display = 'none';
-  }
-  function _resetImgZoom() {
-    _imgZ = 1; _imgPX = 0; _imgPY = 0;
-    const img = document.querySelector('#pracImg img');
-    if (img) { img.style.transform = ''; img.style.cursor = ''; }
-    const btn = document.getElementById('imgZoomResetBtn');
-    if (btn) btn.style.display = 'none';
-  }
-  // 共通：ズーム/パン処理（タッチ=2本指パン、マウス=1本指パン）
-  function _makeZoomHandler(cfg) {
-    // cfg: { getZ, setZ, getPX, setPX, getPY, setPY, apply, reset, maxZ, wheelStep }
-    const pts = new Map();
-    let dragging = false, sx = 0, sy = 0, px0 = 0, py0 = 0;
-    let pinchDist = 0, pinchZoom0 = 1, pinchMX = 0, pinchMY = 0, pinchPX0 = 0, pinchPY0 = 0;
-
-    function onWheel(e) {
-      if (cfg.skip && cfg.skip(e)) return;
-      // タッチパッド・タブレットの通常スクロールではズームしない
-      // ctrlKey=true はトラックパッドのピンチジェスチャ（Chromeが変換）
-      if (!e.ctrlKey) return;
-      e.preventDefault();
-      const z = Math.min(cfg.maxZ, Math.max(1, cfg.getZ() * (e.deltaY < 0 ? cfg.wheelStep : 1 / cfg.wheelStep)));
-      cfg.setZ(z);
-      if (z === 1) { cfg.setPX(0); cfg.setPY(0); }
-      cfg.apply();
-    }
-    function onDown(e) {
-      if (cfg.guard && cfg.guard(e)) return;
-      pts.set(e.pointerId, { x: e.clientX, y: e.clientY, type: e.pointerType });
-      if (pts.size === 2) {
-        const a = [...pts.values()];
-        pinchDist  = Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y);
-        pinchMX    = (a[0].x + a[1].x) / 2;
-        pinchMY    = (a[0].y + a[1].y) / 2;
-        pinchZoom0 = cfg.getZ();
-        pinchPX0   = cfg.getPX(); pinchPY0 = cfg.getPY();
-        dragging   = false;
-      } else if (pts.size === 1 && cfg.getZ() > 1) {
-        // 拡大中は1本指ドラッグでパン（マウス・タッチ共通）
-        dragging = true; sx = e.clientX; sy = e.clientY; px0 = cfg.getPX(); py0 = cfg.getPY();
-        try { cfg.area.setPointerCapture(e.pointerId); } catch(_) {}
-      }
-    }
-    function onMove(e) {
-      if (!pts.has(e.pointerId)) return;
-      pts.set(e.pointerId, { x: e.clientX, y: e.clientY, type: e.pointerType });
-      if (pts.size >= 2) {
-        const a = [...pts.values()];
-        const d  = Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y);
-        const cx = (a[0].x + a[1].x) / 2;
-        const cy = (a[0].y + a[1].y) / 2;
-        if (pinchDist > 0) {
-          // 拡大時のみダンピング（縮小は等倍速）
-          const ratio = d / pinchDist;
-          const damped = ratio >= 1 ? 1 + (ratio - 1) * 0.15 : ratio;
-          const z = Math.min(cfg.maxZ, Math.max(1, pinchZoom0 * damped));
-          cfg.setZ(z);
-          if (z === 1) { cfg.setPX(0); cfg.setPY(0); }
-          else { cfg.setPX(pinchPX0 + (cx - pinchMX)); cfg.setPY(pinchPY0 + (cy - pinchMY)); }
-          cfg.apply();
-        }
-      } else if (dragging && cfg.getZ() > 1) {
-        // マウス1本指パン
-        cfg.setPX(px0 + (e.clientX - sx));
-        cfg.setPY(py0 + (e.clientY - sy));
-        cfg.apply();
-      }
-    }
-    function onEnd(e) {
-      pts.delete(e.pointerId);
-      if (pts.size < 2) { pinchDist = 0; }
-      if (pts.size === 0) dragging = false;
-    }
-    cfg.area.addEventListener('wheel',         onWheel, { passive: false });
-    cfg.area.addEventListener('pointerdown',   onDown);
-    cfg.area.addEventListener('pointermove',   onMove);
-    cfg.area.addEventListener('pointerup',     onEnd);
-    cfg.area.addEventListener('pointercancel', onEnd);
-  }
-
-  (function initImgZoom(){
-    const area = document.getElementById('pracImg');
-    if (!area) return;
-    _makeZoomHandler({
-      area, maxZ: 6, wheelStep: 1.18,
-      getZ:  () => _imgZ,  setZ:  z => { _imgZ  = z; },
-      getPX: () => _imgPX, setPX: x => { _imgPX = x; },
-      getPY: () => _imgPY, setPY: y => { _imgPY = y; },
-      apply: _applyImgZoom, reset: _resetImgZoom,
-      guard: e => drawTool !== 'pointer' || !area.querySelector('img'),
-      skip:  e => !area.querySelector('img'),
-    });
-  })();
-
-  // 左パネル ズーム/パン/ピンチ
-  (function initLeftZoom(){
-    const area = document.querySelector('.expln-left');
-    if (!area) return;
-    _makeZoomHandler({
-      area, maxZ: 5, wheelStep: 1.12,
-      getZ:  () => _leftZ,  setZ:  z => { _leftZ  = z; },
-      getPX: () => _leftPX, setPX: x => { _leftPX = x; },
-      getPY: () => _leftPY, setPY: y => { _leftPY = y; },
-      apply: _applyLeftZoom, reset: _resetLeftZoom,
-      guard:   e => drawTool !== 'pointer' || !!e.target.closest('.left-expand-btn') || e.target.id === 'leftZoomResetBtn',
-      skip:    e => !!e.target.closest('.left-expand-btn') || e.target.id === 'leftZoomResetBtn',
-      dblSkip: e => !!e.target.closest('.left-expand-btn') || e.target.id === 'leftZoomResetBtn',
-    });
-  })();
-
-  // ── 解説モード：ページ全体のピンチ拡大を抑止（上下バーが崩れるのを防ぐ）──
-  // ズームロジックは各パネルの_makeZoomHandlerに委譲（独立制御のため）
-  (function(){
-    function inPractice(){
-      const pm = document.getElementById('practiceMode');
-      return pm && pm.style.display && pm.style.display !== 'none';
-    }
-    function fsOpen(){
-      const fs = document.getElementById('imgFullScreen');
-      return fs && fs.classList.contains('open');
-    }
-    // ブラウザのページ拡大を抑止するだけ（ズームは各パネルのpointerイベントで処理）
-    document.addEventListener('gesturestart',  function(e){ if (inPractice() && !fsOpen()) e.preventDefault(); }, { passive:false });
-    document.addEventListener('gesturechange', function(e){ if (inPractice() && !fsOpen()) e.preventDefault(); }, { passive:false });
-    document.addEventListener('gestureend',    function(e){ if (inPractice() && !fsOpen()) e.preventDefault(); }, { passive:false });
-    // Chrome/Edge等：Ctrl+ホイール＝ページ拡大を抑止（画像ズームは #pracImg の wheel で実施）
-    document.addEventListener('wheel', function(e){
-      if (e.ctrlKey && inPractice() && !fsOpen()) e.preventDefault();
-    }, { passive:false });
-  })();
 
   function initFsCanvas() {
     const canvas = document.getElementById('imgFsCanvas');
