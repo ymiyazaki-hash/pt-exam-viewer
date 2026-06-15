@@ -997,6 +997,7 @@
       will-change: transform;
       display: flex; flex-direction: column; gap: 14px;
       min-height: 100%;
+      touch-action: pan-y; /* 縦スクロールはブラウザに任せ、ピンチ・横ドラッグはJSで処理 */
     }
     /* 左パネル拡大ボタン */
     .left-expand-btn {
@@ -1034,6 +1035,7 @@
     .expln-img-area {
       display: none; align-items: center; justify-content: center;
       padding: 14px; overflow: hidden;
+      touch-action: none; /* ブラウザのネイティブ操作を無効化してポインタイベントで処理 */
     }
     .expln-img-area.has-img { display: flex; flex: 1; }
     .expln-img-area img {
