@@ -3904,13 +3904,13 @@ ${tables}
       const body = pages.map(u =>
         `<div class="apage"><img src="${u}"></div>`).join('\n');
       const html = `<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><title>解説PDF</title>
-<style>@page{size:A4 portrait;margin:8mm}*{margin:0;padding:0;box-sizing:border-box}
+<style>@page{size:A4 landscape;margin:8mm}*{margin:0;padding:0;box-sizing:border-box}
 body{padding-top:52px}
 .toolbar{position:fixed;top:0;left:0;right:0;z-index:99;display:flex;gap:10px;justify-content:center;padding:10px;background:#0c2461;font-family:sans-serif}
 .toolbar button{font-size:15px;font-weight:700;padding:11px 20px;border:none;border-radius:9px;cursor:pointer}
 .toolbar .c{background:#fff;color:#0c2461}.toolbar .p{background:#2563eb;color:#fff}
 .apage{display:block;break-inside:avoid;page-break-inside:avoid;margin-bottom:6mm}
-.apage img{width:194mm;max-width:100%;height:auto;display:block}
+.apage img{width:281mm;max-width:100%;height:auto;display:block}
 @media print{.toolbar{display:none!important}body{padding-top:0}}
 </style></head><body>
 <div class="toolbar"><button class="c" onclick="window.close()">✕ 閉じる</button><button class="p" onclick="window.print()">🖨 印刷 / PDF保存</button></div>
