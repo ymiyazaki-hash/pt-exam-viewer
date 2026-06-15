@@ -1121,6 +1121,19 @@
       .expln-img-portrait { display: block; }
     }
 
+    /* 🎉 イベント装飾パーティクル */
+    @keyframes holidayFall {
+      0%   { transform: translateY(-80px) rotate(0deg) scale(1);   opacity:0; }
+      8%   { opacity:1; }
+      88%  { opacity:1; }
+      100% { transform: translateY(105vh) rotate(420deg) scale(0.8); opacity:0; }
+    }
+    .holiday-particle {
+      position:fixed; top:0; z-index:9990;
+      pointer-events:none; user-select:none; line-height:1;
+      animation: holidayFall linear forwards;
+    }
+
     /* 🌝 月のイースターエッグ */
     @keyframes moonFloat {
       0%   { opacity:0; transform:translate(-50%,-50%) scale(0.4) rotate(-15deg); }
@@ -1134,6 +1147,23 @@
       animation: moonFloat 2.8s ease-out forwards;
       filter: drop-shadow(0 0 18px rgba(255,230,100,0.9));
     }
+    @keyframes cometCross {
+      0%   { transform: translate(-200px, 0px) rotate(-18deg); opacity:0; }
+      5%   { opacity:1; }
+      95%  { opacity:1; }
+      100% { transform: translate(calc(100vw + 200px), calc(100vw * 0.32 + 200px)) rotate(-18deg); opacity:0; }
+    }
+    #cometEgg {
+      position:fixed; left:0; top:8vh; z-index:9999;
+      pointer-events:none; user-select:none;
+      animation: cometCross 7s cubic-bezier(0.25,0.1,0.4,1) forwards;
+      white-space: nowrap;
+      font-size: 1px; /* テキストは非表示、SVGで描画 */
+    }
+    #cometEgg svg {
+      width: 420px; height: 90px; overflow: visible;
+    }
+
     @keyframes fullMoonRise {
       0%   { opacity:0; transform:translateX(-50%) translateY(0px) scale(0.3); }
       15%  { opacity:0.9; }
@@ -3665,14 +3695,49 @@ ${tables}
 
   function _maybeShowMoon() {
     const r = Math.random();
-    if (r < 1/500) {
+    if (r < 1/1000) {
+      // 大きな彗星が画面をゆっくり横切る
+      const topPct = 5 + Math.random() * 35;
+      const dur    = 8 + Math.random() * 4;
+      const el = document.createElement('div');
+      el.id = 'cometEgg';
+      el.style.top = topPct + 'vh';
+      el.style.animationDuration = dur + 's';
+      el.innerHTML = `<svg width="520" height="70" viewBox="0 0 520 70" overflow="visible">
+        <defs>
+          <linearGradient id="ctail" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%"   stop-color="rgba(255,255,255,0)"/>
+            <stop offset="60%"  stop-color="rgba(255,230,120,0.25)"/>
+            <stop offset="88%"  stop-color="rgba(255,245,180,0.7)"/>
+            <stop offset="100%" stop-color="rgba(255,255,255,0.95)"/>
+          </linearGradient>
+          <radialGradient id="chead" cx="50%" cy="50%" r="50%">
+            <stop offset="0%"   stop-color="white"                stop-opacity="1"/>
+            <stop offset="35%"  stop-color="rgba(255,245,160,1)"  stop-opacity="1"/>
+            <stop offset="100%" stop-color="rgba(255,200,60,0)"   stop-opacity="0"/>
+          </radialGradient>
+          <filter id="cglow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="5" result="b"/>
+            <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+        <ellipse cx="260" cy="35" rx="260" ry="7"  fill="url(#ctail)" filter="url(#cglow)"/>
+        <ellipse cx="260" cy="35" rx="220" ry="14" fill="url(#ctail)" opacity="0.35"/>
+        <ellipse cx="260" cy="35" rx="160" ry="22" fill="url(#ctail)" opacity="0.15"/>
+        <circle  cx="505" cy="35" r="48"   fill="url(#chead)" filter="url(#cglow)"/>
+        <circle  cx="505" cy="35" r="12"   fill="white" opacity="0.97"/>
+        <circle  cx="505" cy="35" r="5"    fill="white"/>
+      </svg>`;
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), (dur + 0.5) * 1000);
+    } else if (r < 1/1000 + 1/500) {
       // 満月が地平線からゆっくり昇る
       const el = document.createElement('div');
       el.id = 'fullMoonEgg';
       el.textContent = '🌕';
       document.body.appendChild(el);
       setTimeout(() => el.remove(), 5100);
-    } else if (r < 1/500 + 1/300) {
+    } else if (r < 1/1000 + 1/500 + 1/300) {
       // 微笑む月
       const el = document.createElement('div');
       el.id = 'moonEgg';
@@ -5627,6 +5692,65 @@ ${body}</body></html>`;
   function closeHelpModal() {
     document.getElementById('helpModal').classList.remove('open');
   }
+
+  // ── イベント日装飾 ────────────────────────────────────────────────
+  (function initHolidayDecorations() {
+    const now = new Date();
+    const m = now.getMonth() + 1;
+    const d = now.getDate();
+
+    // イベント定義（range: ±日数）
+    const EVENTS = [
+      { m:1,  d:1,  range:1,  emojis:['🎍','🎌','⛩️','🎎','🎏','🌅'],        label:'元旦' },
+      { m:1,  d:15, range:0,  emojis:['🎁','🎊','🎉','🎈'],                   label:'成人の日' },
+      { m:2,  d:3,  range:0,  emojis:['👹','🫘','💫','😈'],                   label:'節分' },
+      { m:2,  d:14, range:0,  emojis:['💝','💕','🍫','💖','❤️','🌹'],         label:'バレンタイン' },
+      { m:3,  d:3,  range:0,  emojis:['🎎','🌸','🍑','🌷'],                   label:'ひな祭り' },
+      { m:3,  d:25, range:14, emojis:['🌸','🌸','🌸','🌺','🌸','🍃','🌸'],    label:'花見' },
+      { m:4,  d:1,  range:0,  emojis:['🐟','😜','🃏','🐠'],                   label:'エイプリルフール' },
+      { m:5,  d:5,  range:0,  emojis:['🎏','🎐','🎑','🎋','🌬️'],             label:'こどもの日' },
+      { m:6,  d:4,  range:3,  emojis:['☔','🌧️','🐸','🌂','💧'],             label:'梅雨' },
+      { m:7,  d:7,  range:0,  emojis:['🎋','⭐','🌟','💫','🌠','✨'],         label:'七夕' },
+      { m:8,  d:15, range:2,  emojis:['🏮','🪔','🌸','👻','🎆'],             label:'お盆' },
+      { m:9,  d:15, range:7,  emojis:['🌾','🍂','🍁','🌕','🎑','🐛'],        label:'敬老・秋' },
+      { m:10, d:31, range:0,  emojis:['🎃','👻','🕷️','🦇','🕸️','💀'],       label:'ハロウィン' },
+      { m:11, d:15, range:14, emojis:['🍂','🍁','🍂','🌰','🍂','🌿'],        label:'紅葉' },
+      { m:12, d:24, range:1,  emojis:['⭐','🎄','❄️','🎅','🎁','✨','🔔'],   label:'クリスマス' },
+      { m:12, d:31, range:0,  emojis:['🎆','🎇','✨','🎊','🎉','🗼'],         label:'大晦日' },
+    ];
+
+    // 今日に該当するイベントを探す
+    let active = null;
+    for (const ev of EVENTS) {
+      const evDate = new Date(now.getFullYear(), ev.m - 1, ev.d);
+      const diff = (now - evDate) / 86400000;
+      if (diff >= -(ev.range) && diff <= (ev.range) + 1) {
+        active = ev;
+        break;
+      }
+    }
+    if (!active) return;
+
+    function spawnParticle() {
+      const emoji = active.emojis[Math.floor(Math.random() * active.emojis.length)];
+      const el = document.createElement('div');
+      el.className = 'holiday-particle';
+      el.textContent = emoji;
+      el.style.left = (Math.random() * 102 - 1) + 'vw';
+      el.style.fontSize = (18 + Math.random() * 22) + 'px';
+      el.style.opacity = '0';
+      const dur = 5 + Math.random() * 6;
+      el.style.animationDuration = dur + 's';
+      el.style.animationDelay = (Math.random() * 1.5) + 's';
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), (dur + 2) * 1000);
+    }
+
+    // 最初のバースト
+    for (let i = 0; i < 6; i++) setTimeout(spawnParticle, i * 200);
+    // 以後定期的に
+    setInterval(spawnParticle, 700);
+  })();
 </script>
 
 <!-- ✨ 取扱説明モーダル -->
