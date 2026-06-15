@@ -5002,8 +5002,8 @@ ${body}</body></html>`;
         pinchZoom0 = cfg.getZ();
         pinchPX0   = cfg.getPX(); pinchPY0 = cfg.getPY();
         dragging   = false;
-      } else if (pts.size === 1 && cfg.getZ() > 1 && e.pointerType === 'mouse') {
-        // マウスのみ1本指ドラッグでパン
+      } else if (pts.size === 1 && cfg.getZ() > 1) {
+        // 拡大中は1本指ドラッグでパン（マウス・タッチ共通）
         dragging = true; sx = e.clientX; sy = e.clientY; px0 = cfg.getPX(); py0 = cfg.getPY();
         try { cfg.area.setPointerCapture(e.pointerId); } catch(_) {}
       }
