@@ -1189,8 +1189,8 @@
       overflow: hidden; pointer-events: auto; user-select: none;
       box-shadow: 0 6px 24px rgba(0,0,0,0.5);
     }
-    .ins-item img  { width: 100%; height: 100%; object-fit: contain;
-                     display: block; pointer-events: none; background: #fff; }
+    .ins-item img  { width: 100%; height: 100%; object-fit: cover;
+                     display: block; pointer-events: none; }
     .ins-item iframe { width: 100%; height: 100%; border: none; display: block; }
     .ins-drag-area {
       position: absolute; inset: 0; bottom: 18px; z-index: 1;
@@ -3989,17 +3989,27 @@ ${tables}
       const type = file.type === 'application/pdf' ? 'pdf' : 'image';
       const layer = document.getElementById('insertedMediaLayer');
       const lrect = layer ? layer.getBoundingClientRect() : {width:400, height:300};
-      practiceState[q.id].insertedMedia.push({
-        id: 'ins_' + Date.now(),
-        src: ev.target.result,
-        type,
-        x: Math.max(20, (lrect.width  - (type==='pdf'?380:300)) / 2),
-        y: Math.max(20, (lrect.height - (type==='pdf'?320:240)) / 2),
-        w: type === 'pdf' ? 380 : 300,
-        h: type === 'pdf' ? 320 : 240
-      });
-      renderInsertedMedia();
-      _captureDrawMeta(q);  // PDF再現用に位置情報を確保
+      const addItem = (w, h, ratio) => {
+        practiceState[q.id].insertedMedia.push({
+          id: 'ins_' + Date.now(), src: ev.target.result, type,
+          x: Math.max(20, (lrect.width - w) / 2),
+          y: Math.max(20, (lrect.height - h) / 2),
+          w, h, aspectRatio: ratio || null
+        });
+        renderInsertedMedia();
+        _captureDrawMeta(q);
+      };
+      if (type === 'image') {
+        const tmp = new Image();
+        tmp.onload = () => {
+          const ratio = tmp.naturalWidth / tmp.naturalHeight;
+          const w = Math.min(300, lrect.width * 0.6);
+          addItem(Math.round(w), Math.round(w / ratio), ratio);
+        };
+        tmp.src = ev.target.result;
+      } else {
+        addItem(380, 320, null);
+      }
     };
     reader.readAsDataURL(file);
   }
@@ -4065,9 +4075,12 @@ ${tables}
         e.stopPropagation(); e.preventDefault();
         const startX = e.clientX, startY = e.clientY;
         const startW = item.w,    startH = item.h;
+        const ratio  = item.aspectRatio || null;
         const onMove = ev => {
-          item.w = Math.max(80,  startW + (ev.clientX - startX));
-          item.h = Math.max(60,  startH + (ev.clientY - startY));
+          const dw = ev.clientX - startX;
+          const newW = Math.max(80, startW + dw);
+          item.w = newW;
+          item.h = ratio ? Math.round(newW / ratio) : Math.max(60, startH + (ev.clientY - startY));
           el.style.width  = item.w + 'px';
           el.style.height = item.h + 'px';
         };
