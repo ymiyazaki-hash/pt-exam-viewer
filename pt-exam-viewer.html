@@ -4901,7 +4901,7 @@ ${body}</body></html>`;
         const cy = (a[0].y + a[1].y) / 2;
         if (pinchDist > 0) {
           // ズーム（ダンピング0.45）+ 2本指中点でパン
-          const damped = 1 + (d / pinchDist - 1) * 0.45;
+          const damped = 1 + (d / pinchDist - 1) * 0.15;
           const z = Math.min(cfg.maxZ, Math.max(1, pinchZoom0 * damped));
           cfg.setZ(z);
           if (z === 1) { cfg.setPX(0); cfg.setPY(0); }
@@ -4983,7 +4983,7 @@ ${body}</body></html>`;
       if (inPractice() && !fsOpen()) {
         e.preventDefault();
         const scale = e.scale || 1;
-        const dampedScale = 1 + (scale - 1) * 0.45; // ピンチ速度を遅く
+        const dampedScale = 1 + (scale - 1) * 0.15; // ピンチ速度を遅く
         if (document.querySelector('#pracImg img')) {
           _imgZ = Math.min(6, Math.max(1, gStartZoom * dampedScale));
           if (_imgZ === 1) { _imgPX = 0; _imgPY = 0; }
