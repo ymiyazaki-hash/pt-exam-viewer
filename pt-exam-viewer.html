@@ -861,12 +861,18 @@
 
     /* 2カラムボディ（キャンバスオーバーレイの基点） */
     .expln-body {
-      flex: 1; display: flex; overflow: hidden; position: relative;
+      flex: 1; overflow: hidden; position: relative;
       /* テキスト全選択・長押しメニューを抑止（GoodNotes/Loilonote 同様） */
       -webkit-user-select: none; user-select: none;
       -webkit-touch-callout: none;
     }
 
+    #bodyZoomContent {
+      position: absolute; inset: 0;
+      display: flex;
+      transform-origin: 0 0;
+      will-change: transform;
+    }
     /* 左カラム：問題文・選択肢・解答 */
     .expln-left {
       width: 62%; padding: 18px 20px; overflow-y: auto;
@@ -1848,6 +1854,7 @@
   <div id="explnHeaderSpacer"></div>
   <!-- 2カラムボディ（透明キャンバスが全体に重なる） -->
   <div class="expln-body">
+  <div id="bodyZoomContent">
     <!-- 左：問題文・選択肢・解答 -->
     <div class="expln-left">
       <button class="left-expand-btn" id="leftExpandBtn" onclick="toggleLeftExpand()" title="左パネルを拡大/縮小">⛶</button>
@@ -1872,6 +1879,7 @@
     <div id="insertedMediaLayer"></div>
     <!-- 透明キャンバス：問題・画像の上に直接書き込み -->
     <canvas id="drawCanvas"></canvas>
+  </div><!-- /bodyZoomContent -->
   </div>
   <!-- fixed ツールバーの高さ分を flex レイアウトで確保するスペーサー -->
   <div id="drawToolbarSpacer"></div>
@@ -3605,6 +3613,7 @@ ${tables}
   }
 
   function renderPracQ() {
+    if (typeof _resetContentZoom === 'function') _resetContentZoom();
     const q       = practiceData[practiceIdx];
     const state   = practiceState[q.id] || {};
     const total   = practiceData.length;
@@ -3735,7 +3744,7 @@ ${tables}
       if (!left || !body) return;
       dragging = true;
       startX = e.clientX;
-      startW = left.getBoundingClientRect().width;
+      startW = left.getBoundingClientRect().width / _cz; // 論理幅に変換
       resizer.classList.add('dragging');
       resizer.setPointerCapture(e.pointerId);
       e.preventDefault();
@@ -3746,7 +3755,7 @@ ${tables}
       const left = document.querySelector('.expln-left');
       if (!body || !left) return;
       const totalW = body.getBoundingClientRect().width;
-      const newW   = Math.min(Math.max(startW + (e.clientX - startX), totalW * 0.2), totalW * 0.8);
+      const newW   = Math.min(Math.max(startW + (e.clientX - startX) / _cz, totalW * 0.2), totalW * 0.8);
       left.style.width = (newW / totalW * 100).toFixed(1) + '%';
     });
     resizer.addEventListener('pointerup',     () => { dragging = false; resizer.classList.remove('dragging'); });
@@ -4015,14 +4024,19 @@ ${tables}
           // 長押し(0.5秒・移動なし)でトリミング起動
           lpTimer = setTimeout(() => { lpFired = true; openCropEditor(item.id); }, 500);
         }
-        const startX = e.clientX - item.x, startY = e.clientY - item.y;
+        const bodyEl = document.querySelector('.expln-body');
+        const br0 = bodyEl ? bodyEl.getBoundingClientRect() : {left:0,top:0};
+        const toContent = (cx, cy) => ({ x:(cx-br0.left-_cpx)/_cz, y:(cy-br0.top-_cpy)/_cz });
+        const c0 = toContent(e.clientX, e.clientY);
+        const offX = c0.x - item.x, offY = c0.y - item.y;
         const onMove = ev => {
           if (lpTimer && (Math.abs(ev.clientX - downX) > 6 || Math.abs(ev.clientY - downY) > 6)) {
-            clearTimeout(lpTimer); lpTimer = null; // 動かしたらドラッグ扱い
+            clearTimeout(lpTimer); lpTimer = null;
           }
           if (lpFired) return;
-          item.x = ev.clientX - startX;
-          item.y = ev.clientY - startY;
+          const c = toContent(ev.clientX, ev.clientY);
+          item.x = c.x - offX;
+          item.y = c.y - offY;
           el.style.left = item.x + 'px';
           el.style.top  = item.y + 'px';
         };
@@ -4044,10 +4058,10 @@ ${tables}
         const startW = item.w,    startH = item.h;
         const ratio  = item.aspectRatio || null;
         const onMove = ev => {
-          const dw = ev.clientX - startX;
+          const dw = (ev.clientX - startX) / _cz;
           const newW = Math.max(80, startW + dw);
           item.w = newW;
-          item.h = ratio ? Math.round(newW / ratio) : Math.max(60, startH + (ev.clientY - startY));
+          item.h = ratio ? Math.round(newW / ratio) : Math.max(60, startH + (ev.clientY - startY) / _cz);
           el.style.width  = item.w + 'px';
           el.style.height = item.h + 'px';
         };
@@ -4772,6 +4786,7 @@ ${body}</body></html>`;
 
   // ── 手書きキャンバス ──────────────────────────────────────────────
   let currentWriteTab = 'text';
+  let _cz = 1, _cpx = 0, _cpy = 0; // コンテンツエリアのズーム・パン
   let drawTool  = 'pointer';
   let drawColor = '#1a1a1a';
   let drawSize  = 4;
@@ -4957,6 +4972,98 @@ ${body}</body></html>`;
   // ── 解説モード：右ペイン画像を「その場で」拡大/移動 ─────────────────
   // 画面・レイアウトはそのままで、画像だけをホイール/ピンチで拡大、ドラッグで移動、
   // ダブルクリックで元に戻す。上下のバーは拡大されない。
+
+  // ── コンテンツエリア統合ズーム（ツールバーに影響しない）────────────
+  (function initBodyZoom() {
+    const body = document.querySelector('.expln-body');
+    if (!body) return;
+
+    function inPractice() {
+      const pm = document.getElementById('practiceMode');
+      return pm && pm.style.display && pm.style.display !== 'none';
+    }
+
+    function applyZoom() {
+      const el = document.getElementById('bodyZoomContent');
+      if (!el) return;
+      el.style.transform = _cz === 1 ? '' : `translate(${_cpx}px,${_cpy}px) scale(${_cz})`;
+    }
+
+    function clampPan() {
+      if (_cz <= 1) { _cpx = 0; _cpy = 0; return; }
+      const w = body.clientWidth, h = body.clientHeight;
+      _cpx = Math.max(w - w * _cz, Math.min(0, _cpx));
+      _cpy = Math.max(h - h * _cz, Math.min(0, _cpy));
+    }
+
+    // ── ピンチ・パン ──
+    const pts = new Map();
+    let pDist0=0, pZ0=1, pMX=0, pMY=0, pPX0=0, pPY0=0;
+    let panning=false, panSX=0, panSY=0, panPX0=0, panPY0=0;
+
+    body.addEventListener('pointerdown', e => {
+      if (!inPractice()) return;
+      pts.set(e.pointerId, {x:e.clientX, y:e.clientY});
+      if (pts.size === 2) {
+        const a = [...pts.values()];
+        pDist0 = Math.hypot(a[0].x-a[1].x, a[0].y-a[1].y);
+        pMX = (a[0].x+a[1].x)/2; pMY = (a[0].y+a[1].y)/2;
+        pZ0=_cz; pPX0=_cpx; pPY0=_cpy; panning=false;
+      } else if (pts.size === 1 && _cz > 1 && drawTool === 'pointer' && e.pointerType !== 'pen') {
+        panning=true; panSX=e.clientX; panSY=e.clientY; panPX0=_cpx; panPY0=_cpy;
+      }
+    }, {capture:true, passive:true});
+
+    body.addEventListener('pointermove', e => {
+      if (!pts.has(e.pointerId)) return;
+      pts.set(e.pointerId, {x:e.clientX, y:e.clientY});
+      if (pts.size >= 2 && pDist0 > 0) {
+        const a = [...pts.values()];
+        const d = Math.hypot(a[0].x-a[1].x, a[0].y-a[1].y);
+        const cx=(a[0].x+a[1].x)/2, cy=(a[0].y+a[1].y)/2;
+        const br = body.getBoundingClientRect();
+        const ratio = d/pDist0;
+        const damped = ratio>=1 ? 1+(ratio-1)*0.4 : ratio;
+        const newZ = Math.max(1, Math.min(5, pZ0*damped));
+        const cX=(pMX-br.left-pPX0)/pZ0, cY=(pMY-br.top-pPY0)/pZ0;
+        _cz=newZ; _cpx=(cx-br.left)-cX*newZ; _cpy=(cy-br.top)-cY*newZ;
+        clampPan(); applyZoom();
+      } else if (panning && _cz > 1) {
+        _cpx=panPX0+(e.clientX-panSX); _cpy=panPY0+(e.clientY-panSY);
+        clampPan(); applyZoom();
+      }
+    }, {capture:true, passive:true});
+
+    const onEnd = e => {
+      pts.delete(e.pointerId);
+      if (pts.size < 2) pDist0=0;
+      if (pts.size === 0) panning=false;
+    };
+    body.addEventListener('pointerup',     onEnd, {capture:true, passive:true});
+    body.addEventListener('pointercancel', onEnd, {capture:true, passive:true});
+
+    // トラックパッドピンチ（Ctrl+wheel）
+    body.addEventListener('wheel', e => {
+      if (!e.ctrlKey || !inPractice()) return;
+      e.preventDefault();
+      const br = body.getBoundingClientRect();
+      const mx=e.clientX-br.left, my=e.clientY-br.top;
+      const cX=(mx-_cpx)/_cz, cY=(my-_cpy)/_cz;
+      _cz = Math.max(1, Math.min(5, _cz*(e.deltaY<0?1.1:1/1.1)));
+      _cpx=mx-cX*_cz; _cpy=my-cY*_cz;
+      if (_cz===1){_cpx=0;_cpy=0;}
+      clampPan(); applyZoom();
+    }, {passive:false});
+
+    // Safari ネイティブズームを抑止
+    document.addEventListener('gesturestart',  e=>{ if(inPractice()) e.preventDefault(); }, {passive:false});
+    document.addEventListener('gesturechange', e=>{ if(inPractice()) e.preventDefault(); }, {passive:false});
+    document.addEventListener('gestureend',    e=>{ if(inPractice()) e.preventDefault(); }, {passive:false});
+
+    // 問題切替でズームリセット
+    const origRender = typeof renderPracQ === 'function' ? renderPracQ : null;
+    window._resetContentZoom = function() { _cz=1; _cpx=0; _cpy=0; applyZoom(); };
+  })();
 
   function initFsCanvas() {
     const canvas = document.getElementById('imgFsCanvas');
