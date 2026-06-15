@@ -1908,6 +1908,7 @@
       <span id="drawSizeVal">4</span>
     </div>
     <button class="draw-action-btn" id="btnUndoDraw" onclick="undoDraw()" disabled>↩ 元に戻す</button>
+    <button class="draw-action-btn" id="btnRedoDraw" onclick="redoDraw()" disabled>↪ やり直し</button>
     <button class="draw-action-btn danger" onclick="clearDraw()">🗑 クリア</button>
     <input type="file" id="insertFileInput" accept="image/*,.pdf" style="display:none" onchange="handleInsertFile(this)">
     <button class="draw-action-btn" onclick="document.getElementById('insertFileInput').click()">📎 挿入</button>
@@ -4796,9 +4797,11 @@ ${body}</body></html>`;
   let drawSize  = 4;
   let isDrawPointerDown = false;
   let hasPen = false; // Apple Pencil が一度でも検出されたら true
-  let drawPrevX = 0, drawPrevY = 0; // ベジェ曲線スムージング用
+  let drawPrevX = 0, drawPrevY = 0;
   let drawLastX = 0, drawLastY = 0;
+  let drawPrevPressure = 1, drawLastPressure = 1;
   const drawUndoStacks = {};
+  const drawRedoStacks = {};
 
   function switchWriteTab(tab) {
     currentWriteTab = tab;
@@ -4876,27 +4879,47 @@ ${body}</body></html>`;
     if (!canvas || !canvas.width) return;
     if (!drawUndoStacks[q.id]) drawUndoStacks[q.id] = [];
     drawUndoStacks[q.id].push(canvas.toDataURL());
-    if (drawUndoStacks[q.id].length > 20) drawUndoStacks[q.id].shift();
-    updateUndoBtn();
+    if (drawUndoStacks[q.id].length > 30) drawUndoStacks[q.id].shift();
+    drawRedoStacks[q.id] = []; // 新規描画でリドゥをクリア
+    updateUndoRedoBtn();
   }
 
-  function updateUndoBtn() {
-    const btn = document.getElementById('btnUndoDraw');
-    if (!btn) return;
+  function updateUndoRedoBtn() {
     const q = practiceData[practiceIdx];
-    btn.disabled = !(q && drawUndoStacks[q.id]?.length);
+    const u = document.getElementById('btnUndoDraw');
+    const r = document.getElementById('btnRedoDraw');
+    if (u) u.disabled = !(q && drawUndoStacks[q.id]?.length);
+    if (r) r.disabled = !(q && drawRedoStacks[q.id]?.length);
   }
+  function updateUndoBtn() { updateUndoRedoBtn(); } // 後方互換
 
   function undoDraw() {
     const q = practiceData[practiceIdx];
     if (!q || !drawUndoStacks[q.id]?.length) return;
     const canvas = document.getElementById('drawCanvas');
     const ctx = canvas.getContext('2d');
+    // 現在状態をリドゥに積む
+    if (!drawRedoStacks[q.id]) drawRedoStacks[q.id] = [];
+    drawRedoStacks[q.id].push(canvas.toDataURL());
     const prev = drawUndoStacks[q.id].pop();
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     const img = new Image();
-    img.onload = () => { ctx.drawImage(img, 0, 0, canvas.width, canvas.height); saveDrawingState(); updateUndoBtn(); };
+    img.onload = () => { ctx.drawImage(img, 0, 0, canvas.width, canvas.height); saveDrawingState(); updateUndoRedoBtn(); };
     img.src = prev;
+  }
+
+  function redoDraw() {
+    const q = practiceData[practiceIdx];
+    if (!q || !drawRedoStacks[q.id]?.length) return;
+    const canvas = document.getElementById('drawCanvas');
+    const ctx = canvas.getContext('2d');
+    if (!drawUndoStacks[q.id]) drawUndoStacks[q.id] = [];
+    drawUndoStacks[q.id].push(canvas.toDataURL());
+    const next = drawRedoStacks[q.id].pop();
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const img = new Image();
+    img.onload = () => { ctx.drawImage(img, 0, 0, canvas.width, canvas.height); saveDrawingState(); updateUndoRedoBtn(); };
+    img.src = next;
   }
 
   function clearDraw() {
@@ -4905,7 +4928,7 @@ ${body}</body></html>`;
     const canvas = document.getElementById('drawCanvas');
     canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
     saveDrawingState();
-    updateUndoBtn();
+    updateUndoRedoBtn();
   }
 
   // ── 画像全画面表示・書き込み・ピンチズーム ──────────────────────
@@ -5322,21 +5345,49 @@ ${body}</body></html>`;
     if (leftPanel) leftPanel.style.overflowY = tool === 'pointer' ? 'auto' : 'hidden';
   }
 
-  // ── Apple Pencil / 指 自動モード切替 ────────────────────────────
+  // ── Apple Pencil / 指 自動モード切替 + 多本指タップジェスチャー ──
   (function() {
     const pm = document.getElementById('practiceMode');
     if (!pm) return;
+
+    // --- 自動モード切替 ---
+    // Pencilで触れたらペンモード、指で触れたら操作モード（GoodNotes "Pencilのみ"相当）
+    let _lastPenMode = 'pen'; // Pencil使用前の意図したペン/消しゴムモード
     pm.addEventListener('pointerdown', function(e) {
-      // ツールバーのボタン操作は無視（手動選択を優先）
       if (e.target.closest('#drawToolbar')) return;
       if (e.pointerType === 'pen') {
-        // Apple Pencil → ペンモード（消しゴム中はそのまま）
-        if (drawTool === 'pointer') setDrawTool('pen');
+        // Apple Pencil → 前回のペン/消しゴムモードを復元
+        if (drawTool === 'pointer') setDrawTool(_lastPenMode);
       } else if (e.pointerType === 'touch') {
-        // 指 → 操作モード
-        if (drawTool !== 'pointer') setDrawTool('pointer');
+        // 指 → 操作モードへ（ペンモードを記憶しておく）
+        if (drawTool !== 'pointer') { _lastPenMode = drawTool; setDrawTool('pointer'); }
       }
     }, { capture: true, passive: true });
+
+    // --- 多本指タップ：2本指=アンドゥ、3本指=リドゥ ---
+    const tapPts = new Map(); // pointerId → {x, y, time}
+    pm.addEventListener('pointerdown', function(e) {
+      if (e.pointerType !== 'touch') return;
+      tapPts.set(e.pointerId, { x: e.clientX, y: e.clientY, time: Date.now() });
+    }, { passive: true });
+    pm.addEventListener('pointermove', function(e) {
+      if (!tapPts.has(e.pointerId)) return;
+      const p = tapPts.get(e.pointerId);
+      // 10px以上動いたらタップ判定から除外
+      if (Math.hypot(e.clientX - p.x, e.clientY - p.y) > 10) tapPts.delete(e.pointerId);
+    }, { passive: true });
+    pm.addEventListener('pointerup', function(e) {
+      if (!tapPts.has(e.pointerId)) return;
+      const p = tapPts.get(e.pointerId);
+      tapPts.delete(e.pointerId);
+      if (Date.now() - p.time > 350) return; // 長押しは除外
+      // 全指が離れた瞬間の残存タップ数でジェスチャー判定
+      // 今離れた指を含めた同時タップ数を記録してから確認
+      const count = tapPts.size + 1; // +1 = 今離れた指
+      if (count === 2) { setTimeout(() => { if (tapPts.size === 0) undoDraw(); }, 50); }
+      if (count === 3) { setTimeout(() => { if (tapPts.size === 0) redoDraw(); }, 50); }
+    }, { passive: true });
+    pm.addEventListener('pointercancel', function(e) { tapPts.delete(e.pointerId); }, { passive: true });
   })();
 
   function setDrawColor(color, btn) {
@@ -5365,14 +5416,10 @@ ${body}</body></html>`;
                y: (e.clientY - r.top)  * c.height / r.height };
     }
 
-    // ── Apple Pencil 自動検出（practiceMode が開いている間のみ）
-    // pointerType === 'pen' を受け取ったら即ペンモードに切り替え、hasPen フラグを立てる
+    // Apple Pencil 検出 → hasPen フラグ（パームリジェクション用）
+    // モード切替は上の自動切替ブロックで処理
     document.addEventListener('pointerdown', e => {
-      if (!document.getElementById('practiceMode').style.display.includes('flex')) return;
-      if (e.pointerType === 'pen') {
-        hasPen = true; // Pencil 検出：以降パームリジェクションを有効化
-        if (drawTool === 'pointer') setDrawTool('pen');
-      }
+      if (e.pointerType === 'pen') hasPen = true;
     }, { capture: true, passive: true });
 
     // ── 描画イベント（キャンバス自身に登録）
@@ -5384,11 +5431,13 @@ ${body}</body></html>`;
       isDrawPointerDown = true;
       try { cv().setPointerCapture(e.pointerId); } catch(_) {}
       const p = pt(e);
+      const pressure = e.pointerType === 'pen' ? Math.max(0.1, e.pressure || 0.5) : 1;
       drawLastX = drawPrevX = p.x;
       drawLastY = drawPrevY = p.y;
+      drawLastPressure = drawPrevPressure = pressure;
       // タップ（移動なし）用の点を打つ
       const c = cv(), ctx = c.getContext('2d');
-      const sz = drawTool === 'eraser' ? drawSize * 6 : drawSize;
+      const sz = drawTool === 'eraser' ? drawSize * 6 : drawSize * pressure;
       ctx.lineCap = ctx.lineJoin = 'round';
       if (drawTool === 'eraser') {
         ctx.globalCompositeOperation = 'destination-out';
@@ -5404,22 +5453,27 @@ ${body}</body></html>`;
     function drawSegments(points) {
       const c = cv(); if (!c || points.length === 0) return;
       const ctx = c.getContext('2d');
-      const sz = drawTool === 'eraser' ? drawSize * 6 : drawSize;
-      ctx.lineWidth = sz; ctx.lineCap = ctx.lineJoin = 'round';
+      const isPen = points[0] && points[0].pointerType === 'pen';
+      const baseSize = drawTool === 'eraser' ? drawSize * 6 : drawSize;
       if (drawTool === 'eraser') ctx.globalCompositeOperation = 'destination-out';
       const col = drawTool === 'eraser' ? 'rgba(0,0,0,1)' : drawColor;
       ctx.strokeStyle = col;
+      ctx.lineCap = ctx.lineJoin = 'round';
 
       for (const p of points) {
-        // 中点ベジェ曲線スムージング
+        const pressure = isPen ? Math.max(0.1, p.pressure || 0.5) : 1;
+        const sz = baseSize * pressure;
         const mx = (drawLastX + p.x) / 2;
         const my = (drawLastY + p.y) / 2;
+        ctx.lineWidth = sz;
         ctx.beginPath();
         ctx.moveTo((drawPrevX + drawLastX) / 2, (drawPrevY + drawLastY) / 2);
         ctx.quadraticCurveTo(drawLastX, drawLastY, mx, my);
         ctx.stroke();
         drawPrevX = drawLastX; drawPrevY = drawLastY;
+        drawPrevPressure = drawLastPressure;
         drawLastX = p.x; drawLastY = p.y;
+        drawLastPressure = pressure;
       }
       if (drawTool === 'eraser') ctx.globalCompositeOperation = 'source-over';
     }
@@ -5428,9 +5482,8 @@ ${body}</body></html>`;
       if (!isDrawPointerDown || !e.isPrimary) return;
       if (hasPen && drawTool !== 'pointer' && e.pointerType === 'touch') return;
       e.preventDefault();
-      // getCoalescedEvents でスマホの中間タッチ点も取得して滑らかに
       const evts = (e.getCoalescedEvents ? e.getCoalescedEvents() : [e]);
-      drawSegments(evts.map(ev => pt(ev)));
+      drawSegments(evts.map(ev => ({ ...pt(ev), pressure: ev.pressure, pointerType: ev.pointerType })));
     }
 
     const onUp = () => {
