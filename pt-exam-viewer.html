@@ -1073,9 +1073,26 @@
        縦向きは「問題＋選択肢を全部表示 → その下に画像を全幅で全部表示 → 縦スライド」。
        横向き(スマホ・タブレット)は PC と同じ左右2カラム表示にする（この媒体クエリの
        対象外＝デフォルトの2カラムが適用される）。PC(マウス)も常に2カラム。 */
+    /* 縦モード：問題文と選択肢の間に画像を表示するインラインコンテナ */
+    .expln-img-portrait {
+      display: none;
+      width: 100%; margin: 10px 0;
+    }
+    .expln-img-portrait img {
+      width: 100%; height: auto; display: block;
+      border-radius: 8px; max-width: 100%;
+    }
+
     @media (pointer: coarse) and (orientation: portrait) {
-      .expln-body {
+      /* #bodyZoomContent を通常フローに戻してスクロール可能にする */
+      #bodyZoomContent {
+        position: relative !important;
+        inset: auto !important;
+        height: auto !important;
+        min-height: 100%;
         flex-direction: column !important;
+      }
+      .expln-body {
         overflow-y: auto !important;
         overflow-x: hidden !important;
         -webkit-overflow-scrolling: touch;
@@ -1086,35 +1103,14 @@
         max-height: none !important;
         overflow: visible !important;
         border-right: none !important;
-        border-bottom: 2px solid #e2e8f0 !important;
+        border-bottom: none !important;
+        padding-bottom: 150px !important;
       }
-      .expln-right {
-        flex: 0 0 auto !important;
-        display: block !important;
-        overflow: visible !important;
-        min-height: 0 !important;
-        padding-bottom: 150px !important;   /* 下部固定ツールバーに画像が隠れないよう */
-        background: #1a1a2e !important;
-      }
-      .expln-img-area { align-items: flex-start !important; }
-      .expln-img-area.has-img {
-        display: block !important;
-        width: 100% !important;
-        height: auto !important;
-        flex: none !important;
-        padding: 0 !important;
-        overflow: visible !important;
-      }
-      .expln-img-area img {
-        width: 100% !important;
-        height: auto !important;
-        max-width: 100% !important;
-        max-height: none !important;
-        border-radius: 0 !important;
-        border: none !important;
-        display: block !important;
-        object-fit: contain !important;
-      }
+      /* 縦モードでは右パネル（画像）を非表示にしてインライン表示に切替 */
+      .expln-right { display: none !important; }
+      .expln-resizer { display: none !important; }
+      /* 縦モードインライン画像を表示 */
+      .expln-img-portrait { display: block; }
     }
 
     /* 練習モード開始バー */
@@ -1862,6 +1858,7 @@
       <button class="left-expand-btn" id="leftExpandBtn" onclick="toggleLeftExpand()" title="左パネルを拡大/縮小">⛶</button>
       <div id="leftZoomContent">
         <div class="expln-qtext" id="pracText"></div>
+        <div id="pracImgPortrait" class="expln-img-portrait"></div>
         <div class="expln-choices" id="pracChoices"></div>
         <div id="pracResult" style="display:none"></div>
         <!-- 解説パネル（📖 解説ボタンでトグル） -->
@@ -1884,6 +1881,16 @@
   </div><!-- /bodyZoomContent -->
   </div>
   <!-- fixed ツールバーの高さ分を flex レイアウトで確保するスペーサー -->
+  <!-- タブ表示/非表示トグルボタン -->
+  <button id="tabToggleBtn" onclick="togglePracTabs()" title="上下タブを隠す/表示"
+    style="position:fixed;right:0;top:50%;transform:translateY(-50%);z-index:600;
+           width:22px;height:56px;border-radius:8px 0 0 8px;
+           background:rgba(30,58,138,0.75);border:none;color:white;
+           font-size:13px;cursor:pointer;display:none;
+           align-items:center;justify-content:center;
+           writing-mode:vertical-rl;letter-spacing:1px;padding:0;
+           backdrop-filter:blur(4px)">‹</button>
+
   <div id="drawToolbarSpacer"></div>
   <!-- 書き込みツールバー（position:fixed で常時表示） -->
   <div class="draw-toolbar">
@@ -3596,6 +3603,10 @@ ${tables}
     pm.style.top = ''; pm.style.height = ''; pm.style.bottom = '';
     pm.style.display = 'flex';
     document.body.style.overflow = 'hidden';
+    // タブ隠すボタン表示・状態リセット
+    if (_pracTabsHidden) togglePracTabs(); // タブが隠れていたら元に戻す
+    const tabBtn = document.getElementById('tabToggleBtn');
+    if (tabBtn) tabBtn.style.display = 'flex';
     // ヘッダー・ツールバーの高さをスペーサーに反映（fixed 要素が content を隠さないように）
     requestAnimationFrame(() => {
       const hdr = pm.querySelector('.expln-header');
@@ -3610,6 +3621,9 @@ ${tables}
 
   function exitPractice() {
     savePracMemo();
+    if (_pracTabsHidden) togglePracTabs(); // タブが隠れていたら元に戻す
+    const tabBtn = document.getElementById('tabToggleBtn');
+    if (tabBtn) tabBtn.style.display = 'none';
     document.getElementById('practiceMode').style.display = 'none';
     document.body.style.overflow = '';
   }
@@ -3696,16 +3710,19 @@ ${tables}
     const imgArea = document.getElementById('pracImg');
     const body    = document.querySelector('.expln-body');
     const expandBtn = document.getElementById('leftExpandBtn');
+    const imgPortrait = document.getElementById('pracImgPortrait');
     if (q.imageData) {
       imgArea.className = 'expln-img-area has-img';
       imgArea.innerHTML = `<img src="${q.imageData}" alt="問題図" draggable="false"
         title="ホイール/ピンチで拡大・ドラッグで移動・ダブルクリックで戻す">`;
+      if (imgPortrait) imgPortrait.innerHTML = `<img src="${q.imageData}" alt="問題図" draggable="false">`;
       // 画像あり：left-expandedのみ解除（right-expandedは維持）
       if (body) body.classList.remove('left-expanded');
       if (expandBtn) { expandBtn.textContent = '⛶'; expandBtn.title = '左パネルを拡大'; }
     } else {
       imgArea.className = 'expln-img-area';
       imgArea.innerHTML = '';
+      if (imgPortrait) imgPortrait.innerHTML = '';
       // 画像なし：自動で左パネル全画面に・right-expandedも解除
       if (body) { body.classList.add('left-expanded'); body.classList.remove('right-expanded'); }
       if (expandBtn) { expandBtn.textContent = '⊠'; expandBtn.title = '元の表示に戻す'; }
@@ -3784,6 +3801,20 @@ ${tables}
     btn.title = expanded ? '元の表示に戻す' : '右パネルを拡大';
     const lbtn = document.getElementById('leftExpandBtn');
     if (lbtn) { lbtn.textContent = '⛶'; lbtn.title = '左パネルを拡大'; }
+  }
+
+  let _pracTabsHidden = false;
+  function togglePracTabs() {
+    _pracTabsHidden = !_pracTabsHidden;
+    const header  = document.querySelector('.expln-header');
+    const toolbar = document.querySelector('.draw-toolbar');
+    const hSpacer = document.getElementById('explnHeaderSpacer');
+    const tSpacer = document.getElementById('drawToolbarSpacer');
+    const btn     = document.getElementById('tabToggleBtn');
+    [header, toolbar, hSpacer, tSpacer].forEach(el => {
+      if (el) el.style.display = _pracTabsHidden ? 'none' : '';
+    });
+    if (btn) btn.textContent = _pracTabsHidden ? '›' : '‹';
   }
 
   function _syncSessAddCheck() {
@@ -4985,9 +5016,11 @@ ${body}</body></html>`;
       return pm && pm.style.display && pm.style.display !== 'none';
     }
 
+    const portraitMQ = window.matchMedia('(pointer: coarse) and (orientation: portrait)');
     function applyZoom() {
       const el = document.getElementById('bodyZoomContent');
       if (!el) return;
+      if (portraitMQ.matches) { el.style.transform = ''; return; }
       el.style.transform = _cz === 1 ? '' : `translate(${_cpx}px,${_cpy}px) scale(${_cz})`;
     }
 
@@ -5062,9 +5095,26 @@ ${body}</body></html>`;
     document.addEventListener('gesturechange', e=>{ if(inPractice()) e.preventDefault(); }, {passive:false});
     document.addEventListener('gestureend',    e=>{ if(inPractice()) e.preventDefault(); }, {passive:false});
 
-    // 問題切替でズームリセット
-    const origRender = typeof renderPracQ === 'function' ? renderPracQ : null;
-    window._resetContentZoom = function() { _cz=1; _cpx=0; _cpy=0; applyZoom(); };
+    window._resetContentZoom = function() {
+      _cz=1; _cpx=0; _cpy=0;
+      const el = document.getElementById('bodyZoomContent');
+      if (el) el.style.transform = '';
+    };
+
+    // 回転時：ズームリセット＋スペーサー高さ更新
+    window.addEventListener('orientationchange', () => {
+      setTimeout(() => {
+        window._resetContentZoom && window._resetContentZoom();
+        const pm = document.getElementById('practiceMode');
+        if (!pm || !pm.style.display.includes('flex')) return;
+        const hdr = pm.querySelector('.expln-header');
+        const hsp = document.getElementById('explnHeaderSpacer');
+        if (hdr && hsp) hsp.style.height = hdr.offsetHeight + 'px';
+        const tb = pm.querySelector('.draw-toolbar');
+        const sp = document.getElementById('drawToolbarSpacer');
+        if (tb && sp) sp.style.height = tb.offsetHeight + 'px';
+      }, 350);
+    });
   })();
 
   function initFsCanvas() {
