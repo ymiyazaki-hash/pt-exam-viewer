@@ -3713,8 +3713,15 @@ ${tables}
       const rbtn = document.getElementById('rightExpandBtn');
       if (rbtn) { rbtn.textContent = '⛶'; rbtn.title = '右パネルを拡大'; }
     }
-    _resetImgZoom();   // 問題切替で画像ズームをリセット
-    _resetLeftZoom();  // 問題切替で左パネルズームをリセット
+    // 画像ズームは問題ごとに記憶・復元（なければリセット）
+    const savedZ = state.imgZoom;
+    if (savedZ && savedZ.z > 1) {
+      _imgZ = savedZ.z; _imgPX = savedZ.px; _imgPY = savedZ.py;
+      _applyImgZoom();
+    } else {
+      _resetImgZoom();
+    }
+    _resetLeftZoom();  // 左パネルズームは問題切替でリセット
 
     document.getElementById('pracPrevBtn').disabled = practiceIdx === 0;
     document.getElementById('pracNextBtn').disabled = practiceIdx === total - 1;
@@ -3935,13 +3942,22 @@ ${tables}
     saveDrawingState();
   }
 
+  function _saveCurrentImgZoom() {
+    const q = practiceData && practiceData[practiceIdx];
+    if (!q) return;
+    if (!practiceState[q.id]) practiceState[q.id] = {};
+    practiceState[q.id].imgZoom = { z: _imgZ, px: _imgPX, py: _imgPY };
+  }
+
   function pracNext() {
     savePracMemo();
+    _saveCurrentImgZoom();
     if (practiceIdx < practiceData.length - 1) { practiceIdx++; renderPracQ(); }
   }
 
   function pracPrev() {
     savePracMemo();
+    _saveCurrentImgZoom();
     if (practiceIdx > 0) { practiceIdx--; renderPracQ(); }
   }
 
