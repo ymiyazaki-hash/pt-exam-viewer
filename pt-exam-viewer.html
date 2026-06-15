@@ -870,7 +870,7 @@
       width: 44%; padding: 18px 20px; overflow-y: auto;
       display: flex; flex-direction: column; gap: 14px;
       background: white; border-right: 2px solid #e2e8f0; flex-shrink: 0;
-      -webkit-overflow-scrolling: touch; /* iOS スムーズスクロール */
+      -webkit-overflow-scrolling: touch; position: relative;
     }
     .expln-qtext { font-size: 18px; line-height: 1.9; color: #111827; font-weight: 500; }
     .expln-choices { display: flex; flex-direction: column; gap: 9px; }
@@ -991,6 +991,20 @@
 
     /* 右カラム：画像フルサイズ */
     .expln-right { flex: 1; display: flex; overflow: hidden; background: #1a1a2e; min-width: 0; }
+    /* 左パネル拡大ボタン */
+    .left-expand-btn {
+      position: absolute; top: 10px; right: 10px;
+      width: 30px; height: 30px; border-radius: 7px;
+      background: rgba(30,58,138,0.12); border: 1.5px solid #c7d2fe;
+      color: #3b82f6; font-size: 15px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.18s; z-index: 2;
+    }
+    .left-expand-btn:hover { background: #eff6ff; border-color: #3b82f6; }
+    /* 左パネル全画面モード */
+    .expln-body.left-expanded .expln-left  { width: 100% !important; border-right: none !important; }
+    .expln-body.left-expanded .expln-right { display: none !important; }
+    .expln-body.left-expanded .left-expand-btn { background: #dbeafe; border-color: #3b82f6; color: #1d4ed8; }
     .expln-img-area {
       display: none; align-items: center; justify-content: center;
       padding: 14px; overflow: hidden;
@@ -1273,22 +1287,44 @@
     /* 地平線の夜明けグロー（クリーム・白系、オレンジなし） */
     #passwordScreen::before {
       content: '';
-      position: absolute; bottom: 0; left: 0; right: 0; height: 45%;
+      position: absolute; bottom: 0; left: 0; right: 0; height: 65%;
       pointer-events: none; z-index: 0;
-      background: radial-gradient(ellipse 70% 50% at 50% 100%,
-        rgba(220,230,255,0.18) 0%,
-        rgba(180,200,255,0.10) 30%,
-        rgba(140,160,240,0.05) 55%,
+      background: radial-gradient(ellipse 90% 60% at 50% 100%,
+        rgba(220,230,255,0.32) 0%,
+        rgba(190,210,255,0.20) 25%,
+        rgba(160,185,250,0.10) 50%,
         transparent 75%);
+      animation: dawnGlowPulse 5s ease-in-out infinite;
     }
     /* 地平線の輝点 */
     #passwordScreen::after {
       content: '';
       position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
-      width: 200px; height: 2px; pointer-events: none; z-index: 0;
+      width: 320px; height: 3px; pointer-events: none; z-index: 0;
       background: radial-gradient(ellipse at center,
-        rgba(255,252,230,0.55) 0%, transparent 70%);
-      box-shadow: 0 0 40px 20px rgba(220,230,255,0.12);
+        rgba(255,252,235,0.75) 0%, transparent 70%);
+      box-shadow: 0 0 60px 30px rgba(220,230,255,0.22);
+      animation: dawnLinePulse 5s ease-in-out infinite;
+    }
+    @keyframes dawnGlowPulse {
+      0%, 100% {
+        opacity: 0.7;
+        transform: scaleX(1) scaleY(1);
+      }
+      50% {
+        opacity: 1;
+        transform: scaleX(1.08) scaleY(1.12);
+      }
+    }
+    @keyframes dawnLinePulse {
+      0%, 100% {
+        opacity: 0.6;
+        box-shadow: 0 0 60px 30px rgba(220,230,255,0.18);
+      }
+      50% {
+        opacity: 1;
+        box-shadow: 0 0 90px 50px rgba(220,235,255,0.35);
+      }
     }
     #pwStars {
       position: absolute; inset: 0;
@@ -1296,6 +1332,17 @@
     }
     #passwordScreen.fade-out { animation: pwFade 0.4s ease forwards; }
     @keyframes pwFade { to { opacity: 0; pointer-events: none; } }
+    /* 三日月 */
+    .pw-moon {
+      position: absolute; top: 40px; right: 48px;
+      pointer-events: none; z-index: 1;
+      animation: moonFloat 6s ease-in-out infinite;
+      filter: drop-shadow(0 0 10px rgba(200,220,255,0.55)) drop-shadow(0 0 24px rgba(160,190,255,0.3));
+    }
+    @keyframes moonFloat {
+      0%, 100% { transform: translateY(0px) rotate(-8deg); }
+      50%       { transform: translateY(-8px) rotate(-4deg); }
+    }
     /* SVG太陽 */
     .pw-sun {
       display: block; margin: 0 auto 10px;
@@ -1349,9 +1396,28 @@
       animation: pwBeamPulse 0.45s ease-in-out infinite alternate;
     }
     .pw-ufo-alien {
-      font-size: 16px;
       margin-top: 1px;
       animation: pwAlienDangle 0.85s ease-in-out infinite alternate;
+      display: flex; flex-direction: column; align-items: center;
+    }
+    .pw-alien-head { font-size: 16px; line-height: 1; }
+    .pw-alien-body-wrap {
+      display: flex; align-items: center; margin-top: -2px;
+    }
+    .pw-alien-torso {
+      width: 10px; height: 14px;
+      background: rgba(134,239,172,0.92); border-radius: 3px 3px 2px 2px;
+    }
+    .pw-alien-arm {
+      width: 8px; height: 4px;
+      background: rgba(134,239,172,0.92); border-radius: 2px;
+    }
+    .pw-alien-arm-l { transform: rotate(-25deg); margin-right: -1px; }
+    .pw-alien-arm-r { transform: rotate(25deg);  margin-left: -1px;  }
+    .pw-alien-legs  { display: flex; gap: 4px; margin-top: -1px; }
+    .pw-alien-leg   {
+      width: 4px; height: 10px;
+      background: rgba(134,239,172,0.92); border-radius: 0 0 2px 2px;
     }
     @keyframes pwBeamPulse {
       from { opacity: 0.15; border-top-color: rgba(125,211,252,0.15); }
@@ -1493,6 +1559,21 @@
 <!-- パスワード画面 -->
 <div id="passwordScreen">
   <div id="pwStars"></div>
+  <!-- 三日月 -->
+  <svg class="pw-moon" viewBox="0 0 60 64" width="52" height="56" xmlns="http://www.w3.org/2000/svg">
+    <!-- 三日月本体（大円から小円を引いた形） -->
+    <defs>
+      <mask id="moonMask">
+        <rect width="60" height="64" fill="white"/>
+        <circle cx="38" cy="24" r="22" fill="black"/>
+      </mask>
+    </defs>
+    <circle cx="26" cy="30" r="24" fill="rgba(230,240,255,0.92)" mask="url(#moonMask)"/>
+    <!-- 小さな星 -->
+    <circle cx="50" cy="12" r="1.8" fill="rgba(220,235,255,0.85)"/>
+    <circle cx="46" cy="52" r="1.2" fill="rgba(200,220,255,0.7)"/>
+    <circle cx="10" cy="8"  r="1.4" fill="rgba(210,228,255,0.75)"/>
+  </svg>
   <div class="pw-card">
     <svg class="pw-sun" viewBox="0 0 80 52" width="72" height="46" xmlns="http://www.w3.org/2000/svg">
       <circle cx="40" cy="46" r="20" fill="rgba(255,252,220,0.92)"/>
@@ -1508,7 +1589,7 @@
       <span class="app-sub">PT国家試験 問題抽出アプリ</span>
     </h2>
     <div class="pw-divider">✦</div>
-    <p class="pw-tagline">合格への夜明けが始まる。</p>
+    <p class="pw-tagline">合格への夜明け</p>
     <p id="pwSubText" style="display:none">パスワードを入力してください</p>
     <div id="pwLoadingArea">
       <div class="pw-spinner"></div>
@@ -1701,6 +1782,7 @@
   <div class="expln-body">
     <!-- 左：問題文・選択肢・解答 -->
     <div class="expln-left">
+      <button class="left-expand-btn" id="leftExpandBtn" onclick="toggleLeftExpand()" title="左パネルを拡大/縮小">⛶</button>
       <div class="expln-qtext" id="pracText"></div>
       <div class="expln-choices" id="pracChoices"></div>
       <div id="pracResult" style="display:none"></div>
@@ -1932,7 +2014,7 @@
       setTimeout(function() { if (el.parentNode) el.parentNode.removeChild(el); }, 1100);
     }
 
-    // UFO（🛸）イースターエッグ — パスワード画面のみ、約1/50の確率
+    // UFO（🛸）イースターエッグ — パスワード画面のみ、約1/100の確率
     function spawnUFO(container) {
       var ufo = document.createElement('div');
       ufo.className = 'pw-ufo';
@@ -1944,7 +2026,7 @@
       ufo.innerHTML =
         '<div class="pw-ufo-ship">🛸</div>' +
         '<div class="pw-ufo-beam"></div>' +
-        (hasAlien ? '<div class="pw-ufo-alien">👽</div>' : '');
+        (hasAlien ? '<div class="pw-ufo-alien"><div class="pw-alien-head">👽</div><div class="pw-alien-body-wrap"><div class="pw-alien-arm pw-alien-arm-l"></div><div class="pw-alien-torso"></div><div class="pw-alien-arm pw-alien-arm-r"></div></div><div class="pw-alien-legs"><div class="pw-alien-leg"></div><div class="pw-alien-leg"></div></div></div>' : '');
       container.appendChild(ufo);
       setTimeout(function() { if (ufo.parentNode) ufo.parentNode.removeChild(ufo); }, 5800);
     }
@@ -1953,8 +2035,8 @@
       setTimeout(function() {
         // コンテナの親画面が表示中のときだけ発射
         if (container.parentNode && container.parentNode.style.display !== 'none') {
-          // パスワード画面では約1/50の確率でUFOが出現
-          if (container.id === 'pwStars' && Math.random() < 0.02) {
+          // パスワード画面では約1/100の確率でUFOが出現
+          if (container.id === 'pwStars' && Math.random() < 0.01) {
             spawnUFO(container);
           } else {
             spawnShoot(container);
@@ -3423,6 +3505,7 @@ ${tables}
     practiceData = [...filteredData];
     if (!practiceData.length) { alert('表示中の問題がありません'); return; }
     practiceIdx = startIdx || 0;
+    practiceState = {};  // 解答表示状態をリセット
     setDrawTool('pointer');
     const pm = document.getElementById('practiceMode');
     // 以前の syncPracticeViewport による高さ変更をリセット
@@ -3556,6 +3639,14 @@ ${tables}
 
     // セッション追加チェックボックスを現在の問題に合わせて更新
     _syncSessAddCheck();
+  }
+
+  function toggleLeftExpand() {
+    const body = document.querySelector('.expln-body');
+    const btn  = document.getElementById('leftExpandBtn');
+    const expanded = body.classList.toggle('left-expanded');
+    btn.textContent = expanded ? '⊠' : '⛶';
+    btn.title = expanded ? '元の表示に戻す' : '左パネルを拡大';
   }
 
   function _syncSessAddCheck() {
