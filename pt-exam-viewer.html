@@ -824,7 +824,9 @@
     #practiceMode {
       position: fixed; inset: 0; z-index: 500; background: #f0f4f8;
       display: none; flex-direction: column; overflow: hidden;
-      touch-action: manipulation; /* ダブルタップズームを無効化 */
+      touch-action: manipulation;
+      -webkit-user-select: none; user-select: none;
+      -webkit-touch-callout: none;
     }
     .expln-header {
       /* position:fixed でズーム時も常に画面上端へ固定。top/left/width は JS で Visual Viewport に合わせて更新 */
@@ -5441,6 +5443,14 @@ ${body}</body></html>`;
     // ハンドラ未登録＝ペンが効かない原因になり得るため同期で開始する）
     const c0 = cv();
     if (c0) observer.observe(c0, { attributes: true, attributeFilter: ['class'] });
+  })();
+
+  // プレゼンモード中のテキスト選択メニュー・コンテキストメニューを抑止
+  (function() {
+    const pm = document.getElementById('practiceMode');
+    if (!pm) return;
+    pm.addEventListener('contextmenu', e => e.preventDefault(), { passive: false });
+    pm.addEventListener('selectstart',  e => e.preventDefault(), { passive: false });
   })();
 
   // キーボードで操作（解説モード中：←→で前後移動、Spaceで解答表示）
