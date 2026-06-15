@@ -1262,9 +1262,29 @@
     /* ── パスワード画面 ── */
     #passwordScreen {
       position: fixed; inset: 0; z-index: 9999;
-      background: linear-gradient(150deg, #060d2e 0%, #0d1f6b 45%, #0a3060 100%);
+      background:
+        linear-gradient(to bottom,
+          #03091e 0%,
+          #080e3a 25%,
+          #0d1b6e 50%,
+          #1a2590 65%,
+          #2a2080 78%,
+          #3d2a6a 88%,
+          #6b3a50 94%,
+          #a05030 97%,
+          #c87020 100%);
       display: flex; align-items: center; justify-content: center;
       overflow: hidden;
+    }
+    /* 地平線グロー */
+    #passwordScreen::after {
+      content: '';
+      position: absolute; bottom: 0; left: 0; right: 0; height: 38%;
+      pointer-events: none;
+      background: radial-gradient(ellipse 80% 60% at 50% 100%,
+        rgba(255,180,40,0.38) 0%,
+        rgba(255,120,20,0.18) 40%,
+        transparent 75%);
     }
     #pwStars {
       position: absolute; top: 0; left: 0; right: 0; bottom: 0;
@@ -1274,6 +1294,20 @@
       animation: pwFade 0.4s ease forwards;
     }
     @keyframes pwFade { to { opacity: 0; pointer-events: none; } }
+    /* 太陽アイコン */
+    .pw-sun {
+      font-size: 40px; margin-bottom: 6px; display: block;
+      animation: pwSunPulse 3s ease-in-out infinite;
+    }
+    @keyframes pwSunPulse {
+      0%,100% { filter: drop-shadow(0 0 8px rgba(255,200,60,0.6)); transform: scale(1); }
+      50%      { filter: drop-shadow(0 0 18px rgba(255,200,60,0.9)); transform: scale(1.06); }
+    }
+    /* キャッチコピー */
+    .pw-tagline {
+      color: rgba(255,255,255,0.78); font-size: 13px; font-weight: 500;
+      letter-spacing: 0.25em; margin: 10px 0 22px; line-height: 1.5;
+    }
 
     /* ── UFO イースターエッグ（約1/50の確率で出現） ── */
     .pw-ufo {
@@ -1328,9 +1362,12 @@
     }
 
     .pw-card {
-      background: rgba(255,255,255,0.08); backdrop-filter: blur(12px);
-      border: 1px solid rgba(255,255,255,0.18); border-radius: 20px;
-      padding: 40px 48px; text-align: center; width: 340px;
+      background: rgba(255,255,255,0.09); backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid rgba(255,255,255,0.22); border-radius: 28px;
+      padding: 36px 44px 40px; text-align: center; width: 320px;
+      box-shadow: 0 8px 40px rgba(0,0,50,0.4), inset 0 1px 0 rgba(255,255,255,0.15);
+      position: relative; z-index: 1;
     }
     .pw-card h2 { margin: 0 0 10px; }
     .pw-card h2 .app-name {
@@ -1434,12 +1471,14 @@
 <!-- パスワード画面 -->
 <div id="passwordScreen">
   <div id="pwStars"></div>
-  <div class="pw-card" style="position:relative;z-index:1">
+  <div class="pw-card">
+    <span class="pw-sun">🌅</span>
     <h2>
       <span class="app-name">✨ 国対くん</span>
       <span class="app-sub">PT国家試験 問題抽出アプリ</span>
     </h2>
-    <p id="pwSubText">パスワードを入力してください</p>
+    <p class="pw-tagline">合格への夜明けが始まる。</p>
+    <p id="pwSubText" style="display:none">パスワードを入力してください</p>
     <!-- 初期ローディング（JS不要・CSS spinnerで即時表示。データ準備完了後に非表示） -->
     <div id="pwLoadingArea">
       <div class="pw-spinner"></div>
