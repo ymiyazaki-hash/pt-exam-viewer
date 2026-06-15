@@ -5086,8 +5086,13 @@ ${body}</body></html>`;
     body.addEventListener('pointercancel', onEnd, {capture:true, passive:true});
 
     // トラックパッドピンチ（Ctrl+wheel）
+    // タッチデバイス（iPad）かどうか（pointer: coarse = タッチ、fine = マウス/トラックパッド）
+    const isTouch = () => window.matchMedia('(pointer: coarse)').matches;
+
+    // Ctrl+wheel：iPad では使われないが念のため。MacBook はブラウザに任せる
     body.addEventListener('wheel', e => {
       if (!e.ctrlKey || !inPractice()) return;
+      if (!isTouch()) return; // MacBook トラックパッドはブラウザのデフォルトズームに任せる
       e.preventDefault();
       const br = body.getBoundingClientRect();
       const mx=e.clientX-br.left, my=e.clientY-br.top;
@@ -5098,10 +5103,10 @@ ${body}</body></html>`;
       clampPan(); applyZoom();
     }, {passive:false});
 
-    // Safari ネイティブズームを抑止
-    document.addEventListener('gesturestart',  e=>{ if(inPractice()) e.preventDefault(); }, {passive:false});
-    document.addEventListener('gesturechange', e=>{ if(inPractice()) e.preventDefault(); }, {passive:false});
-    document.addEventListener('gestureend',    e=>{ if(inPractice()) e.preventDefault(); }, {passive:false});
+    // Safari ネイティブズームを抑止（iPad のみ。MacBook は通常のブラウザズームを許可）
+    document.addEventListener('gesturestart',  e=>{ if(inPractice() && isTouch()) e.preventDefault(); }, {passive:false});
+    document.addEventListener('gesturechange', e=>{ if(inPractice() && isTouch()) e.preventDefault(); }, {passive:false});
+    document.addEventListener('gestureend',    e=>{ if(inPractice() && isTouch()) e.preventDefault(); }, {passive:false});
 
     window._resetContentZoom = function() {
       _cz=1; _cpx=0; _cpy=0;
