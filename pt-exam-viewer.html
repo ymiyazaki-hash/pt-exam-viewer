@@ -827,6 +827,7 @@
       touch-action: manipulation;
       -webkit-user-select: none; user-select: none;
       -webkit-touch-callout: none;
+      overscroll-behavior: none;
     }
     .expln-header {
       /* position:fixed でズーム時も常に画面上端へ固定。top/left/width は JS で Visual Viewport に合わせて更新 */
@@ -864,6 +865,7 @@
     /* 2カラムボディ（キャンバスオーバーレイの基点） */
     .expln-body {
       flex: 1; overflow: hidden; position: relative;
+      overscroll-behavior: none;
       /* テキスト全選択・長押しメニューを抑止（GoodNotes/Loilonote 同様） */
       -webkit-user-select: none; user-select: none;
       -webkit-touch-callout: none;
@@ -881,6 +883,7 @@
       display: flex; flex-direction: column;
       background: white; flex-shrink: 0;
       -webkit-overflow-scrolling: touch; position: relative;
+      overscroll-behavior: none;
     }
     /* パネル分割リサイザー */
     .expln-resizer {
