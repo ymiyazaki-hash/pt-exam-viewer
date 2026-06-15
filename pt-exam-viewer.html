@@ -4863,6 +4863,9 @@ ${body}</body></html>`;
 
     function onWheel(e) {
       if (cfg.skip && cfg.skip(e)) return;
+      // タッチパッド・タブレットの通常スクロールではズームしない
+      // ctrlKey=true はトラックパッドのピンチジェスチャ（Chromeが変換）
+      if (!e.ctrlKey) return;
       e.preventDefault();
       const z = Math.min(cfg.maxZ, Math.max(1, cfg.getZ() * (e.deltaY < 0 ? cfg.wheelStep : 1 / cfg.wheelStep)));
       cfg.setZ(z);
