@@ -5101,10 +5101,13 @@ ${body}</body></html>`;
       if (el) el.style.transform = '';
     };
 
-    // 回転時：ズームリセット＋スペーサー高さ更新
+    // 回転時：ズームリセット＋スクロールリセット＋スペーサー高さ更新
     window.addEventListener('orientationchange', () => {
+      // 即座にスクロール位置をリセット（回転後に空白になるのを防ぐ）
+      body.scrollTop = 0;
       setTimeout(() => {
         window._resetContentZoom && window._resetContentZoom();
+        body.scrollTop = 0; // 念押し
         const pm = document.getElementById('practiceMode');
         if (!pm || !pm.style.display.includes('flex')) return;
         const hdr = pm.querySelector('.expln-header');
