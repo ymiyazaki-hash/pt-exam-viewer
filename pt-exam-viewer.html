@@ -5017,8 +5017,9 @@ ${body}</body></html>`;
         const cx = (a[0].x + a[1].x) / 2;
         const cy = (a[0].y + a[1].y) / 2;
         if (pinchDist > 0) {
-          // ズーム（ダンピング0.45）+ 2本指中点でパン
-          const damped = 1 + (d / pinchDist - 1) * 0.15;
+          // 拡大時のみダンピング（縮小は等倍速）
+          const ratio = d / pinchDist;
+          const damped = ratio >= 1 ? 1 + (ratio - 1) * 0.15 : ratio;
           const z = Math.min(cfg.maxZ, Math.max(1, pinchZoom0 * damped));
           cfg.setZ(z);
           if (z === 1) { cfg.setPX(0); cfg.setPY(0); }
@@ -5096,7 +5097,7 @@ ${body}</body></html>`;
       if (inPractice() && !fsOpen()) {
         e.preventDefault();
         const scale = e.scale || 1;
-        const dampedScale = 1 + (scale - 1) * 0.15; // ピンチ速度を遅く
+        const dampedScale = scale >= 1 ? 1 + (scale - 1) * 0.15 : scale; // 拡大のみダンピング
         if (document.querySelector('#pracImg img')) {
           _imgZ = Math.min(6, Math.max(1, gStartZoom * dampedScale));
           if (_imgZ === 1) { _imgPX = 0; _imgPY = 0; }
