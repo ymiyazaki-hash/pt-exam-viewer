@@ -1135,17 +1135,20 @@
     }
 
     /* 🌝 月のイースターエッグ */
-    @keyframes moonFloat {
-      0%   { opacity:0; transform:translate(-50%,-50%) scale(0.4) rotate(-15deg); }
-      20%  { opacity:1; transform:translate(-50%,-60%) scale(1.1) rotate(8deg); }
-      60%  { opacity:1; transform:translate(-50%,-80%) scale(1)   rotate(-4deg); }
-      100% { opacity:0; transform:translate(-50%,-120%) scale(0.8) rotate(12deg); }
+    @keyframes astronautCross {
+      0%   { transform: translateX(-140px) translateY(0px)   rotate(-3deg); opacity:0; }
+      6%   { opacity:1; }
+      25%  { transform: translateX(20vw)   translateY(-18px) rotate(2deg); }
+      50%  { transform: translateX(45vw)   translateY(6px)   rotate(-2deg); }
+      75%  { transform: translateX(70vw)   translateY(-12px) rotate(3deg); }
+      94%  { opacity:1; }
+      100% { transform: translateX(calc(100vw + 140px)) translateY(4px) rotate(-1deg); opacity:0; }
     }
-    #moonEgg {
-      position:fixed; left:50%; top:50%; z-index:9999;
-      font-size:72px; pointer-events:none; user-select:none;
-      animation: moonFloat 2.8s ease-out forwards;
-      filter: drop-shadow(0 0 18px rgba(255,230,100,0.9));
+    #astronautEgg {
+      position:fixed; left:0; top:28vh; z-index:9999;
+      pointer-events:none; user-select:none;
+      animation: astronautCross 10s ease-in-out forwards;
+      filter: drop-shadow(0 0 12px rgba(120,200,255,0.55));
     }
     @keyframes cometCross {
       0%   { transform: translate(-200px, 0px) rotate(-18deg); opacity:0; }
@@ -3801,12 +3804,64 @@ ${tables}
       document.body.appendChild(el);
       setTimeout(() => el.remove(), 5100);
     } else if (r < 1/1000 + 1/500 + 1/300) {
-      // 微笑む月
+      // 宇宙服を着た人が画面を横切る
       const el = document.createElement('div');
-      el.id = 'moonEgg';
-      el.textContent = '🌝';
+      el.id = 'astronautEgg';
+      el.innerHTML = `<svg width="90" height="130" viewBox="0 0 90 130" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="ag_visor" cx="40%" cy="35%" r="55%">
+            <stop offset="0%"  stop-color="#a8d8ff"/>
+            <stop offset="60%" stop-color="#3a7bd5"/>
+            <stop offset="100%" stop-color="#1a4a9a"/>
+          </radialGradient>
+          <radialGradient id="ag_helm" cx="38%" cy="30%" r="60%">
+            <stop offset="0%"  stop-color="#ffffff"/>
+            <stop offset="100%" stop-color="#d8e8f0"/>
+          </radialGradient>
+          <radialGradient id="ag_body" cx="40%" cy="30%" r="65%">
+            <stop offset="0%"  stop-color="#ffffff"/>
+            <stop offset="100%" stop-color="#d0dce8"/>
+          </radialGradient>
+        </defs>
+        <!-- 左脚（前） -->
+        <ellipse cx="33" cy="112" rx="10" ry="15" fill="url(#ag_body)" transform="rotate(10,33,105)"/>
+        <ellipse cx="30" cy="124" rx="12" ry="6" fill="#b8c8d8" transform="rotate(-5,30,124)"/>
+        <!-- 右脚（後） -->
+        <ellipse cx="52" cy="110" rx="9"  ry="14" fill="#ccd8e4" transform="rotate(-8,52,103)"/>
+        <ellipse cx="55" cy="122" rx="11" ry="5"  fill="#a8b8c8" transform="rotate(5,55,122)"/>
+        <!-- 胴体 -->
+        <rect x="22" y="58" width="44" height="48" rx="14" fill="url(#ag_body)"/>
+        <!-- バックパック -->
+        <rect x="14" y="62" width="12" height="34" rx="5" fill="#c0d0e0"/>
+        <rect x="16" y="70" width="8"  height="8"  rx="2" fill="#90b0d0"/>
+        <!-- 胸パネル -->
+        <rect x="30" y="68" width="28" height="20" rx="5" fill="rgba(120,180,240,0.35)" stroke="#a0c0e0" stroke-width="1"/>
+        <circle cx="38" cy="78" r="3" fill="#60a0d0"/>
+        <circle cx="46" cy="78" r="3" fill="#80d080"/>
+        <circle cx="54" cy="78" r="3" fill="#e08060"/>
+        <!-- 左腕（上げ気味・手を振る） -->
+        <ellipse cx="16" cy="72" rx="7" ry="19" fill="url(#ag_body)" transform="rotate(-30,16,72)"/>
+        <circle  cx="10" cy="57" r="8" fill="#c8d8e8"/>
+        <!-- 右腕（下げ） -->
+        <ellipse cx="72" cy="78" rx="7" ry="18" fill="url(#ag_body)" transform="rotate(15,72,78)"/>
+        <circle  cx="74" cy="94" r="8" fill="#c8d8e8"/>
+        <!-- 首リング -->
+        <rect x="31" y="49" width="26" height="12" rx="6" fill="#c8d8e8"/>
+        <!-- ヘルメット -->
+        <circle cx="44" cy="32" r="28" fill="url(#ag_helm)"/>
+        <!-- バイザー -->
+        <ellipse cx="44" cy="33" rx="18" ry="16" fill="url(#ag_visor)" opacity="0.9"/>
+        <!-- バイザー映り込み -->
+        <ellipse cx="38" cy="26" rx="6" ry="5" fill="white" opacity="0.35"/>
+        <ellipse cx="48" cy="24" rx="3" ry="2" fill="white" opacity="0.2"/>
+        <!-- ヘルメットリング -->
+        <circle cx="44" cy="32" r="28" fill="none" stroke="#b0c8dc" stroke-width="2.5"/>
+        <!-- 小さな星（アクセント） -->
+        <text x="4"  y="18" font-size="10" opacity="0.6" fill="white">✦</text>
+        <text x="76" y="44" font-size="8"  opacity="0.4" fill="white">✦</text>
+      </svg>`;
       document.body.appendChild(el);
-      setTimeout(() => el.remove(), 2900);
+      setTimeout(() => el.remove(), 10500);
     }
   }
 
