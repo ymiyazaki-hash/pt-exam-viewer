@@ -14,6 +14,12 @@
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+  <!-- クイズモード: ?quiz= が付いていたら最速でログイン画面を隠す -->
+  <script>
+    if (new URLSearchParams(location.search).get('quiz')) {
+      document.write('<style>#loadScreen{display:none!important}#quizScreen{display:flex!important;flex-direction:column!important}</style>');
+    }
+  </script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
