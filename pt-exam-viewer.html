@@ -17,7 +17,7 @@
   <!-- クイズモード: ?quiz= が付いていたら最速でログイン画面を隠す -->
   <script>
     if (new URLSearchParams(location.search).get('quiz')) {
-      document.write('<style>#passwordScreen,#loadScreen,#mainContent{display:none!important}#quizScreen{display:flex!important;flex-direction:column!important;position:fixed!important;inset:0!important;z-index:2000!important}</style>');
+      document.write('<style>#passwordScreen,#loadScreen,#mainContent,header{display:none!important}#quizScreen{display:flex!important;flex-direction:column!important;position:fixed!important;inset:0!important;z-index:9999!important;background:#eef2ff!important}</style>');
     }
   </script>
   <style>
@@ -1969,6 +1969,25 @@
 
 <div id="loadScreen">
   <div id="lsStars"></div>
+  <div class="ls-grid"></div>
+  <div class="load-card">
+    <div class="ls-logo">📋</div>
+    <div class="ls-subtitle">PT National Exam Viewer</div>
+    <h2>国家試験<br>問題集</h2>
+    <div class="ls-badge">✦ PT・OT 対応 &nbsp;|&nbsp; 過去問データベース</div>
+    <div class="ls-drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+      <span class="ls-drop-icon">🗂️</span>
+      <div class="ls-drop-text">
+        クリックまたはファイルをドロップ<br>
+        <em>pt-exam-full-backup-*.json</em>
+      </div>
+    </div>
+    <input type="file" id="fileInput" accept=".json">
+    <button class="btn-primary" onclick="document.getElementById('fileInput').click()">JSONファイルを選択して読み込む</button>
+    <p class="load-hint" id="cacheHint"></p>
+  </div>
+</div>
+
 <!-- ════════════════════════════════════════
      学生クイズ回答画面（?quiz=CODE で表示）
 ════════════════════════════════════════ -->
@@ -2022,25 +2041,6 @@
     <div style="font-size:48px">⚠️</div>
     <div style="font-size:16px;color:#dc2626;font-weight:600;" id="quizErrorMsg"></div>
     <div style="font-size:13px;color:#64748b;">先生にクイズコードを確認してください</div>
-  </div>
-</div>
-
-  <div class="ls-grid"></div>
-  <div class="load-card">
-    <div class="ls-logo">📋</div>
-    <div class="ls-subtitle">PT National Exam Viewer</div>
-    <h2>国家試験<br>問題集</h2>
-    <div class="ls-badge">✦ PT・OT 対応 &nbsp;|&nbsp; 過去問データベース</div>
-    <div class="ls-drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
-      <span class="ls-drop-icon">🗂️</span>
-      <div class="ls-drop-text">
-        クリックまたはファイルをドロップ<br>
-        <em>pt-exam-full-backup-*.json</em>
-      </div>
-    </div>
-    <input type="file" id="fileInput" accept=".json">
-    <button class="btn-primary" onclick="document.getElementById('fileInput').click()">JSONファイルを選択して読み込む</button>
-    <p class="load-hint" id="cacheHint"></p>
   </div>
 </div>
 
