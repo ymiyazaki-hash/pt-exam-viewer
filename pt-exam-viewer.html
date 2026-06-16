@@ -2422,6 +2422,20 @@
   let _pwVerified    = false; // 正しいパスワードが確認された
 
   // パスワード確認
+  function openResultsByCode() {
+    const code = (document.getElementById('qtmSearchCode').value || '').trim().toUpperCase();
+    const errEl = document.getElementById('qtmSearchErr');
+    if (code.length !== 6) { errEl.style.display = 'block'; return; }
+    errEl.style.display = 'none';
+    // Firebase からタイトルを取得して結果ペインを開く
+    const db = _initFb();
+    if (!db) { alert('Firebase未設定です'); return; }
+    db.ref('quizzes/' + code).get().then(snap => {
+      const title = snap.exists() ? (snap.val().title || 'クイズ') : 'コード: ' + code;
+      openResults(code, title);
+    }).catch(() => openResults(code, 'コード: ' + code));
+  }
+
   function joinQuizByCode() {
     const code = (document.getElementById('quizCodeInput').value || '').trim().toUpperCase();
     const errEl = document.getElementById('quizCodeError');
@@ -7534,6 +7548,26 @@ function downloadResultsCSV() {
 
       <button class="qtm-btn-primary" onclick="createQuiz()">クイズを作成 →</button>
       <div id="qtmRecentWrap"></div>
+
+      <!-- 他の先生のクイズを見る -->
+      <div style="margin-top:16px;border-top:1px solid #e2e8f0;padding-top:16px;">
+        <div style="font-size:12px;color:#64748b;margin-bottom:8px;font-weight:600;">📊 コードで結果を見る（他の先生のクイズも可）</div>
+        <div style="display:flex;gap:8px;">
+          <input id="qtmSearchCode" type="text" maxlength="6"
+            style="flex:1;padding:10px 12px;border:1.5px solid #c7d2fe;border-radius:10px;
+                   font-size:15px;font-family:monospace;letter-spacing:3px;text-transform:uppercase;
+                   outline:none;color:#1e293b;text-align:center;"
+            placeholder="例：ABC123"
+            oninput="this.value=this.value.toUpperCase()"
+            onkeydown="if(event.key==='Enter')openResultsByCode()">
+          <button onclick="openResultsByCode()"
+            style="padding:10px 16px;background:linear-gradient(135deg,#1e3a8a,#3b82f6);
+                   color:white;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;">
+            表示
+          </button>
+        </div>
+        <div id="qtmSearchErr" style="color:#dc2626;font-size:12px;margin-top:4px;display:none;">6文字のコードを入力してください</div>
+      </div>
     </div>
 
     <!-- 発行済みペイン -->
