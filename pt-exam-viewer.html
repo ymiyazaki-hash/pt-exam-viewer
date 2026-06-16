@@ -5084,6 +5084,8 @@ ${body}</body></html>`;
   const drawRedoStacks = {};
   // マーカー用（全点を1パスで描画してトゲを防ぐ）
   let _markerPoints = [];
+  // ストローク終了後にRAFで非同期撮影しておくundoスナップショット
+  let _preUndoCapture = null;
   // フェードペン用
   const _fadeStrokes = []; // {points, color, size, startTime}
   let _currentFadePoints = null;
@@ -5152,6 +5154,9 @@ ${body}</body></html>`;
         }
       };
       img.src = practiceState[q.id].drawing;
+    } else {
+      // 既存描画なし（空キャンバス）→ 初期状態を事前撮影
+      _scheduleUndoCapture();
     }
     updateUndoBtn();
   }
@@ -5730,7 +5735,16 @@ ${body}</body></html>`;
         return;
       }
 
-      pushUndoState();
+      // 事前撮影済みのImageDataをundoスタックに積む（GPU読み出しゼロ・ブロッキングなし）
+      const _q = practiceData[practiceIdx];
+      if (_q && _preUndoCapture) {
+        if (!drawUndoStacks[_q.id]) drawUndoStacks[_q.id] = [];
+        drawUndoStacks[_q.id].push(_preUndoCapture);
+        if (drawUndoStacks[_q.id].length > 20) drawUndoStacks[_q.id].shift();
+        drawRedoStacks[_q.id] = [];
+        _preUndoCapture = null;
+        updateUndoRedoBtn();
+      }
       const c = cv(), ctx = c.getContext('2d');
       ctx.lineCap = ctx.lineJoin = 'round';
 
@@ -5846,11 +5860,11 @@ ${body}</body></html>`;
         }
         _markerPoints = [];
         saveDrawingState();
+        _scheduleUndoCapture();
         return;
       }
 
       if (drawTool === 'fadepen') {
-        // 現在のストロークをfadeStrokesに登録してアニメ開始
         if (_currentFadePoints && _currentFadePoints.length > 0) {
           _fadeStrokes.push({
             points: [..._currentFadePoints],
@@ -5860,10 +5874,11 @@ ${body}</body></html>`;
         }
         _currentFadePoints = null;
         _startFadeAnimation();
-        return; // 保存しない（一時的な描画）
+        return;
       }
 
       saveDrawingState();
+      _scheduleUndoCapture(); // 次ストロークのundo用をRAFで非同期撮影
     };
 
     // ── キャンバスが描画モードになったときにリスナーをアタッチ ────
@@ -5888,6 +5903,18 @@ ${body}</body></html>`;
     const c0 = cv();
     if (c0) observer.observe(c0, { attributes: true, attributeFilter: ['class'] });
   })();
+
+  // ── Undo 事前キャプチャ ────────────────────────────────────────────
+  // ストローク終了後に RAF で非同期撮影 → 次ストロークの onDown で即座に積む
+  function _scheduleUndoCapture() {
+    requestAnimationFrame(() => {
+      const canvas = document.getElementById('drawCanvas');
+      if (!canvas || !canvas.width) return;
+      try {
+        _preUndoCapture = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height);
+      } catch (_) {}
+    });
+  }
 
   // ── マーカー スムーズ描画 & スナップ ─────────────────────────────
   function _drawSmoothMarkerPath(mctx, points) {
