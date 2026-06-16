@@ -15,6 +15,31 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <!-- 学生モード: ?student=1 が付いていたらパスワード画面を隠してコード入力画面を表示 -->
+  <script>
+    (function() {
+      if (!new URLSearchParams(location.search).get('student')) return;
+      document.write('<style>' +
+        '#passwordScreen,#loadScreen,#mainContent,header,#sidebarOverlay,#quizScreen{display:none!important}' +
+        '#studentLanding{display:flex!important;position:fixed!important;inset:0!important;' +
+        'z-index:9999!important;flex-direction:column!important;align-items:center!important;' +
+        'justify-content:center!important;' +
+        'background:linear-gradient(to bottom,#02061a 0%,#050e38 30%,#0f1e78 65%,#1a1060 100%)!important}' +
+        '</style>');
+      document.addEventListener('DOMContentLoaded', function() {
+        ['passwordScreen','loadScreen','mainContent','sidebarOverlay','quizScreen'].forEach(function(id) {
+          var el = document.getElementById(id);
+          if (el) el.style.setProperty('display','none','important');
+        });
+        var h = document.querySelector('header');
+        if (h) h.style.setProperty('display','none','important');
+        var sl = document.getElementById('studentLanding');
+        if (sl) sl.style.setProperty('display','flex','important');
+        var inp = document.getElementById('studentCodeInput');
+        if (inp) setTimeout(function(){ inp.focus(); }, 300);
+      });
+    })();
+  </script>
   <!-- クイズモード: ?quiz= が付いていたら最速でログイン画面を隠す -->
   <script>
     (function() {
@@ -2000,54 +2025,55 @@
       <line x1="66" y1="40" x2="76" y2="38" stroke="rgba(255,252,210,0.6)"  stroke-width="2"   stroke-linecap="round"/>
       <line x1="0"  y1="46" x2="80" y2="46" stroke="rgba(255,252,220,0.35)" stroke-width="1.5"/>
     </svg>
-    <h2 id="pwAppTitle" onclick="_pwTitleTap()" style="cursor:default;user-select:none;">
+    <h2>
       <span class="app-name">✨ 国対くん</span>
       <span class="app-sub">PT国家試験 問題抽出アプリ</span>
     </h2>
     <div class="pw-divider">✦</div>
     <p class="pw-tagline">合格への夜明け</p>
-
-    <!-- クイズコード入力（学生向け・常に表示） -->
-    <div style="width:100%;margin-bottom:4px;">
-      <div style="font-size:13px;color:rgba(255,255,255,0.6);text-align:center;margin-bottom:12px;">
-        クイズコードを入力して参加
-      </div>
-      <div style="display:flex;gap:8px;">
-        <input id="quizCodeInput"
-          style="flex:1;padding:13px 14px;border:1.5px solid rgba(255,255,255,0.25);border-radius:12px;
-                 background:rgba(255,255,255,0.1);color:white;font-size:18px;font-family:monospace;
-                 letter-spacing:4px;text-transform:uppercase;outline:none;text-align:center;"
-          type="text" placeholder="ABC123" maxlength="6"
-          oninput="this.value=this.value.toUpperCase()"
-          onkeydown="if(event.key==='Enter')joinQuizByCode()">
-        <button onclick="joinQuizByCode()"
-          style="padding:13px 20px;background:linear-gradient(135deg,#2563eb,#3b82f6);
-                 border:none;color:white;border-radius:12px;font-size:15px;font-weight:700;
-                 cursor:pointer;white-space:nowrap;box-shadow:0 4px 14px rgba(37,99,235,0.4);">
-          参加 →
-        </button>
-      </div>
-      <div id="quizCodeError" style="color:#fca5a5;font-size:12px;margin-top:6px;text-align:center;display:none;">
-        コードは6文字で入力してください
-      </div>
+    <p id="pwSubText" style="display:none">パスワードを入力してください</p>
+    <div id="pwLoadingArea">
+      <div class="pw-spinner"></div>
+      <p>データを読み込み中です…<br>しばらくお待ちください</p>
     </div>
+    <div class="pw-input-wrap">
+      <span class="pw-input-icon">🔒</span>
+      <input id="pwInput" class="pw-input" type="password" placeholder="パスワードを入力してください" maxlength="20"
+             autocomplete="off" disabled
+             oninput="checkPassword()" onkeydown="if(event.key==='Enter')checkPassword(true)">
+      <span class="pw-input-dots">···</span>
+    </div>
+    <button class="pw-btn" id="pwBtn" onclick="checkPassword(true)" disabled>読み込み中…</button>
+    <div class="pw-error" id="pwError"></div>
+  </div>
+</div>
 
-    <!-- 先生ログイン（アプリ名5回タップで表示） -->
-    <div id="pwTeacherArea" style="display:none;width:100%;margin-top:12px;">
-      <p id="pwSubText" style="display:none;color:rgba(255,255,255,0.6);font-size:13px;margin:0 0 10px;">パスワードを入力してください</p>
-      <div id="pwLoadingArea">
-        <div class="pw-spinner"></div>
-        <p>データを読み込み中です…<br>しばらくお待ちください</p>
-      </div>
-      <div class="pw-input-wrap">
-        <span class="pw-input-icon">🔒</span>
-        <input id="pwInput" class="pw-input" type="password" placeholder="パスワードを入力してください" maxlength="20"
-               autocomplete="off" disabled
-               oninput="checkPassword()" onkeydown="if(event.key==='Enter')checkPassword(true)">
-        <span class="pw-input-dots">···</span>
-      </div>
-      <button class="pw-btn" id="pwBtn" onclick="checkPassword(true)" disabled>読み込み中…</button>
-      <div class="pw-error" id="pwError"></div>
+<!-- 学生専用コード入力画面（?student=1 で表示） -->
+<div id="studentLanding" style="display:none;">
+  <div style="text-align:center;padding:0 24px;width:100%;max-width:360px;">
+    <div style="font-size:52px;margin-bottom:8px;">📚</div>
+    <div style="font-size:24px;font-weight:900;color:white;letter-spacing:.05em;">国対くん</div>
+    <div style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:32px;">PT国家試験 問題集</div>
+    <div style="font-size:15px;color:rgba(255,255,255,0.8);margin-bottom:16px;font-weight:600;">
+      先生から受け取ったクイズコードを入力
+    </div>
+    <div style="display:flex;gap:10px;margin-bottom:10px;">
+      <input id="studentCodeInput" type="text" maxlength="6"
+        style="flex:1;padding:16px;border:2px solid rgba(255,255,255,0.3);border-radius:14px;
+               background:rgba(255,255,255,0.12);color:white;font-size:22px;font-family:monospace;
+               letter-spacing:6px;text-transform:uppercase;outline:none;text-align:center;"
+        placeholder="ABC123"
+        oninput="this.value=this.value.toUpperCase()"
+        onkeydown="if(event.key==='Enter')_joinByStudentCode()">
+      <button onclick="_joinByStudentCode()"
+        style="padding:16px 22px;background:linear-gradient(135deg,#2563eb,#3b82f6);
+               border:none;color:white;border-radius:14px;font-size:16px;font-weight:800;
+               cursor:pointer;box-shadow:0 4px 18px rgba(37,99,235,0.5);">
+        参加 →
+      </button>
+    </div>
+    <div id="studentCodeErr" style="color:#fca5a5;font-size:13px;display:none;margin-top:4px;">
+      コードは6文字で入力してください
     </div>
   </div>
 </div>
@@ -2441,20 +2467,9 @@
     }).catch(() => openResults(code, 'コード: ' + code));
   }
 
-  let _pwTapCount = 0, _pwTapTimer = null;
-  function _pwTitleTap() {
-    _pwTapCount++;
-    clearTimeout(_pwTapTimer);
-    _pwTapTimer = setTimeout(() => { _pwTapCount = 0; }, 2000);
-    if (_pwTapCount >= 5) {
-      _pwTapCount = 0;
-      document.getElementById('pwTeacherArea').style.display = 'block';
-    }
-  }
-
-  function joinQuizByCode() {
-    const code = (document.getElementById('quizCodeInput').value || '').trim().toUpperCase();
-    const errEl = document.getElementById('quizCodeError');
+  function _joinByStudentCode() {
+    const code = (document.getElementById('studentCodeInput').value || '').trim().toUpperCase();
+    const errEl = document.getElementById('studentCodeErr');
     if (code.length !== 6) {
       errEl.style.display = 'block'; return;
     }
@@ -7199,6 +7214,8 @@ async function createQuiz() {
   const url = location.origin + location.pathname + '?quiz=' + code;
   document.getElementById('qtmURLBox').textContent    = url;
   document.getElementById('qtmCodeDisplay').textContent = code;
+  const studentURL = location.origin + location.pathname + '?student=1';
+  document.getElementById('qtmStudentURL').textContent = studentURL;
 
   // QRコード生成
   const qrEl = document.getElementById('qtmQRCode');
@@ -7218,6 +7235,18 @@ function copyQuizURL() {
   const url = document.getElementById('qtmURLBox').textContent.trim();
   navigator.clipboard.writeText(url).then(() => {
     const btn = document.querySelector('.qtm-copy-btn');
+    const orig = btn.textContent;
+    btn.textContent = '✓ コピーしました！';
+    setTimeout(() => { btn.textContent = orig; }, 2000);
+  }).catch(() => {
+    prompt('URLをコピーしてください', url);
+  });
+}
+
+function copyStudentURL() {
+  const url = document.getElementById('qtmStudentURL').textContent.trim();
+  navigator.clipboard.writeText(url).then(() => {
+    const btn = document.getElementById('qtmStudentCopyBtn');
     const orig = btn.textContent;
     btn.textContent = '✓ コピーしました！';
     setTimeout(() => { btn.textContent = orig; }, 2000);
@@ -7595,6 +7624,14 @@ function downloadResultsCSV() {
       <button class="qtm-copy-btn" onclick="copyQuizURL()">📋 URLをコピー</button>
       <div style="margin-top:10px;text-align:center;font-size:14px;color:#64748b;">
         クイズコード：<strong id="qtmCodeDisplay" style="font-size:20px;color:#1d4ed8;letter-spacing:4px;font-family:monospace;"></strong>
+      </div>
+      <div style="margin-top:14px;padding:10px 12px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;text-align:left;">
+        <div style="font-size:11px;color:#0369a1;font-weight:700;margin-bottom:4px;">📱 学生用ログインページ（コード入力画面）</div>
+        <div id="qtmStudentURL" style="font-size:11px;color:#0c4a6e;font-family:monospace;word-break:break-all;cursor:pointer;" onclick="copyStudentURL()" title="クリックでコピー"></div>
+        <button onclick="copyStudentURL()" id="qtmStudentCopyBtn"
+          style="margin-top:6px;padding:4px 10px;background:#0ea5e9;color:white;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;">
+          📋 コピー
+        </button>
       </div>
       <button class="qtm-btn-primary" style="margin-top:14px;" onclick="openResults()">📊 結果をリアルタイムで見る</button>
       <button class="qtm-btn-secondary" onclick="showQtmPane('qtmCreatePane','📤 クイズ配信')">← 別のクイズを作る</button>
