@@ -2073,18 +2073,17 @@
     }
   }
 
-  // パスワード画面表示中に1.5秒ごとにイースターエッグ抽選
-  const _moonTimer = setInterval(() => {
-    if (!document.getElementById('passwordScreen')) {
-      clearInterval(_moonTimer);
-      return;
-    }
+  // ページを開いたとき1回だけイースターエッグ抽選（2〜5秒後）
+  let _moonTimer = null;
+  const _eggDelay = 2000 + Math.random() * 3000;
+  _moonTimer = setTimeout(() => {
+    _moonTimer = null;
     _maybeShowMoon();
-  }, 1500);
+  }, _eggDelay);
 
   // ログイン実行（パスワード画面をフェードアウト）
   function _doLogin() {
-    clearInterval(_moonTimer);
+    if (_moonTimer) { clearTimeout(_moonTimer); _moonTimer = null; }
     sessionStorage.setItem('pt-exam-authed', '1'); // リロードでも認証維持
     const scr = document.getElementById('passwordScreen');
     if (!scr || !scr.parentNode) return;
@@ -2249,16 +2248,20 @@
       setTimeout(function() {
         // コンテナの親画面が表示中のときだけ発射
         if (container.parentNode && container.parentNode.style.display !== 'none') {
-          // パスワード画面では約1/100の確率でUFOが出現
-          if (container.id === 'pwStars' && Math.random() < 0.01) {
-            spawnUFO(container);
-          } else {
-            spawnShoot(container);
-            if (Math.random() < 0.25) setTimeout(function(){ spawnShoot(container); }, 300 + Math.random()*300);
-          }
+          spawnShoot(container);
+          if (Math.random() < 0.25) setTimeout(function(){ spawnShoot(container); }, 300 + Math.random()*300);
         }
         scheduleShoot(container);
       }, 3000 + Math.random() * 4000);
+    }
+
+    // UFOはページを開いたとき1回だけ抽選（約1/5の確率、5〜20秒後）
+    function scheduleUFOOnce(container) {
+      if (Math.random() >= 0.2) return; // 1/5の確率で当選
+      var delay = 5000 + Math.random() * 15000;
+      setTimeout(function() {
+        if (container.parentNode) spawnUFO(container);
+      }, delay);
     }
 
     // パスワード画面
@@ -2267,6 +2270,7 @@
       buildStars(pwStars);
       setTimeout(function(){ spawnShoot(pwStars); }, 1800);
       scheduleShoot(pwStars);
+      scheduleUFOOnce(pwStars); // UFOは1回だけ
     }
 
     // ファイル読み込み画面
@@ -3752,8 +3756,10 @@ ${tables}
   }
 
   function _maybeShowMoon() {
+    // 単発抽選（ページを開いたとき1回だけ）なので確率を調整
+    // 彗星: 約1/30、満月: 約1/20、微笑み月: 約1/15、合計~約15%
     const r = Math.random();
-    if (r < 1/1000) {
+    if (r < 1/30) {
       // 大きな彗星が画面をゆっくり横切る
       const topPct = 5 + Math.random() * 35;
       const dur    = 8 + Math.random() * 4;
@@ -3788,14 +3794,14 @@ ${tables}
       </svg>`;
       document.body.appendChild(el);
       setTimeout(() => el.remove(), (dur + 0.5) * 1000);
-    } else if (r < 1/1000 + 1/500) {
+    } else if (r < 1/30 + 1/20) {
       // 満月が地平線からゆっくり昇る
       const el = document.createElement('div');
       el.id = 'fullMoonEgg';
       el.textContent = '🌕';
       document.body.appendChild(el);
       setTimeout(() => el.remove(), 5100);
-    } else if (r < 1/1000 + 1/500 + 1/300) {
+    } else if (r < 1/30 + 1/20 + 1/15) {
       // 微笑む月
       const el = document.createElement('div');
       el.id = 'moonEgg';
