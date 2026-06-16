@@ -1750,6 +1750,7 @@
       box-shadow:0 1px 6px rgba(0,0,0,0.08); margin-bottom:14px;
     }
     .quiz-q-id   { font-size:11px; color:#94a3b8; margin-bottom:6px; }
+    .quiz-q-img  { max-width:100%; border-radius:8px; margin:8px 0 10px; display:block; border:1px solid #e2e8f0; }
     .quiz-q-text { font-size:15px; line-height:1.7; color:#1e293b; }
     .quiz-choices { display:flex; flex-direction:column; gap:10px; margin-bottom:10px; }
     .quiz-choice-btn {
@@ -2118,6 +2119,7 @@
       </div>
       <div class="quiz-q-card">
         <div class="quiz-q-id"   id="quizQIdEl"></div>
+        <img id="quizQImgEl" class="quiz-q-img" src="" alt="問題図" style="display:none;">
         <div class="quiz-q-text" id="quizQTextEl"></div>
       </div>
       <div class="quiz-choices" id="quizChoicesEl"></div>
@@ -6909,8 +6911,13 @@ function _renderQuizQ() {
   document.getElementById('quizProgressEl').textContent = `${_qs.currentIdx+1} / ${tot} 問`;
   const disp = [_qs.grade, _qs.cls, _qs.studentName].filter(Boolean).join(' ');
   document.getElementById('quizStudentEl').textContent  = disp;
-  document.getElementById('quizQIdEl').textContent      = q.id;
-  document.getElementById('quizQTextEl').textContent    = q.text;
+  document.getElementById('quizQIdEl').textContent   = q.id;
+  document.getElementById('quizQTextEl').textContent = q.text;
+  const imgEl = document.getElementById('quizQImgEl');
+  if (imgEl) {
+    if (q.imageData) { imgEl.src = q.imageData; imgEl.style.display = 'block'; }
+    else             { imgEl.src = ''; imgEl.style.display = 'none'; }
+  }
 
   const choicesEl = document.getElementById('quizChoicesEl');
   choicesEl.innerHTML = (q.choices||[]).map((c,i) =>
@@ -7019,6 +7026,7 @@ function _showQuizReview() {
         <span class="review-q-num">${i+1} / ${total}</span>
         <span class="review-q-id">${q.id}</span>
       </div>
+      ${q.imageData ? `<img src="${q.imageData}" alt="問題図" class="quiz-q-img">` : ''}
       <div class="review-q-text">${q.text}</div>
       <div class="review-choices">${choices}</div>
       ${q.explanation ? `<div class="review-explanation"><strong>解説</strong><br>${q.explanation.replace(/\n/g,'<br>')}</div>` : ''}
