@@ -2043,8 +2043,18 @@
     }
   }
 
+  // パスワード画面表示中に1.5秒ごとにイースターエッグ抽選
+  const _moonTimer = setInterval(() => {
+    if (!document.getElementById('passwordScreen')) {
+      clearInterval(_moonTimer);
+      return;
+    }
+    _maybeShowMoon();
+  }, 1500);
+
   // ログイン実行（パスワード画面をフェードアウト）
   function _doLogin() {
+    clearInterval(_moonTimer);
     sessionStorage.setItem('pt-exam-authed', '1'); // リロードでも認証維持
     const scr = document.getElementById('passwordScreen');
     if (!scr || !scr.parentNode) return;
@@ -3766,7 +3776,6 @@ ${tables}
   }
 
   function renderPracQ() {
-    _maybeShowMoon();
     if (typeof _resetContentZoom === 'function') _resetContentZoom();
     const q = practiceData[practiceIdx];
     // 解答・解説の継続表示：グローバルフラグが立っていたら自動で開く
