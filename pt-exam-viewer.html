@@ -5263,6 +5263,8 @@ ${body}</body></html>`;
 
     body.addEventListener('pointerdown', e => {
       if (!inPractice()) return;
+      // マウス（トラックパッド）の左ボタン以外は無視
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
       pts.set(e.pointerId, {x:e.clientX, y:e.clientY});
       if (pts.size === 2) {
         const a = [...pts.values()];
@@ -5301,18 +5303,38 @@ ${body}</body></html>`;
     };
     body.addEventListener('pointerup',     onEnd, {capture:true, passive:true});
     body.addEventListener('pointercancel', onEnd, {capture:true, passive:true});
+    // body外でpointerupされた場合もクリーンアップ
+    document.addEventListener('pointerup',     onEnd, {capture:true, passive:true});
+    document.addEventListener('pointercancel', onEnd, {capture:true, passive:true});
 
-    // Ctrl+wheel（PC トラックパッドピンチ・iPad 共通）→ コンテンツのみ拡大、ヘッダー/ツールバー固定
+    // wheel：Ctrl+wheel=ピンチズーム／通常scroll時にズーム中なら2本指でパン
     body.addEventListener('wheel', e => {
-      if (!e.ctrlKey || !inPractice()) return;
-      e.preventDefault();
-      const br = body.getBoundingClientRect();
-      const mx=e.clientX-br.left, my=e.clientY-br.top;
-      const cX=(mx-_cpx)/_cz, cY=(my-_cpy)/_cz;
-      _cz = Math.max(1, Math.min(5, _cz*(e.deltaY<0?1.1:1/1.1)));
-      _cpx=mx-cX*_cz; _cpy=my-cY*_cz;
-      if (_cz===1){_cpx=0;_cpy=0;}
-      clampPan(); applyZoom();
+      if (!inPractice()) return;
+      if (e.ctrlKey) {
+        // ピンチズーム（なめらかにdeltaYの大きさに比例）
+        e.preventDefault();
+        panning = false; // ズーム中はパン状態を解除
+        const br = body.getBoundingClientRect();
+        const mx=e.clientX-br.left, my=e.clientY-br.top;
+        const cX=(mx-_cpx)/_cz, cY=(my-_cpy)/_cz;
+        // deltaYの量に比例した滑らかなズーム（Math.powで指数的に）
+        let delta = e.deltaY;
+        if (e.deltaMode === 1) delta *= 15;
+        if (e.deltaMode === 2) delta *= 200;
+        const factor = Math.pow(0.997, delta);
+        _cz = Math.max(1, Math.min(5, _cz * factor));
+        _cpx=mx-cX*_cz; _cpy=my-cY*_cz;
+        if (_cz===1){_cpx=0;_cpy=0;}
+        clampPan(); applyZoom();
+      } else if (_cz > 1) {
+        // 2本指スクロールでパン（ズーム中のみ）
+        e.preventDefault();
+        let dx = e.deltaX, dy = e.deltaY;
+        if (e.deltaMode === 1) { dx*=15; dy*=15; }
+        if (e.deltaMode === 2) { dx*=200; dy*=200; }
+        _cpx -= dx; _cpy -= dy;
+        clampPan(); applyZoom();
+      }
     }, {passive:false});
 
     // ブラウザのネイティブズームを抑止（ヘッダー/ツールバーが拡大されるのを防ぐ）
