@@ -3756,10 +3756,9 @@ ${tables}
   }
 
   function _maybeShowMoon() {
-    // 単発抽選（ページを開いたとき1回だけ）なので確率を調整
-    // 彗星: 約1/30、満月: 約1/20、微笑み月: 約1/15、合計~約15%
+    // ページを開いたとき1回だけ抽選。超レアな演出のため確率は低め
     const r = Math.random();
-    if (r < 1/30) {
+    if (r < 1/1000) {
       // 大きな彗星が画面をゆっくり横切る
       const topPct = 5 + Math.random() * 35;
       const dur    = 8 + Math.random() * 4;
@@ -3794,14 +3793,14 @@ ${tables}
       </svg>`;
       document.body.appendChild(el);
       setTimeout(() => el.remove(), (dur + 0.5) * 1000);
-    } else if (r < 1/30 + 1/20) {
+    } else if (r < 1/1000 + 1/500) {
       // 満月が地平線からゆっくり昇る
       const el = document.createElement('div');
       el.id = 'fullMoonEgg';
       el.textContent = '🌕';
       document.body.appendChild(el);
       setTimeout(() => el.remove(), 5100);
-    } else if (r < 1/30 + 1/20 + 1/15) {
+    } else if (r < 1/1000 + 1/500 + 1/300) {
       // 微笑む月
       const el = document.createElement('div');
       el.id = 'moonEgg';
