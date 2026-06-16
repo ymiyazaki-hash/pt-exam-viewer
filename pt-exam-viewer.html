@@ -12,6 +12,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="theme-color" content="#060d2e">
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -1659,6 +1661,162 @@
     .pw-btn:hover { background: linear-gradient(135deg, #4d7ef7,#1d4ed8); transform: translateY(-1px); }
     .pw-error { color: #fca5a5; font-size: 13px; margin-top: 10px; min-height: 18px; }
 
+    /* ════════════════════════════════════════
+       クイズ配信 CSS
+    ════════════════════════════════════════ */
+    .btn-quiz-create {
+      width:100%; padding:11px 14px;
+      background:linear-gradient(135deg,#7c3aed,#2563eb);
+      color:white; border:none; border-radius:10px;
+      font-size:13px; font-weight:700; cursor:pointer; margin-top:8px;
+      letter-spacing:0.5px; box-shadow:0 2px 8px rgba(124,58,237,0.3);
+      transition:opacity 0.15s, transform 0.15s;
+    }
+    .btn-quiz-create:hover { opacity:0.9; transform:translateY(-1px); }
+
+    /* ── 学生クイズ画面 ── */
+    #quizScreen {
+      display:none; flex-direction:column;
+      min-height:100vh; min-height:100dvh; background:#eef2ff;
+    }
+    .quiz-header {
+      background:linear-gradient(135deg,#1e3a8a,#3b82f6); color:white;
+      padding:14px 18px; display:flex; align-items:center; gap:12px;
+      box-shadow:0 2px 8px rgba(30,58,138,0.3); flex-shrink:0;
+    }
+    .quiz-title { font-size:16px; font-weight:800; }
+    .quiz-meta  { font-size:12px; opacity:0.8; margin-top:2px; }
+
+    .quiz-name-pane {
+      flex:1; display:flex; flex-direction:column;
+      align-items:center; justify-content:center; padding:32px 24px; gap:20px;
+    }
+    .quiz-name-input {
+      width:100%; max-width:320px; padding:14px 18px;
+      border:2px solid #c7d2fe; border-radius:14px;
+      font-size:18px; text-align:center; outline:none; background:white; color:#1e293b;
+    }
+    .quiz-name-input:focus { border-color:#3b82f6; }
+    .quiz-start-btn {
+      width:100%; max-width:320px; padding:16px;
+      background:linear-gradient(135deg,#1e3a8a,#3b82f6); color:white;
+      border:none; border-radius:14px; font-size:17px; font-weight:700;
+      cursor:pointer; box-shadow:0 4px 14px rgba(30,58,138,0.3);
+    }
+    .quiz-q-pane {
+      display:none; flex:1; flex-direction:column; overflow-y:auto; min-height:0;
+    }
+    .quiz-q-inner { padding:16px; padding-bottom:0; }
+    .quiz-progress-bar {
+      display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;
+    }
+    .quiz-q-card {
+      background:white; border-radius:16px; padding:18px;
+      box-shadow:0 1px 6px rgba(0,0,0,0.08); margin-bottom:14px;
+    }
+    .quiz-q-id   { font-size:11px; color:#94a3b8; margin-bottom:6px; }
+    .quiz-q-text { font-size:15px; line-height:1.7; color:#1e293b; }
+    .quiz-choices { display:flex; flex-direction:column; gap:10px; margin-bottom:10px; }
+    .quiz-choice-btn {
+      width:100%; padding:14px 16px; background:white; border:2px solid #e2e8f0;
+      border-radius:12px; font-size:14px; text-align:left; cursor:pointer;
+      color:#374151; line-height:1.4; transition:all 0.15s;
+    }
+    .quiz-choice-btn:hover  { border-color:#93c5fd; background:#eff6ff; }
+    .quiz-choice-btn.selected { background:#eff6ff; border-color:#3b82f6; color:#1d4ed8; font-weight:600; }
+    .quiz-next-wrap {
+      padding:14px 16px; padding-bottom:calc(14px + env(safe-area-inset-bottom,0px));
+      background:white; border-top:1px solid #f1f5f9; flex-shrink:0;
+    }
+    .quiz-next-btn {
+      width:100%; padding:15px;
+      background:linear-gradient(135deg,#1e3a8a,#3b82f6); color:white;
+      border:none; border-radius:12px; font-size:16px; font-weight:700; cursor:pointer;
+    }
+    .quiz-next-btn:disabled { opacity:0.35; cursor:not-allowed; }
+    .quiz-done-pane {
+      display:none; flex:1; flex-direction:column;
+      align-items:center; justify-content:center; padding:32px 24px; gap:14px; text-align:center;
+    }
+    .quiz-done-score { font-size:72px; font-weight:900; color:#1d4ed8; line-height:1; }
+    .quiz-done-label { font-size:20px; font-weight:800; color:#1e3a8a; }
+    .quiz-done-sub   { font-size:15px; color:#64748b; }
+    .quiz-done-status{
+      font-size:14px; color:#16a34a; font-weight:700;
+      background:#dcfce7; padding:8px 20px; border-radius:20px;
+    }
+
+    /* ── 先生クイズモーダル ── */
+    #quizTeacherModal {
+      display:none; position:fixed; inset:0; z-index:1200;
+      background:#f0f4ff; flex-direction:column;
+    }
+    .qtm-header {
+      background:linear-gradient(135deg,#1e3a8a,#3b82f6); color:white;
+      padding:14px 18px; display:flex; align-items:center; justify-content:space-between;
+      flex-shrink:0;
+    }
+    .qtm-close-btn {
+      background:rgba(255,255,255,0.2); border:none; color:white;
+      width:36px; height:36px; border-radius:50%;
+      font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center;
+    }
+    .qtm-body { flex:1; overflow-y:auto; padding:20px; }
+    .qtm-pane { display:none; }
+    .qtm-pane.active { display:block; }
+    .qtm-label {
+      display:block; font-size:12px; font-weight:700; color:#64748b;
+      margin-bottom:6px; margin-top:18px; letter-spacing:0.5px; text-transform:uppercase;
+    }
+    .qtm-select {
+      width:100%; padding:12px 14px; border:2px solid #e2e8f0;
+      border-radius:10px; font-size:15px; background:white; color:#1e293b; outline:none;
+    }
+    .qtm-select:focus { border-color:#3b82f6; }
+    .qtm-btn-primary {
+      width:100%; padding:15px; margin-top:24px;
+      background:linear-gradient(135deg,#1e3a8a,#3b82f6); color:white;
+      border:none; border-radius:12px; font-size:16px; font-weight:700; cursor:pointer;
+      box-shadow:0 4px 12px rgba(30,58,138,0.25);
+    }
+    .qtm-btn-secondary {
+      width:100%; padding:13px; margin-top:10px;
+      background:white; border:2px solid #3b82f6; color:#1d4ed8;
+      border-radius:12px; font-size:15px; font-weight:600; cursor:pointer;
+    }
+    .qtm-url-box {
+      background:white; border:2px solid #c7d2fe; border-radius:12px;
+      padding:14px; font-size:13px; color:#1e293b; word-break:break-all;
+      margin-top:14px; line-height:1.7;
+    }
+    .qtm-copy-btn {
+      width:100%; padding:12px; margin-top:8px;
+      background:#1d4ed8; color:white; border:none; border-radius:10px;
+      font-size:14px; font-weight:700; cursor:pointer;
+    }
+    .qtm-results-table { width:100%; border-collapse:collapse; margin-top:8px; font-size:14px; }
+    .qtm-results-table th {
+      background:#1e3a8a; color:white; padding:10px 12px; text-align:left; font-size:12px;
+    }
+    .qtm-results-table td { padding:10px 12px; border-bottom:1px solid #e2e8f0; background:white; }
+    .qtm-results-table tr:nth-child(even) td { background:#f8fafc; }
+    .qtm-score-bar { display:flex; align-items:center; gap:6px; }
+    .qtm-score-fill { height:6px; border-radius:3px; transition:width 0.3s; min-width:2px; }
+    .qtm-recent {
+      background:white; border-radius:12px; padding:14px;
+      margin-top:18px; border:1px solid #e2e8f0;
+    }
+    .qtm-recent-title { font-size:12px; font-weight:700; color:#64748b; margin-bottom:10px; letter-spacing:0.5px; text-transform:uppercase; }
+    .qtm-recent-item {
+      display:flex; justify-content:space-between; align-items:center;
+      padding:9px 0; border-bottom:1px solid #f1f5f9;
+    }
+    .qtm-recent-item:last-child { border-bottom:none; }
+    .qtm-recent-view {
+      padding:6px 12px; background:#eff6ff; color:#1d4ed8;
+      border:none; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer;
+    }
+
   </style>
 </head>
 <body>
@@ -1804,6 +1962,62 @@
 
 <div id="loadScreen">
   <div id="lsStars"></div>
+<!-- ════════════════════════════════════════
+     学生クイズ回答画面（?quiz=CODE で表示）
+════════════════════════════════════════ -->
+<div id="quizScreen">
+  <div class="quiz-header">
+    <span style="font-size:22px;flex-shrink:0">📚</span>
+    <div>
+      <div class="quiz-title" id="quizTitleEl">クイズ読み込み中...</div>
+      <div class="quiz-meta"  id="quizMetaEl"></div>
+    </div>
+  </div>
+
+  <!-- 名前入力 -->
+  <div class="quiz-name-pane" id="quizNamePane">
+    <div style="font-size:56px">✏️</div>
+    <div style="font-size:19px;font-weight:800;color:#1e3a8a;text-align:center;">名前を入力してください</div>
+    <input class="quiz-name-input" id="quizNameInput" type="text" placeholder="例：田中太郎"
+      maxlength="30" onkeydown="if(event.key==='Enter')quizStartAnswer()">
+    <button class="quiz-start-btn" onclick="quizStartAnswer()">スタート →</button>
+  </div>
+
+  <!-- 問題回答 -->
+  <div class="quiz-q-pane" id="quizQPane">
+    <div class="quiz-q-inner">
+      <div class="quiz-progress-bar">
+        <span id="quizProgressEl" style="font-size:13px;color:#64748b;font-weight:600;"></span>
+        <span id="quizStudentEl"  style="font-size:13px;color:#1e40af;font-weight:600;"></span>
+      </div>
+      <div class="quiz-q-card">
+        <div class="quiz-q-id"   id="quizQIdEl"></div>
+        <div class="quiz-q-text" id="quizQTextEl"></div>
+      </div>
+      <div class="quiz-choices" id="quizChoicesEl"></div>
+    </div>
+    <div class="quiz-next-wrap">
+      <button class="quiz-next-btn" id="quizNextBtn" onclick="quizNextQ()" disabled>次の問題 →</button>
+    </div>
+  </div>
+
+  <!-- 完了 -->
+  <div class="quiz-done-pane" id="quizDonePane">
+    <div style="font-size:64px">🎉</div>
+    <div class="quiz-done-label"  id="quizDoneName"></div>
+    <div class="quiz-done-score"  id="quizDoneScore"></div>
+    <div class="quiz-done-sub"    id="quizDoneSub"></div>
+    <div class="quiz-done-status" id="quizDoneStatus">送信中...</div>
+  </div>
+
+  <!-- エラー -->
+  <div id="quizErrorPane" style="display:none;flex:1;flex-direction:column;align-items:center;justify-content:center;padding:32px;gap:16px;text-align:center;">
+    <div style="font-size:48px">⚠️</div>
+    <div style="font-size:16px;color:#dc2626;font-weight:600;" id="quizErrorMsg"></div>
+    <div style="font-size:13px;color:#64748b;">先生にクイズコードを確認してください</div>
+  </div>
+</div>
+
   <div class="ls-grid"></div>
   <div class="load-card">
     <div class="ls-logo">📋</div>
@@ -1908,6 +2122,7 @@
           <button id="exportListPdfBtn" class="btn-export btn-list-pdf" onclick="exportAnswerPDF()" disabled>📋 PDF<br>解答一覧</button>
         </div>
         <button class="btn-reset" onclick="resetFilters()">フィルターをリセット</button>
+        <button class="btn-quiz-create" onclick="openQuizTeacher()">📤 クイズを配信する</button>
       </div>
     </div>
 
@@ -6453,6 +6668,403 @@ ${body}</body></html>`;
   })();
 </script>
 
+<script>
+// ════════════════════════════════════════════════════════════
+//  クイズ配信機能  (Firebase Realtime Database)
+// ════════════════════════════════════════════════════════════
+
+// ▼▼▼ Firebase コンソールからコピーした設定をここに貼り付けてください ▼▼▼
+const FIREBASE_CONFIG = {
+  apiKey:            "REPLACE_API_KEY",
+  authDomain:        "REPLACE.firebaseapp.com",
+  databaseURL:       "https://REPLACE-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:         "REPLACE",
+  storageBucket:     "REPLACE.appspot.com",
+  messagingSenderId: "REPLACE",
+  appId:             "REPLACE"
+};
+// ▲▲▲
+
+let _fbDb = null;
+function _initFb() {
+  if (_fbDb) return _fbDb;
+  try {
+    if (!firebase.apps || firebase.apps.length === 0) firebase.initializeApp(FIREBASE_CONFIG);
+    _fbDb = firebase.database();
+    return _fbDb;
+  } catch(e) { console.warn('Firebase init error:', e); return null; }
+}
+
+// ── クイズコード生成（読み間違いしにくい文字のみ）──────────────────────────
+function _genCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  return Array.from({length:6}, () => chars[Math.floor(Math.random()*chars.length)]).join('');
+}
+
+// ── ページ読み込み時にクイズモードを検出 ─────────────────────────────────────
+const _quizCode = new URLSearchParams(window.location.search).get('quiz');
+if (_quizCode) {
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('loadScreen').style.display = 'none';
+    const qs = document.getElementById('quizScreen');
+    qs.style.display = 'flex';
+    qs.style.flexDirection = 'column';
+    _initQuizStudent(_quizCode);
+  });
+}
+
+// ════════════════════════════════════════
+//  学生側ロジック
+// ════════════════════════════════════════
+let _qs = null;
+
+async function _initQuizStudent(code) {
+  const _showPane = id => {
+    ['quizNamePane','quizQPane','quizDonePane','quizErrorPane'].forEach(p => {
+      const el = document.getElementById(p);
+      if (!el) return;
+      const isTarget = p === id;
+      el.style.display = isTarget ? 'flex' : 'none';
+      if (isTarget) el.style.flexDirection = 'column';
+    });
+  };
+  try {
+    const db = _initFb();
+    if (!db) throw new Error('Firebase が設定されていません（先生に連絡してください）');
+
+    const snap = await db.ref('quizzes/' + code).get();
+    if (!snap.exists()) throw new Error('クイズが見つかりません（コード: ' + code + '）');
+    const quiz = snap.val();
+
+    const resp = await fetch('data.json');
+    const allQ = await resp.json();
+    const qMap = {};
+    allQ.forEach(q => { qMap[q.id] = q; });
+    const questions = (quiz.questionIds || []).map(id => qMap[id]).filter(Boolean);
+    if (questions.length === 0) throw new Error('問題データが読み込めませんでした');
+
+    document.getElementById('quizTitleEl').textContent = quiz.title || 'クイズ';
+    document.getElementById('quizMetaEl').textContent  = questions.length + '問';
+    document.title = quiz.title || 'クイズ';
+
+    _qs = { code, quiz, questions, answers:{}, currentIdx:0, studentName:'' };
+    _showPane('quizNamePane');
+    setTimeout(() => { const inp = document.getElementById('quizNameInput'); if(inp) inp.focus(); }, 300);
+  } catch(e) {
+    document.getElementById('quizErrorMsg').textContent = e.message || '読み込みエラー';
+    const ep = document.getElementById('quizErrorPane');
+    ep.style.display = 'flex'; ep.style.flexDirection = 'column';
+    ['quizNamePane','quizQPane','quizDonePane'].forEach(p => {
+      const el = document.getElementById(p); if(el) el.style.display = 'none';
+    });
+  }
+}
+
+function quizStartAnswer() {
+  const name = (document.getElementById('quizNameInput').value || '').trim();
+  if (!name) {
+    const inp = document.getElementById('quizNameInput');
+    inp.style.borderColor = '#ef4444'; inp.focus(); return;
+  }
+  _qs.studentName = name;
+  document.getElementById('quizNamePane').style.display = 'none';
+  const qp = document.getElementById('quizQPane');
+  qp.style.display = 'flex'; qp.style.flexDirection = 'column';
+  _renderQuizQ();
+}
+
+function _renderQuizQ() {
+  const q   = _qs.questions[_qs.currentIdx];
+  const tot = _qs.questions.length;
+  document.getElementById('quizProgressEl').textContent = `${_qs.currentIdx+1} / ${tot} 問`;
+  document.getElementById('quizStudentEl').textContent  = _qs.studentName;
+  document.getElementById('quizQIdEl').textContent      = q.id;
+  document.getElementById('quizQTextEl').textContent    = q.text;
+
+  const choicesEl = document.getElementById('quizChoicesEl');
+  choicesEl.innerHTML = (q.choices||[]).map((c,i) =>
+    `<button class="quiz-choice-btn" onclick="quizSelectChoice(${i+1})" id="qcb${i+1}">
+      <span style="font-weight:700;color:#3b82f6;margin-right:8px;">${i+1}</span>${c}
+    </button>`
+  ).join('');
+
+  const prev = _qs.answers[q.id];
+  if (prev !== undefined) {
+    const b = document.getElementById('qcb'+prev);
+    if (b) b.classList.add('selected');
+  }
+  const nb = document.getElementById('quizNextBtn');
+  nb.disabled = (prev === undefined);
+  nb.textContent = (_qs.currentIdx === tot-1) ? '回答を送信する ✓' : '次の問題 →';
+}
+
+function quizSelectChoice(n) {
+  const q = _qs.questions[_qs.currentIdx];
+  _qs.answers[q.id] = n;
+  (q.choices||[]).forEach((_,i) => {
+    const b = document.getElementById('qcb'+(i+1));
+    if (b) b.classList.toggle('selected', i+1===n);
+  });
+  document.getElementById('quizNextBtn').disabled = false;
+}
+
+function quizNextQ() {
+  const q = _qs.questions[_qs.currentIdx];
+  if (_qs.answers[q.id] === undefined) return;
+  if (_qs.currentIdx < _qs.questions.length-1) {
+    _qs.currentIdx++;
+    _renderQuizQ();
+    const pane = document.getElementById('quizQPane'); if(pane) pane.scrollTop = 0;
+  } else {
+    _submitQuizAnswers();
+  }
+}
+
+async function _submitQuizAnswers() {
+  let score = 0;
+  _qs.questions.forEach(q => {
+    const ans     = _qs.answers[q.id];
+    const correct = Array.isArray(q.answer) ? q.answer.map(Number) : [Number(q.answer)];
+    if (ans !== undefined && correct.includes(ans)) score++;
+  });
+  const total = _qs.questions.length;
+
+  document.getElementById('quizQPane').style.display = 'none';
+  const dp = document.getElementById('quizDonePane');
+  dp.style.display = 'flex'; dp.style.flexDirection = 'column';
+  document.getElementById('quizDoneName').textContent  = _qs.studentName + ' さんの結果';
+  document.getElementById('quizDoneScore').textContent = `${score} / ${total}`;
+  document.getElementById('quizDoneSub').textContent   = `正答率 ${Math.round(score/total*100)}%`;
+  document.getElementById('quizDoneStatus').textContent = '送信中...';
+
+  try {
+    const db = _initFb();
+    if (!db) throw new Error('Firebase未設定');
+    const key = _qs.studentName.replace(/[.#$[\]/\s]/g,'_');
+    await db.ref(`results/${_qs.code}/${key}`).set({
+      name: _qs.studentName, answers: _qs.answers, score, total,
+      submittedAt: Date.now()
+    });
+    const st = document.getElementById('quizDoneStatus');
+    st.textContent = '✓ 送信完了！先生に届きました';
+    st.style.background = '#dcfce7'; st.style.color = '#16a34a';
+  } catch(e) {
+    const st = document.getElementById('quizDoneStatus');
+    st.textContent = '⚠ 送信エラー: ' + e.message;
+    st.style.background = '#fee2e2'; st.style.color = '#dc2626';
+  }
+}
+
+// ════════════════════════════════════════
+//  先生側ロジック
+// ════════════════════════════════════════
+let _currentQCode = null;
+let _currentQTitle = null;
+let _resultsListener = null;
+
+function openQuizTeacher() {
+  const modal = document.getElementById('quizTeacherModal');
+  modal.style.display = 'flex'; modal.style.flexDirection = 'column';
+  // 分野セレクト構築
+  const sel = document.getElementById('qtmFieldSel');
+  if (sel && sel.options.length <= 1 && typeof allData !== 'undefined') {
+    const fields = [...new Set(allData.map(q=>q.field).filter(Boolean))].sort();
+    sel.innerHTML = '<option value="">全分野（ランダム）</option>' +
+      fields.map(f => `<option value="${f}">${f}</option>`).join('');
+  }
+  _renderRecentQuizzes();
+}
+
+function closeQuizTeacher() {
+  document.getElementById('quizTeacherModal').style.display = 'none';
+  if (_resultsListener) { _resultsListener(); _resultsListener = null; }
+}
+
+function showQtmPane(id, title) {
+  ['qtmCreatePane','qtmCreatedPane','qtmResultsPane'].forEach(p =>
+    document.getElementById(p).classList.toggle('active', p===id)
+  );
+  document.getElementById('qtmHeaderTitle').textContent = title;
+}
+
+async function createQuiz() {
+  const db = _initFb();
+  if (!db || FIREBASE_CONFIG.apiKey === 'REPLACE_API_KEY') {
+    alert('Firebase設定が未完了です。\nFIREBASE_CONFIG を入力してください。');
+    return;
+  }
+  const field = document.getElementById('qtmFieldSel').value;
+  const count = parseInt(document.getElementById('qtmCountSel').value);
+
+  let pool = (typeof allData!=='undefined' ? allData : []).filter(q => !field || q.field===field);
+  if (pool.length < count) {
+    alert(`「${field||'全分野'}」の問題数が${count}問に足りません（${pool.length}問）`);
+    return;
+  }
+  // Fisher-Yates シャッフル
+  for (let i=pool.length-1;i>0;i--) {
+    const j=Math.floor(Math.random()*(i+1)); [pool[i],pool[j]]=[pool[j],pool[i]];
+  }
+  const selected = pool.slice(0,count);
+  const code  = _genCode();
+  const title = (field||'全分野') + ' ' + count + '問テスト';
+
+  await db.ref('quizzes/'+code).set({
+    title, field:field||'全分野',
+    questionIds: selected.map(q=>q.id),
+    createdAt: Date.now(), isOpen:true
+  });
+
+  _currentQCode  = code;
+  _currentQTitle = title;
+
+  const url = location.origin + location.pathname + '?quiz=' + code;
+  document.getElementById('qtmURLBox').textContent    = url;
+  document.getElementById('qtmCodeDisplay').textContent = code;
+
+  const recent = JSON.parse(localStorage.getItem('ptQuizRecent')||'[]');
+  recent.unshift({code, title, createdAt:Date.now()});
+  localStorage.setItem('ptQuizRecent', JSON.stringify(recent.slice(0,8)));
+
+  showQtmPane('qtmCreatedPane','📤 配信中');
+}
+
+function copyQuizURL() {
+  const url = document.getElementById('qtmURLBox').textContent.trim();
+  navigator.clipboard.writeText(url).then(() => {
+    const btn = document.querySelector('.qtm-copy-btn');
+    const orig = btn.textContent;
+    btn.textContent = '✓ コピーしました！';
+    setTimeout(() => { btn.textContent = orig; }, 2000);
+  }).catch(() => {
+    prompt('URLをコピーしてください', url);
+  });
+}
+
+function openResults(code, title) {
+  const c = code || _currentQCode;
+  const t = title || _currentQTitle;
+  if (!c) return;
+  _currentQCode  = c;
+  _currentQTitle = t;
+
+  document.getElementById('qtmResultsTitle').textContent = '📊 ' + (t||'クイズ結果');
+  document.getElementById('qtmResultsMeta').textContent  = 'コード: ' + c;
+  document.getElementById('qtmResultsContent').innerHTML =
+    '<div style="text-align:center;color:#94a3b8;padding:48px 0;font-size:14px;">回答待ち中...</div>';
+
+  showQtmPane('qtmResultsPane','📊 結果');
+
+  const db = _initFb(); if (!db) return;
+  if (_resultsListener) { _resultsListener(); _resultsListener = null; }
+  const ref = db.ref('results/'+c);
+  ref.on('value', snap => _renderResults(snap.val()||{}, c));
+  _resultsListener = () => ref.off('value');
+}
+
+function _renderResults(data, code) {
+  const entries = Object.values(data).sort((a,b)=>b.score/b.total - a.score/a.total);
+  document.getElementById('qtmResultsMeta').textContent =
+    `コード: ${code}　参加: ${entries.length}名`;
+
+  if (entries.length===0) {
+    document.getElementById('qtmResultsContent').innerHTML =
+      '<div style="text-align:center;color:#94a3b8;padding:48px 0;font-size:14px;">回答待ち中...</div>';
+    return;
+  }
+
+  const pctColor = p => p>=80?'#16a34a':p>=60?'#d97706':'#dc2626';
+
+  const rows = entries.map((e,i) => {
+    const pct = Math.round(e.score/e.total*100);
+    return `<tr>
+      <td style="font-weight:600;color:#1e293b;">${i+1}. ${e.name}</td>
+      <td style="text-align:center;font-weight:700;color:#1d4ed8;">${e.score}/${e.total}</td>
+      <td><div class="qtm-score-bar">
+        <div class="qtm-score-fill" style="width:${pct}%;max-width:80px;background:${pctColor(pct)}"></div>
+        <span style="font-size:12px;color:#64748b;">${pct}%</span>
+      </div></td>
+    </tr>`;
+  }).join('');
+
+  // 問題別正答率
+  const qStats = {};
+  const allQ = typeof allData !== 'undefined' ? allData : [];
+  const qMap2 = {}; allQ.forEach(q => { qMap2[q.id]=q; });
+  entries.forEach(e => {
+    Object.entries(e.answers||{}).forEach(([qid, ans]) => {
+      if (!qStats[qid]) qStats[qid]={correct:0,total:0};
+      qStats[qid].total++;
+      const q2 = qMap2[qid];
+      if (q2) {
+        const cor = Array.isArray(q2.answer)?q2.answer.map(Number):[Number(q2.answer)];
+        if (cor.includes(ans)) qStats[qid].correct++;
+      }
+    });
+  });
+
+  const qRows = Object.entries(qStats).map(([qid,s]) => {
+    const pct = Math.round(s.correct/s.total*100);
+    return `<tr>
+      <td style="font-size:12px;color:#475569;">${qid}</td>
+      <td style="text-align:center;font-size:13px;">${s.correct}/${s.total}</td>
+      <td><div class="qtm-score-bar">
+        <div class="qtm-score-fill" style="width:${pct}%;max-width:80px;background:${pctColor(pct)}"></div>
+        <span style="font-size:12px;color:#64748b;">${pct}%</span>
+      </div></td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('qtmResultsContent').innerHTML = `
+    <div style="font-size:12px;font-weight:700;color:#64748b;margin-bottom:8px;letter-spacing:.5px;">参加者 (${entries.length}名)</div>
+    <table class="qtm-results-table">
+      <thead><tr><th>名前</th><th>点数</th><th>正答率</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    ${qRows ? `
+    <div style="font-size:12px;font-weight:700;color:#64748b;margin:18px 0 8px;letter-spacing:.5px;">問題別正答率</div>
+    <table class="qtm-results-table">
+      <thead><tr><th>問題ID</th><th>正解数</th><th>正答率</th></tr></thead>
+      <tbody>${qRows}</tbody>
+    </table>` : ''}
+  `;
+}
+
+function _renderRecentQuizzes() {
+  const recent = JSON.parse(localStorage.getItem('ptQuizRecent')||'[]');
+  const wrap = document.getElementById('qtmRecentWrap');
+  if (!wrap || recent.length===0) { if(wrap) wrap.innerHTML=''; return; }
+  wrap.innerHTML = `<div class="qtm-recent">
+    <div class="qtm-recent-title">最近のクイズ</div>
+    ${recent.map(r=>`
+      <div class="qtm-recent-item">
+        <div>
+          <div style="font-size:13px;font-weight:600;color:#1e293b;">${r.title}</div>
+          <div style="font-size:11px;color:#94a3b8;font-family:monospace;letter-spacing:2px;">${r.code}</div>
+        </div>
+        <button class="qtm-recent-view" onclick="openResults('${r.code}','${r.title}')">結果を見る</button>
+      </div>`).join('')}
+  </div>`;
+}
+
+function downloadResultsCSV() {
+  const db = _initFb(); if (!db||!_currentQCode) return;
+  db.ref('results/'+_currentQCode).get().then(snap => {
+    const entries = Object.values(snap.val()||{});
+    if (entries.length===0) { alert('まだ回答がありません'); return; }
+    const csv = [['名前','点数','合計','正答率'],
+      ...entries.map(e=>[e.name,e.score,e.total,Math.round(e.score/e.total*100)+'%'])
+    ].map(r=>r.join(',')).join('\n');
+    const blob = new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8;'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = (_currentQTitle||'quiz')+'_results.csv';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+}
+</script>
+
 <!-- ✨ 取扱説明モーダル -->
 <div id="helpModal" onclick="if(event.target===this)closeHelpModal()">
   <div class="help-box">
@@ -6630,6 +7242,80 @@ ${body}</body></html>`;
     </div>
   </div>
 </div><!-- /sessionModal -->
+
+<!-- ════════════════════════════════════════
+     先生用クイズ配信モーダル
+════════════════════════════════════════ -->
+<div id="quizTeacherModal">
+  <div class="qtm-header">
+    <div style="font-size:16px;font-weight:800;" id="qtmHeaderTitle">📤 クイズ配信</div>
+    <button class="qtm-close-btn" onclick="closeQuizTeacher()">✕</button>
+  </div>
+  <div class="qtm-body">
+
+    <!-- 作成ペイン -->
+    <div class="qtm-pane active" id="qtmCreatePane">
+      <div style="font-size:18px;font-weight:800;color:#1e3a8a;">クイズを作成</div>
+      <div style="font-size:13px;color:#64748b;margin-top:4px;">分野と問題数を選んで配信URLを発行します</div>
+
+      <label class="qtm-label">分野</label>
+      <select class="qtm-select" id="qtmFieldSel"><option value="">全分野（ランダム）</option></select>
+
+      <label class="qtm-label">問題数</label>
+      <select class="qtm-select" id="qtmCountSel">
+        <option value="5">5問</option>
+        <option value="10" selected>10問</option>
+        <option value="15">15問</option>
+        <option value="20">20問</option>
+        <option value="30">30問</option>
+      </select>
+
+      <button class="qtm-btn-primary" onclick="createQuiz()">クイズを作成 →</button>
+      <div id="qtmRecentWrap"></div>
+    </div>
+
+    <!-- 発行済みペイン -->
+    <div class="qtm-pane" id="qtmCreatedPane">
+      <div style="font-size:18px;font-weight:800;color:#1e3a8a;">配信準備完了！</div>
+      <div style="font-size:13px;color:#64748b;margin-top:4px;">以下のURLを学生にLINE等で送ってください</div>
+      <div class="qtm-url-box" id="qtmURLBox"></div>
+      <button class="qtm-copy-btn" onclick="copyQuizURL()">📋 URLをコピー</button>
+      <div style="margin-top:14px;text-align:center;font-size:14px;color:#64748b;">
+        クイズコード：<strong id="qtmCodeDisplay" style="font-size:20px;color:#1d4ed8;letter-spacing:4px;font-family:monospace;"></strong>
+      </div>
+      <button class="qtm-btn-primary" style="margin-top:18px;" onclick="openResults()">📊 結果をリアルタイムで見る</button>
+      <button class="qtm-btn-secondary" onclick="showQtmPane('qtmCreatePane','📤 クイズ配信')">← 別のクイズを作る</button>
+    </div>
+
+    <!-- 結果ペイン -->
+    <div class="qtm-pane" id="qtmResultsPane">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+        <button onclick="showQtmPane('qtmCreatedPane','📤 配信中')"
+          style="background:none;border:none;font-size:24px;cursor:pointer;color:#3b82f6;line-height:1;">←</button>
+        <div style="flex:1;">
+          <div style="font-size:16px;font-weight:800;color:#1e3a8a;" id="qtmResultsTitle">結果</div>
+          <div style="font-size:12px;color:#64748b;" id="qtmResultsMeta"></div>
+        </div>
+        <span style="display:flex;align-items:center;gap:4px;">
+          <span style="width:8px;height:8px;background:#16a34a;border-radius:50%;display:inline-block;animation:livePulse 1.5s infinite;"></span>
+          <span style="font-size:12px;color:#16a34a;font-weight:700;">LIVE</span>
+        </span>
+      </div>
+      <div id="qtmResultsContent">
+        <div style="text-align:center;color:#94a3b8;padding:48px 0;font-size:14px;">回答待ち中...</div>
+      </div>
+      <button class="qtm-btn-secondary" style="margin-top:16px;" onclick="downloadResultsCSV()">📥 CSVダウンロード</button>
+    </div>
+
+  </div>
+</div>
+
+<style>
+@keyframes livePulse {
+  0%,100% { opacity:1; transform:scale(1); }
+  50%      { opacity:0.4; transform:scale(1.4); }
+}
+</style>
 
 </body>
 </html>
