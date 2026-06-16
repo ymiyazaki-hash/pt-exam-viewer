@@ -1837,8 +1837,16 @@
     .review-explanation {
       background:#eff6ff; border-left:4px solid #3b82f6;
       border-radius:0 10px 10px 0; padding:12px 14px;
-      font-size:13px; line-height:1.7; color:#1e40af;
+      font-size:13px; line-height:1.7; color:#1e40af; margin-bottom:8px;
     }
+    .review-ce { display:flex; flex-direction:column; gap:6px; margin-top:4px; }
+    .review-ce-item {
+      display:flex; gap:8px; align-items:flex-start;
+      font-size:12px; line-height:1.6; color:#475569;
+      background:#f8fafc; border-radius:8px; padding:8px 10px;
+    }
+    .review-ce-item.review-ce-corr { background:#f0fdf4; color:#15803d; font-weight:600; }
+    .review-ce-num { font-weight:800; flex-shrink:0; min-width:18px; }
     /* QRコード（先生モーダル） */
     #qtmQRCode { display:flex; justify-content:center; margin:10px 0; }
     #qtmQRCode canvas, #qtmQRCode img { border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.12); }
@@ -6997,6 +7005,8 @@ async function _submitQuizAnswers() {
 
 function _showQuizReview() {
   if (!_qs) return;
+  const _e = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const circled = ['①','②','③','④','⑤'];
   const total = _qs.questions.length;
   let correct = 0;
   const cards = _qs.questions.map((q, i) => {
@@ -7011,26 +7021,37 @@ function _showQuizReview() {
       const isCorrAns = correctNums.includes(n);
       let cls = 'review-choice';
       let badge = '';
-      if (isCorrAns) { cls += ' correct'; badge = '<span style="margin-left:auto;font-size:11px;font-weight:700;">✓ 正解</span>'; }
-      else if (isUser) { cls += ' wrong';   badge = '<span style="margin-left:auto;font-size:11px;font-weight:700;">✗ あなたの回答</span>'; }
-      return `<div class="${cls}"><span class="rc-num">${n}</span><span style="flex:1;">${c}</span>${badge}</div>`;
+      if (isCorrAns) { cls += ' correct'; badge = '<span style="margin-left:auto;font-size:11px;font-weight:700;flex-shrink:0;">✓ 正解</span>'; }
+      else if (isUser) { cls += ' wrong'; badge = '<span style="margin-left:auto;font-size:11px;font-weight:700;flex-shrink:0;">✗ あなた</span>'; }
+      return `<div class="${cls}"><span class="rc-num">${n}</span><span style="flex:1;">${_e(c)}</span>${badge}</div>`;
     }).join('');
+
+    // 選択肢別解説
+    const ce = Array.isArray(q.choiceExplanations) ? q.choiceExplanations : [];
+    const ceHtml = ce.length ? '<div class="review-ce">' + ce.map((text, ci) => {
+      const isCorr = correctNums.includes(ci + 1);
+      return `<div class="review-ce-item${isCorr ? ' review-ce-corr' : ''}">` +
+        `<span class="review-ce-num">${circled[ci]||ci+1}</span>` +
+        `<span>${_e(text)}</span></div>`;
+    }).join('') + '</div>' : '';
 
     const hd = isOk
       ? `<span style="color:#16a34a;font-size:18px;font-weight:900;">✓</span>`
       : `<span style="color:#dc2626;font-size:18px;font-weight:900;">✗</span>`;
 
-    return `<div class="review-card">
-      <div class="review-card-header">
-        ${hd}
-        <span class="review-q-num">${i+1} / ${total}</span>
-        <span class="review-q-id">${q.id}</span>
-      </div>
-      ${q.imageData ? `<img src="${q.imageData}" alt="問題図" class="quiz-q-img">` : ''}
-      <div class="review-q-text">${q.text}</div>
-      <div class="review-choices">${choices}</div>
-      ${q.explanation ? `<div class="review-explanation"><strong>解説</strong><br>${q.explanation.replace(/\n/g,'<br>')}</div>` : ''}
-    </div>`;
+    const explHtml = q.explanation
+      ? `<div class="review-explanation"><strong>解説</strong><br>${_e(q.explanation).replace(/\n/g,'<br>')}</div>`
+      : '';
+
+    return '<div class="review-card">' +
+      '<div class="review-card-header">' + hd +
+      `<span class="review-q-num">${i+1} / ${total}</span>` +
+      `<span class="review-q-id">${q.id}</span></div>` +
+      (q.imageData ? `<img src="${q.imageData}" alt="問題図" class="quiz-q-img">` : '') +
+      `<div class="review-q-text">${_e(q.text)}</div>` +
+      `<div class="review-choices">${choices}</div>` +
+      explHtml + ceHtml +
+      '</div>';
   }).join('');
 
   document.getElementById('quizReviewContent').innerHTML = cards;
