@@ -2306,6 +2306,7 @@
         </div>
         <button class="btn-reset" onclick="resetFilters()">フィルターをリセット</button>
         <button class="btn-quiz-create" onclick="openQuizTeacher()">📤 クイズを配信する</button>
+        <button class="btn-quiz-create" onclick="openQuizTeacher('search')" style="margin-top:8px;background:linear-gradient(135deg,#1e3a8a,#3b82f6);">📊 コードで結果を見る</button>
       </div>
     </div>
 
@@ -7155,7 +7156,7 @@ let _currentQCode = null;
 let _currentQTitle = null;
 let _resultsListener = null;
 
-function openQuizTeacher() {
+function openQuizTeacher(pane) {
   const modal = document.getElementById('quizTeacherModal');
   modal.style.display = 'flex'; modal.style.flexDirection = 'column';
   // 分野セレクト構築
@@ -7166,6 +7167,10 @@ function openQuizTeacher() {
       fields.map(f => `<option value="${f}">${f}</option>`).join('');
   }
   _renderRecentQuizzes();
+  if (pane === 'search') {
+    showQtmPane('qtmSearchPane', '📊 コードで結果を見る');
+    setTimeout(() => { const inp = document.getElementById('qtmSearchCode'); if (inp) inp.focus(); }, 200);
+  }
 }
 
 function closeQuizTeacher() {
@@ -7174,7 +7179,7 @@ function closeQuizTeacher() {
 }
 
 function showQtmPane(id, title) {
-  ['qtmCreatePane','qtmCreatedPane','qtmResultsPane'].forEach(p =>
+  ['qtmCreatePane','qtmSearchPane','qtmCreatedPane','qtmResultsPane'].forEach(p =>
     document.getElementById(p).classList.toggle('active', p===id)
   );
   document.getElementById('qtmHeaderTitle').textContent = title;
@@ -7593,26 +7598,27 @@ function downloadResultsCSV() {
 
       <button class="qtm-btn-primary" onclick="createQuiz()">クイズを作成 →</button>
       <div id="qtmRecentWrap"></div>
+    </div>
 
-      <!-- 他の先生のクイズを見る -->
-      <div style="margin-top:16px;border-top:1px solid #e2e8f0;padding-top:16px;">
-        <div style="font-size:12px;color:#64748b;margin-bottom:8px;font-weight:600;">📊 コードで結果を見る（他の先生のクイズも可）</div>
-        <div style="display:flex;gap:8px;">
-          <input id="qtmSearchCode" type="text" maxlength="6"
-            style="flex:1;padding:10px 12px;border:1.5px solid #c7d2fe;border-radius:10px;
-                   font-size:15px;font-family:monospace;letter-spacing:3px;text-transform:uppercase;
-                   outline:none;color:#1e293b;text-align:center;"
-            placeholder="例：ABC123"
-            oninput="this.value=this.value.toUpperCase()"
-            onkeydown="if(event.key==='Enter')openResultsByCode()">
-          <button onclick="openResultsByCode()"
-            style="padding:10px 16px;background:linear-gradient(135deg,#1e3a8a,#3b82f6);
-                   color:white;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;">
-            表示
-          </button>
-        </div>
-        <div id="qtmSearchErr" style="color:#dc2626;font-size:12px;margin-top:4px;display:none;">6文字のコードを入力してください</div>
+    <!-- コード検索ペイン -->
+    <div class="qtm-pane" id="qtmSearchPane">
+      <div style="font-size:18px;font-weight:800;color:#1e3a8a;">コードで結果を見る</div>
+      <div style="font-size:13px;color:#64748b;margin-top:4px;margin-bottom:20px;">自分・他の先生のクイズコードを入力</div>
+      <div style="display:flex;gap:8px;">
+        <input id="qtmSearchCode" type="text" maxlength="6"
+          style="flex:1;padding:12px;border:1.5px solid #c7d2fe;border-radius:10px;
+                 font-size:18px;font-family:monospace;letter-spacing:4px;text-transform:uppercase;
+                 outline:none;color:#1e293b;text-align:center;"
+          placeholder="ABC123"
+          oninput="this.value=this.value.toUpperCase()"
+          onkeydown="if(event.key==='Enter')openResultsByCode()">
+        <button onclick="openResultsByCode()"
+          style="padding:12px 18px;background:linear-gradient(135deg,#1e3a8a,#3b82f6);
+                 color:white;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;">
+          表示
+        </button>
       </div>
+      <div id="qtmSearchErr" style="color:#dc2626;font-size:12px;margin-top:6px;display:none;">6文字のコードを入力してください</div>
     </div>
 
     <!-- 発行済みペイン -->
