@@ -4174,6 +4174,31 @@ ${tables}
   // ── テキスト挿入 ─────────────────────────────────────────────────
   let _editingTextItem = null; // 編集中のテキストアイテム（nullなら新規）
 
+  let _textInsertColor = '#1a1a1a';
+
+  function setTextInsertColor(color, btn) {
+    _textInsertColor = color;
+    document.querySelectorAll('#txtColorPalette button').forEach(b => {
+      b.style.border = '2px solid transparent';
+      b.style.boxShadow = '';
+    });
+    if (btn) { btn.style.border = '2px solid #1e3a8a'; btn.style.boxShadow = '0 0 0 2px #93c5fd'; }
+  }
+
+  function _syncTextColorPalette(color) {
+    const btns = document.querySelectorAll('#txtColorPalette button');
+    let matched = false;
+    btns.forEach(b => {
+      const match = b.dataset.color === color;
+      b.style.border = match ? '2px solid #1e3a8a' : '2px solid transparent';
+      b.style.boxShadow = match ? '0 0 0 2px #93c5fd' : '';
+      if (match) matched = true;
+    });
+    if (!matched && btns.length) {
+      // カスタム色 → 最初のボタンを選択解除のまま何もしない
+    }
+  }
+
   function openTextInsertModal(editItem) {
     _editingTextItem = editItem || null;
     const modal = document.getElementById('textInsertModal');
@@ -4182,6 +4207,8 @@ ${tables}
     if (!modal || !area) return;
     area.value = editItem ? (editItem.text || '') : '';
     sel.value  = editItem ? String(editItem.fontSize || 18) : '18';
+    _textInsertColor = editItem ? (editItem.color || drawColor) : drawColor;
+    _syncTextColorPalette(_textInsertColor);
     modal.style.display = 'flex';
     setTimeout(() => { area.focus(); area.select(); }, 80);
   }
@@ -4206,6 +4233,7 @@ ${tables}
       // 既存アイテムを編集
       _editingTextItem.text     = text;
       _editingTextItem.fontSize = fontSize;
+      _editingTextItem.color    = _textInsertColor;
     } else {
       // 新規挿入
       const layer = document.getElementById('insertedMediaLayer');
@@ -4213,7 +4241,7 @@ ${tables}
       const w     = Math.min(280, lr.width * 0.65);
       practiceState[q.id].insertedMedia.push({
         id: 'ins_' + Date.now(), type: 'text',
-        text, fontSize, color: drawColor,
+        text, fontSize, color: _textInsertColor,
         x: Math.max(10, (lr.width  - w)   / 2),
         y: Math.max(10, (lr.height - 100) / 3),
         w: Math.round(w), h: Math.max(48, fontSize * 2 + 20),
@@ -5753,6 +5781,8 @@ ${body}</body></html>`;
         return;
       }
 
+      // 進行中のRAFキャプチャをキャンセル（描画開始時にgetImageDataが走らないように）
+      if (_preUndoCaptureRafId) { cancelAnimationFrame(_preUndoCaptureRafId); _preUndoCaptureRafId = null; }
       // 事前撮影済みのImageDataをundoスタックに積む（GPU読み出しゼロ・ブロッキングなし）
       const _q = practiceData[practiceIdx];
       if (_q && _preUndoCapture) {
@@ -5855,7 +5885,16 @@ ${body}</body></html>`;
       if (hasPen && drawTool !== 'pointer' && e.pointerType === 'touch') return;
       e.preventDefault();
       const evts = (e.getCoalescedEvents ? e.getCoalescedEvents() : [e]);
-      drawSegments(evts.map(ev => ({ ...pt(ev), pressure: ev.pressure, pointerType: ev.pointerType })));
+      if (!evts.length) return;
+      // getBoundingClientRect を1回だけ呼ぶ（毎イベント呼ぶとレイアウト再計算が発生）
+      const c = cv(), r = c.getBoundingClientRect();
+      const sx = c.width / r.width, sy = c.height / r.height;
+      const ox = r.left, oy = r.top;
+      drawSegments(evts.map(ev => ({
+        x: (ev.clientX - ox) * sx,
+        y: (ev.clientY - oy) * sy,
+        pressure: ev.pressure, pointerType: ev.pointerType
+      })));
     }
 
     const onUp = () => {
@@ -5923,9 +5962,12 @@ ${body}</body></html>`;
   })();
 
   // ── Undo 事前キャプチャ ────────────────────────────────────────────
-  // ストローク終了後に RAF で非同期撮影 → 次ストロークの onDown で即座に積む
+  let _preUndoCaptureRafId = null;
   function _scheduleUndoCapture() {
-    requestAnimationFrame(() => {
+    if (_preUndoCaptureRafId) cancelAnimationFrame(_preUndoCaptureRafId);
+    _preUndoCaptureRafId = requestAnimationFrame(() => {
+      _preUndoCaptureRafId = null;
+      if (isDrawPointerDown) return; // 描画中はスキップ
       const canvas = document.getElementById('drawCanvas');
       if (!canvas || !canvas.width) return;
       try {
@@ -6319,6 +6361,23 @@ ${body}</body></html>`;
         <option value="24">大 (24)</option>
         <option value="32">特大 (32)</option>
       </select>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <label style="font-size:13px;color:#64748b;white-space:nowrap;flex-shrink:0">文字色:</label>
+      <div id="txtColorPalette" style="display:flex;gap:6px;flex-wrap:wrap">
+        <button onclick="setTextInsertColor('#1a1a1a',this)" data-color="#1a1a1a"
+          style="width:26px;height:26px;border-radius:50%;background:#1a1a1a;border:2px solid transparent;cursor:pointer;padding:0"></button>
+        <button onclick="setTextInsertColor('#dc2626',this)" data-color="#dc2626"
+          style="width:26px;height:26px;border-radius:50%;background:#dc2626;border:2px solid transparent;cursor:pointer;padding:0"></button>
+        <button onclick="setTextInsertColor('#2563eb',this)" data-color="#2563eb"
+          style="width:26px;height:26px;border-radius:50%;background:#2563eb;border:2px solid transparent;cursor:pointer;padding:0"></button>
+        <button onclick="setTextInsertColor('#16a34a',this)" data-color="#16a34a"
+          style="width:26px;height:26px;border-radius:50%;background:#16a34a;border:2px solid transparent;cursor:pointer;padding:0"></button>
+        <button onclick="setTextInsertColor('#d97706',this)" data-color="#d97706"
+          style="width:26px;height:26px;border-radius:50%;background:#d97706;border:2px solid transparent;cursor:pointer;padding:0"></button>
+        <button onclick="setTextInsertColor('#7c3aed',this)" data-color="#7c3aed"
+          style="width:26px;height:26px;border-radius:50%;background:#7c3aed;border:2px solid transparent;cursor:pointer;padding:0"></button>
+      </div>
     </div>
     <div style="display:flex;gap:8px;justify-content:flex-end">
       <button onclick="closeTextModal()"
