@@ -2018,7 +2018,7 @@
     </div>
     <div class="draw-size-row">
       <span>太さ:</span>
-      <input type="range" id="drawSizeRange" min="1" max="24" value="4" style="width:72px;accent-color:#2563eb" oninput="setDrawSize(this.value)">
+      <input type="range" id="drawSizeRange" min="1" max="24" value="2" style="width:72px;accent-color:#2563eb" oninput="setDrawSize(this.value)">
       <span id="drawSizeVal">4</span>
     </div>
     <button class="draw-action-btn" id="btnUndoDraw" onclick="undoDraw()" disabled>↩ 元に戻す</button>
@@ -5125,7 +5125,7 @@ ${body}</body></html>`;
   let _cz = 1, _cpx = 0, _cpy = 0; // コンテンツエリアのズーム・パン
   let drawTool  = 'pointer';
   let drawColor = '#1a1a1a';
-  let drawSize  = 11;
+  let drawSize  = 2;
   let isDrawPointerDown = false;
   let hasPen = false; // Apple Pencil が一度でも検出されたら true
   let drawPrevX = 0, drawPrevY = 0;
