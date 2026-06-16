@@ -5160,8 +5160,12 @@ ${body}</body></html>`;
     const canvas = document.getElementById('drawCanvas');
     if (!canvas || !canvas.width) return;
     if (!practiceState[q.id]) practiceState[q.id] = {};
-    practiceState[q.id].drawing = canvas.toDataURL();
-    _captureDrawMeta(q);  // PDF再現用にボディ寸法・画像位置を記録
+    _captureDrawMeta(q); // PDF再現用にボディ寸法・画像位置を記録
+    // toDataURL は重いので非同期で実行（描画をブロックしない）
+    setTimeout(() => {
+      if (!canvas.width) return;
+      practiceState[q.id].drawing = canvas.toDataURL();
+    }, 0);
   }
 
   function pushUndoState() {
@@ -5170,8 +5174,10 @@ ${body}</body></html>`;
     const canvas = document.getElementById('drawCanvas');
     if (!canvas || !canvas.width) return;
     if (!drawUndoStacks[q.id]) drawUndoStacks[q.id] = [];
-    drawUndoStacks[q.id].push(canvas.toDataURL());
-    if (drawUndoStacks[q.id].length > 30) drawUndoStacks[q.id].shift();
+    // getImageData は toDataURL より10〜50倍高速（PNG圧縮なし）
+    const ctx = canvas.getContext('2d');
+    drawUndoStacks[q.id].push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+    if (drawUndoStacks[q.id].length > 20) drawUndoStacks[q.id].shift();
     drawRedoStacks[q.id] = []; // 新規描画でリドゥをクリア
     updateUndoRedoBtn();
   }
@@ -5190,14 +5196,12 @@ ${body}</body></html>`;
     if (!q || !drawUndoStacks[q.id]?.length) return;
     const canvas = document.getElementById('drawCanvas');
     const ctx = canvas.getContext('2d');
-    // 現在状態をリドゥに積む
     if (!drawRedoStacks[q.id]) drawRedoStacks[q.id] = [];
-    drawRedoStacks[q.id].push(canvas.toDataURL());
+    // リドゥ用に現在状態を保存（getImageData で高速）
+    drawRedoStacks[q.id].push(ctx.getImageData(0, 0, canvas.width, canvas.height));
     const prev = drawUndoStacks[q.id].pop();
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    const img = new Image();
-    img.onload = () => { ctx.drawImage(img, 0, 0, canvas.width, canvas.height); saveDrawingState(); updateUndoRedoBtn(); };
-    img.src = prev;
+    ctx.putImageData(prev, 0, 0); // putImageData は即座・同期（drawImage より速い）
+    saveDrawingState(); updateUndoRedoBtn();
   }
 
   function redoDraw() {
@@ -5206,12 +5210,10 @@ ${body}</body></html>`;
     const canvas = document.getElementById('drawCanvas');
     const ctx = canvas.getContext('2d');
     if (!drawUndoStacks[q.id]) drawUndoStacks[q.id] = [];
-    drawUndoStacks[q.id].push(canvas.toDataURL());
+    drawUndoStacks[q.id].push(ctx.getImageData(0, 0, canvas.width, canvas.height));
     const next = drawRedoStacks[q.id].pop();
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    const img = new Image();
-    img.onload = () => { ctx.drawImage(img, 0, 0, canvas.width, canvas.height); saveDrawingState(); updateUndoRedoBtn(); };
-    img.src = next;
+    ctx.putImageData(next, 0, 0);
+    saveDrawingState(); updateUndoRedoBtn();
   }
 
   function clearDraw() {
@@ -5705,6 +5707,8 @@ ${body}</body></html>`;
       if (hasPen && drawTool !== 'pointer' && e.pointerType === 'touch') return;
       if (!e.isPrimary) { isDrawPointerDown = false; return; }
       isDrawPointerDown = true;
+      // setPointerCapture を最優先で実行（pushUndoState より前）
+      // → これより後の処理が重くてもイベントが途切れない
       try { cv().setPointerCapture(e.pointerId); } catch(_) {}
       const p = pt(e);
       const pressure = e.pointerType === 'pen' ? Math.max(0.1, e.pressure || 0.5) : 1;
