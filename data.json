@@ -31783,7 +31783,7 @@
       "Barthel Indexのスコアが高くなる。"
     ],
     "answer": "1,3",
-    "field": "ADL",
+    "field": "リハ概",
     "keywords": [],
     "accuracyRate": 65.2,
     "lastSyncedAt": "2026-02-14T13:44:18.727Z",
@@ -37704,7 +37704,7 @@
       "9～10METs"
     ],
     "answer": "2",
-    "field": "ADL",
+    "field": "内部",
     "keywords": [],
     "accuracyRate": 91.3,
     "lastSyncedAt": "2026-02-14T13:44:57.102Z",
