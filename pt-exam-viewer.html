@@ -5321,7 +5321,7 @@ ${body}</body></html>`;
         let delta = e.deltaY;
         if (e.deltaMode === 1) delta *= 15;
         if (e.deltaMode === 2) delta *= 200;
-        const factor = Math.pow(0.997, delta);
+        const factor = Math.pow(0.993, delta);
         _cz = Math.max(1, Math.min(5, _cz * factor));
         _cpx=mx-cX*_cz; _cpy=my-cY*_cz;
         if (_cz===1){_cpx=0;_cpy=0;}
