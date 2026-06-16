@@ -5082,6 +5082,8 @@ ${body}</body></html>`;
   let drawPrevPressure = 1, drawLastPressure = 1;
   const drawUndoStacks = {};
   const drawRedoStacks = {};
+  // マーカー用（全点を1パスで描画してトゲを防ぐ）
+  let _markerPoints = [];
   // フェードペン用
   const _fadeStrokes = []; // {points, color, size, startTime}
   let _currentFadePoints = null;
@@ -5739,12 +5741,12 @@ ${body}</body></html>`;
         ctx.fillStyle = 'rgba(0,0,0,1)'; ctx.fill();
         ctx.globalCompositeOperation = 'source-over';
       } else if (drawTool === 'marker') {
-        // マーカーはmarkerCanvas（opacity:0.4で表示）に描き、onUpでmainに合成
+        // マーカー: 全点を1パスで再描画するため点リストを初期化
+        _markerPoints = [{ x: p.x, y: p.y }];
         const mc = document.getElementById('markerCanvas');
         if (mc) {
           const mctx = mc.getContext('2d');
           mctx.clearRect(0, 0, mc.width, mc.height);
-          mctx.lineCap = mctx.lineJoin = 'round';
           mctx.beginPath(); mctx.arc(p.x, p.y, drawSize * 9/11, 0, Math.PI * 2);
           mctx.fillStyle = drawColor; mctx.fill();
         }
@@ -5782,22 +5784,14 @@ ${body}</body></html>`;
       }
 
       if (drawTool === 'marker') {
-        const mc = document.getElementById('markerCanvas');
-        if (!mc) return;
-        const mctx = mc.getContext('2d');
-        const baseSize = drawSize * 18 / 11;
-        mctx.strokeStyle = drawColor;
-        mctx.lineCap = mctx.lineJoin = 'square';
+        // 新しい点を追加してキャンバス全体を1パスで再描画（トゲ防止）
         for (const p of points) {
-          const mx = (drawLastX + p.x) / 2, my = (drawLastY + p.y) / 2;
-          mctx.lineWidth = baseSize;
-          mctx.beginPath();
-          mctx.moveTo((drawPrevX + drawLastX) / 2, (drawPrevY + drawLastY) / 2);
-          mctx.quadraticCurveTo(drawLastX, drawLastY, mx, my);
-          mctx.stroke();
+          _markerPoints.push({ x: p.x, y: p.y });
           drawPrevX = drawLastX; drawPrevY = drawLastY;
           drawLastX = p.x; drawLastY = p.y;
         }
+        const mc = document.getElementById('markerCanvas');
+        if (mc) _drawSmoothMarkerPath(mc.getContext('2d'), _markerPoints);
         return;
       }
 
@@ -5837,15 +5831,20 @@ ${body}</body></html>`;
       isDrawPointerDown = false;
 
       if (drawTool === 'marker') {
-        // markerCanvas(opacity:0.4)の内容をmainに0.4alphaで合成してクリア
         const c = cv(); const mc = document.getElementById('markerCanvas');
         if (c && mc) {
+          // スナップ補正（水平・直線）してから最終描画
+          const snapped = _snapMarkerStroke(_markerPoints);
+          const mctx = mc.getContext('2d');
+          _drawSmoothMarkerPath(mctx, snapped);
+          // mainキャンバスに0.4alphaで合成してmarkerCanvasをクリア
           const ctx = c.getContext('2d');
           ctx.globalAlpha = 0.4;
           ctx.drawImage(mc, 0, 0);
           ctx.globalAlpha = 1;
-          mc.getContext('2d').clearRect(0, 0, mc.width, mc.height);
+          mctx.clearRect(0, 0, mc.width, mc.height);
         }
+        _markerPoints = [];
         saveDrawingState();
         return;
       }
@@ -5889,6 +5888,59 @@ ${body}</body></html>`;
     const c0 = cv();
     if (c0) observer.observe(c0, { attributes: true, attributeFilter: ['class'] });
   })();
+
+  // ── マーカー スムーズ描画 & スナップ ─────────────────────────────
+  function _drawSmoothMarkerPath(mctx, points) {
+    const mc = mctx.canvas;
+    mctx.clearRect(0, 0, mc.width, mc.height);
+    if (!points || points.length === 0) return;
+    const sz = drawSize * 18 / 11;
+    mctx.strokeStyle = drawColor;
+    mctx.lineWidth = sz;
+    mctx.lineCap = 'round';
+    mctx.lineJoin = 'round';
+    if (points.length === 1) {
+      mctx.beginPath(); mctx.arc(points[0].x, points[0].y, sz / 2, 0, Math.PI * 2);
+      mctx.fillStyle = drawColor; mctx.fill();
+      return;
+    }
+    mctx.beginPath();
+    mctx.moveTo(points[0].x, points[0].y);
+    for (let i = 1; i < points.length - 1; i++) {
+      const mx = (points[i].x + points[i + 1].x) / 2;
+      const my = (points[i].y + points[i + 1].y) / 2;
+      mctx.quadraticCurveTo(points[i].x, points[i].y, mx, my);
+    }
+    mctx.lineTo(points[points.length - 1].x, points[points.length - 1].y);
+    mctx.stroke();
+  }
+
+  function _snapMarkerStroke(points) {
+    if (!points || points.length < 2) return points;
+    const p0 = points[0], p1 = points[points.length - 1];
+    const dx = p1.x - p0.x, dy = p1.y - p0.y;
+    const totalDist = Math.hypot(dx, dy);
+    if (totalDist < 30) return points; // 短すぎる線はスナップしない
+
+    const ys = points.map(p => p.y);
+    const yRange = Math.max(...ys) - Math.min(...ys);
+
+    // 水平スナップ: y変動が横幅の18%以下 → 完全な水平線に補正
+    if (yRange < Math.abs(dx) * 0.18) {
+      const midY = (p0.y + p1.y) / 2;
+      return [{ x: p0.x, y: midY }, { x: p1.x, y: midY }];
+    }
+
+    // 直線スナップ: 全点の直線からのずれが距離の15%以下 → 直線に補正
+    let maxDev = 0;
+    for (const p of points) {
+      const dev = Math.abs(dy * p.x - dx * p.y + p1.x * p0.y - p1.y * p0.x) / totalDist;
+      if (dev > maxDev) maxDev = dev;
+    }
+    if (maxDev < totalDist * 0.15) return [p0, p1];
+
+    return points;
+  }
 
   // ── フェードペン アニメーション ──────────────────────────────────
   function _startFadeAnimation() {
