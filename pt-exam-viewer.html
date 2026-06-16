@@ -5042,18 +5042,31 @@ ${body}</body></html>`;
       const hdr = document.querySelector('#practiceMode .expln-header');
       const hsp = document.getElementById('explnHeaderSpacer');
       if (hdr) {
-        if (vv) {
-          hdr.style.top   = vv.offsetTop + 'px';
-          hdr.style.left  = vv.offsetLeft + 'px';
-          hdr.style.right = 'auto';
-          hdr.style.width = vv.width + 'px';
-        } else {
-          hdr.style.top   = '0px';
-          hdr.style.left  = '0px';
-          hdr.style.right = '0px';
+        // 縦向きスマホ: position:fixed を外して通常フローに戻す
+        // (iOS Safari では fixed親の中でfixed子が消えるバグがある)
+        const isPortrait = window.matchMedia('(pointer: coarse) and (orientation: portrait)').matches;
+        if (isPortrait) {
+          hdr.style.position = 'relative';
+          hdr.style.top = '';
+          hdr.style.left = '';
+          hdr.style.right = '';
           hdr.style.width = '';
+          if (hsp) hsp.style.height = '0px';
+        } else {
+          hdr.style.position = '';
+          if (vv) {
+            hdr.style.top   = vv.offsetTop + 'px';
+            hdr.style.left  = vv.offsetLeft + 'px';
+            hdr.style.right = 'auto';
+            hdr.style.width = vv.width + 'px';
+          } else {
+            hdr.style.top   = '0px';
+            hdr.style.left  = '0px';
+            hdr.style.right = '0px';
+            hdr.style.width = '';
+          }
+          if (hsp) hsp.style.height = (hdr.offsetHeight || 60) + 'px';
         }
-        if (hsp) hsp.style.height = (hdr.offsetHeight || 60) + 'px';
       }
 
       // ② 解説モードツールバー（常に画面下端）
