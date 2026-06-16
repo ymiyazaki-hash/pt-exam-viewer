@@ -5676,10 +5676,17 @@ ${body}</body></html>`;
     // laserpointerを解除したらドットを隠す
     if (tool !== 'laserpointer') { const d = document.getElementById('laserDot'); if (d) d.style.display = 'none'; }
 
-    // ペン/消しゴムモード中：左パネルのスクロールを無効化（意図しない画面スクロールを防止）
-    // 操作モード：スクロール再有効化
-    const leftPanel = document.querySelector('.expln-left');
-    if (leftPanel) leftPanel.style.overflowY = tool === 'pointer' ? 'auto' : 'hidden';
+    // 描画モード中：スクロールと touch 先取りを完全に封鎖
+    const leftPanel   = document.querySelector('.expln-left');
+    const bodyContent = document.getElementById('bodyZoomContent');
+    const drawing = (tool !== 'pointer' && tool !== 'laserpointer');
+    if (leftPanel) {
+      leftPanel.style.overflowY    = drawing ? 'hidden' : 'auto';
+      leftPanel.style.touchAction  = drawing ? 'none'   : '';
+    }
+    if (bodyContent) {
+      bodyContent.style.touchAction = drawing ? 'none' : '';
+    }
   }
 
   // ── Apple Pencil / 指 自動モード切替 + 多本指タップジェスチャー ──
@@ -5762,7 +5769,8 @@ ${body}</body></html>`;
     // ── 描画イベント（キャンバス自身に登録）
     function onDown(e) {
       e.preventDefault();
-      if (hasPen && drawTool !== 'pointer' && e.pointerType === 'touch') return;
+      if (drawTool === 'pointer' || drawTool === 'laserpointer') return;
+      if (hasPen && e.pointerType === 'touch') return; // Apple Pencil使用中は指タッチ無視
       if (!e.isPrimary) { isDrawPointerDown = false; return; }
       isDrawPointerDown = true;
       // setPointerCapture を最優先で実行（pushUndoState より前）
@@ -5943,27 +5951,19 @@ ${body}</body></html>`;
       _scheduleUndoCapture(); // 次ストロークのundo用をRAFで非同期撮影
     };
 
-    // ── キャンバスが描画モードになったときにリスナーをアタッチ ────
-    // MutationObserver で .drawing-active クラスの付け外しを監視
-    const observer = new MutationObserver(() => {
-      const c = cv(); if (!c) return;
-      if (c.classList.contains('drawing-active')) {
-        c.addEventListener('pointerdown',   onDown, { passive: false });
-        c.addEventListener('pointermove',   onMove, { passive: false });
-        c.addEventListener('pointerup',     onUp);
-        c.addEventListener('pointercancel', onUp);
-      } else {
-        c.removeEventListener('pointerdown',   onDown);
-        c.removeEventListener('pointermove',   onMove);
-        c.removeEventListener('pointerup',     onUp);
-        c.removeEventListener('pointercancel', onUp);
-        isDrawPointerDown = false;
-      }
-    });
-    // drawCanvas は静的要素なので即 observe（rAFはバックグラウンドタブ等で発火せず
-    // ハンドラ未登録＝ペンが効かない原因になり得るため同期で開始する）
+    // ── キャンバスにリスナーを常時直接登録（MutationObserver方式をやめ race condition を排除）
+    // pointer-events:none のときはブラウザがイベントを通さないため onDown 内の drawTool チェックで十分
     const c0 = cv();
-    if (c0) observer.observe(c0, { attributes: true, attributeFilter: ['class'] });
+    if (c0) {
+      c0.addEventListener('pointerdown',   onDown, { passive: false });
+      c0.addEventListener('pointermove',   onMove, { passive: false });
+      c0.addEventListener('pointerup',     onUp);
+      c0.addEventListener('pointercancel', onUp);
+      // iOS Safari がスクロール判定のために touch を先取りするのを防ぐ
+      c0.addEventListener('touchstart', e => {
+        if (drawTool !== 'pointer' && drawTool !== 'laserpointer') e.preventDefault();
+      }, { passive: false });
+    }
   })();
 
   // ── Undo 事前キャプチャ ────────────────────────────────────────────
