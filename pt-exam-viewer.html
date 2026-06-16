@@ -5135,6 +5135,8 @@ ${body}</body></html>`;
   const drawRedoStacks = {};
   // マーカー用（全点を1パスで描画してトゲを防ぐ）
   let _markerPoints = [];
+  // ペン用（全点バッファ方式で滑らかに描画）
+  let _penPoints = [];
   // ストローク終了後にRAFで非同期撮影しておくundoスナップショット
   let _preUndoCapture = null;
   // フェードペン用
@@ -5820,15 +5822,23 @@ ${body}</body></html>`;
         _markerPoints = [{ x: p.x, y: p.y }];
         const mc = document.getElementById('markerCanvas');
         if (mc) {
+          mc.style.opacity = '0.4';
           const mctx = mc.getContext('2d');
           mctx.clearRect(0, 0, mc.width, mc.height);
           mctx.beginPath(); mctx.arc(p.x, p.y, drawSize * 9/11, 0, Math.PI * 2);
           mctx.fillStyle = drawColor; mctx.fill();
         }
       } else {
-        const sz = drawSize * pressure;
-        ctx.beginPath(); ctx.arc(p.x, p.y, sz / 2, 0, Math.PI * 2);
-        ctx.fillStyle = drawColor; ctx.fill();
+        // ペン: markerCanvas を不透明ストロークプレビューに使用（滑らか全点再描画方式）
+        _penPoints = [{ x: p.x, y: p.y }];
+        const mc = document.getElementById('markerCanvas');
+        if (mc) {
+          mc.style.opacity = '1';
+          const mctx = mc.getContext('2d');
+          mctx.clearRect(0, 0, mc.width, mc.height);
+          mctx.beginPath(); mctx.arc(p.x, p.y, drawSize * pressure / 2, 0, Math.PI * 2);
+          mctx.fillStyle = drawColor; mctx.fill();
+        }
       }
     }
 
@@ -5867,6 +5877,17 @@ ${body}</body></html>`;
         }
         const mc = document.getElementById('markerCanvas');
         if (mc) _drawSmoothMarkerPath(mc.getContext('2d'), _markerPoints);
+        return;
+      }
+
+      if (drawTool === 'pen') {
+        // ペン: markerCanvas に全点を滑らか再描画（ガタつき防止）
+        for (const p of points) {
+          _penPoints.push({ x: p.x, y: p.y });
+          drawLastX = p.x; drawLastY = p.y;
+        }
+        const mc = document.getElementById('markerCanvas');
+        if (mc) _drawSmoothPenPath(mc.getContext('2d'), _penPoints);
         return;
       }
 
@@ -5913,6 +5934,22 @@ ${body}</body></html>`;
     const onUp = () => {
       if (!isDrawPointerDown) return;
       isDrawPointerDown = false;
+
+      if (drawTool === 'pen') {
+        const c = cv(); const mc = document.getElementById('markerCanvas');
+        if (c && mc) {
+          // 最終スムーズ描画してmainキャンバスにalphaそのままで合成
+          _drawSmoothPenPath(mc.getContext('2d'), _penPoints);
+          const ctx = c.getContext('2d');
+          ctx.drawImage(mc, 0, 0);
+          mc.getContext('2d').clearRect(0, 0, mc.width, mc.height);
+          mc.style.opacity = '0.4'; // markerCanvas をマーカー用opacity に戻す
+        }
+        _penPoints = [];
+        saveDrawingState();
+        _scheduleUndoCapture();
+        return;
+      }
 
       if (drawTool === 'marker') {
         const c = cv(); const mc = document.getElementById('markerCanvas');
@@ -5982,6 +6019,29 @@ ${body}</body></html>`;
   }
 
   // ── マーカー スムーズ描画 & スナップ ─────────────────────────────
+  function _drawSmoothPenPath(ctx, points) {
+    const c = ctx.canvas;
+    ctx.clearRect(0, 0, c.width, c.height);
+    if (!points || points.length === 0) return;
+    ctx.strokeStyle = drawColor;
+    ctx.lineWidth = drawSize;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    if (points.length === 1) {
+      ctx.beginPath(); ctx.arc(points[0].x, points[0].y, drawSize / 2, 0, Math.PI * 2);
+      ctx.fillStyle = drawColor; ctx.fill(); return;
+    }
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+    for (let i = 1; i < points.length - 1; i++) {
+      const mx = (points[i].x + points[i + 1].x) / 2;
+      const my = (points[i].y + points[i + 1].y) / 2;
+      ctx.quadraticCurveTo(points[i].x, points[i].y, mx, my);
+    }
+    ctx.lineTo(points[points.length - 1].x, points[points.length - 1].y);
+    ctx.stroke();
+  }
+
   function _drawSmoothMarkerPath(mctx, points) {
     const mc = mctx.canvas;
     mctx.clearRect(0, 0, mc.width, mc.height);
