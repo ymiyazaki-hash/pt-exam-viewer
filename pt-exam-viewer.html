@@ -7101,8 +7101,16 @@ function _showQuizReview() {
       const isCorrAns = correctNums.includes(n);
       let cls = 'review-choice';
       let badge = '';
-      if (isCorrAns) { cls += ' correct'; badge = '<span style="margin-left:auto;font-size:11px;font-weight:700;flex-shrink:0;">✓ 正解</span>'; }
-      else if (isUser) { cls += ' wrong'; badge = '<span style="margin-left:auto;font-size:11px;font-weight:700;flex-shrink:0;">✗ あなた</span>'; }
+      if (isCorrAns && isUser) {
+        cls += ' correct';
+        badge = '<span style="margin-left:auto;font-size:11px;font-weight:700;flex-shrink:0;color:#15803d;">✓ あなた（正解）</span>';
+      } else if (isCorrAns) {
+        cls += ' correct';
+        badge = '<span style="margin-left:auto;font-size:11px;font-weight:700;flex-shrink:0;color:#15803d;">✓ 正解</span>';
+      } else if (isUser) {
+        cls += ' wrong';
+        badge = '<span style="margin-left:auto;font-size:11px;font-weight:700;flex-shrink:0;color:#dc2626;">✗ あなた（不正解）</span>';
+      }
       return `<div class="${cls}"><span class="rc-num">${n}</span><span style="flex:1;">${_e(c)}</span>${badge}</div>`;
     }).join('');
 
