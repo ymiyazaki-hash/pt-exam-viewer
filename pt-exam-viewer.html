@@ -1677,7 +1677,8 @@
     /* ── 学生クイズ画面 ── */
     #quizScreen {
       display:none; flex-direction:column;
-      min-height:100vh; min-height:100dvh; background:#eef2ff;
+      position:fixed; inset:0; z-index:2000;
+      background:#eef2ff; overflow-y:auto;
     }
     .quiz-header {
       background:linear-gradient(135deg,#1e3a8a,#3b82f6); color:white;
@@ -6704,13 +6705,17 @@ function _genCode() {
 // ── ページ読み込み時にクイズモードを検出 ─────────────────────────────────────
 const _quizCode = new URLSearchParams(window.location.search).get('quiz');
 if (_quizCode) {
-  document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('loadScreen').style.display = 'none';
+  // スクリプトはページ末尾なのでDOMは既にロード済み。即時実行する。
+  const _showQuizScreen = () => {
+    const ls = document.getElementById('loadScreen');
     const qs = document.getElementById('quizScreen');
-    qs.style.display = 'flex';
-    qs.style.flexDirection = 'column';
-    _initQuizStudent(_quizCode);
-  });
+    if (ls) ls.style.display = 'none';
+    if (qs) { qs.style.display = 'flex'; qs.style.flexDirection = 'column'; }
+  };
+  _showQuizScreen();
+  setTimeout(_showQuizScreen, 50);   // 他スクリプトの上書き対策
+  setTimeout(_showQuizScreen, 300);  // 念のため再確認
+  _initQuizStudent(_quizCode);
 }
 
 // ════════════════════════════════════════
