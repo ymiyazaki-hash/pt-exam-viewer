@@ -708,6 +708,7 @@
     .answer-value { font-size: 22px; font-weight: 900; color: #1e40af; }
     .answer-text { font-size: 13px; color: #4a5568; margin-top: 4px; }
     .modal-nav { display: flex; justify-content: space-between; align-items: center; padding: 14px 20px; border-top: 1px solid #f0f4f8; }
+    .modal-close-bottom { display: none; }
     .nav-btn {
       padding: 8px 18px; border: 1.5px solid #e2e8f0; background: white;
       border-radius: 8px; cursor: pointer; font-size: 13px; color: #4a5568;
@@ -834,6 +835,16 @@
       .modal-nav { padding: 12px 16px; }
       .nav-btn { padding: 11px 16px; min-height: 44px; font-size: 13px; }
       .nav-pos { font-size: 12px; }
+      .modal-close-bottom {
+        display: block;
+        padding: 10px 16px 20px;
+        border-top: 1px solid #f0f4f8;
+      }
+      .modal-close-bottom button {
+        width: 100%; padding: 13px;
+        background: #f1f5f9; border: none; border-radius: 12px;
+        font-size: 15px; font-weight: 700; color: #475569; cursor: pointer;
+      }
 
       /* 解説モードの縦1スクロール・レイアウトは
          @media (pointer: coarse) and (orientation: portrait) 側で定義（縦向きのみ）。
@@ -2336,6 +2347,9 @@
       <button class="nav-btn" id="prevBtn">← 前の問題</button>
       <span class="nav-pos" id="navPos"></span>
       <button class="nav-btn" id="nextBtn">次の問題 →</button>
+    </div>
+    <div class="modal-close-bottom">
+      <button onclick="closeModal()">✕ 閉じる</button>
     </div>
   </div>
 </div>
