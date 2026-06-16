@@ -14,6 +14,7 @@
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <!-- クイズモード: ?quiz= が付いていたら最速でログイン画面を隠す -->
   <script>
     (function() {
@@ -1779,6 +1780,67 @@
       font-size:14px; color:#16a34a; font-weight:700;
       background:#dcfce7; padding:8px 20px; border-radius:20px;
     }
+    .quiz-review-btn {
+      width:100%; max-width:320px; padding:14px;
+      background:white; border:2px solid #3b82f6; color:#1d4ed8;
+      border-radius:14px; font-size:16px; font-weight:700; cursor:pointer;
+    }
+    /* 学年・クラス入力行 */
+    .quiz-name-row {
+      display:flex; gap:10px; width:100%; max-width:320px;
+    }
+    .quiz-grade-sel {
+      flex:0 0 90px; padding:14px 10px;
+      border:2px solid #c7d2fe; border-radius:14px;
+      font-size:16px; text-align:center; outline:none; background:white; color:#1e293b;
+      appearance:none; cursor:pointer;
+    }
+    .quiz-cls-input {
+      flex:1; padding:14px 14px;
+      border:2px solid #c7d2fe; border-radius:14px;
+      font-size:16px; outline:none; background:white; color:#1e293b;
+    }
+    .quiz-grade-sel:focus, .quiz-cls-input:focus { border-color:#3b82f6; }
+    /* 解説ペイン */
+    .quiz-review-pane {
+      display:none; flex:1; flex-direction:column; overflow-y:auto; min-height:0;
+    }
+    .quiz-review-topbar {
+      background:linear-gradient(135deg,#1e3a8a,#3b82f6); color:white;
+      padding:12px 16px; display:flex; align-items:center; gap:12px; flex-shrink:0;
+    }
+    .quiz-review-back {
+      background:rgba(255,255,255,0.2); border:none; color:white;
+      border-radius:8px; padding:6px 12px; font-size:14px; font-weight:700; cursor:pointer;
+    }
+    .review-card {
+      background:white; border-radius:14px; padding:16px 18px;
+      margin:10px 12px 0; box-shadow:0 1px 4px rgba(0,0,0,0.07);
+    }
+    .review-card:last-child { margin-bottom:16px; }
+    .review-card-header {
+      display:flex; align-items:center; gap:8px; margin-bottom:8px;
+    }
+    .review-q-num  { font-size:11px; color:#94a3b8; font-weight:600; }
+    .review-q-id   { font-size:11px; color:#64748b; background:#f1f5f9; padding:2px 6px; border-radius:6px; }
+    .review-q-text { font-size:14px; line-height:1.7; color:#1e293b; margin-bottom:12px; }
+    .review-choices { display:flex; flex-direction:column; gap:7px; margin-bottom:10px; }
+    .review-choice {
+      padding:10px 13px; border-radius:10px; font-size:13px; line-height:1.4;
+      background:#f8fafc; border:2px solid #e2e8f0; color:#374151;
+      display:flex; gap:8px; align-items:flex-start;
+    }
+    .review-choice.correct { background:#f0fdf4; border-color:#22c55e; color:#15803d; font-weight:600; }
+    .review-choice.wrong   { background:#fef2f2; border-color:#ef4444; color:#dc2626; font-weight:600; }
+    .rc-num { font-weight:700; flex-shrink:0; min-width:16px; }
+    .review-explanation {
+      background:#eff6ff; border-left:4px solid #3b82f6;
+      border-radius:0 10px 10px 0; padding:12px 14px;
+      font-size:13px; line-height:1.7; color:#1e40af;
+    }
+    /* QRコード（先生モーダル） */
+    #qtmQRCode { display:flex; justify-content:center; margin:10px 0; }
+    #qtmQRCode canvas, #qtmQRCode img { border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.12); }
 
     /* ── 先生クイズモーダル ── */
     #quizTeacherModal {
@@ -2030,8 +2092,19 @@
   <!-- 名前入力 -->
   <div class="quiz-name-pane" id="quizNamePane">
     <div style="font-size:56px">✏️</div>
-    <div style="font-size:19px;font-weight:800;color:#1e3a8a;text-align:center;">名前を入力してください</div>
-    <input class="quiz-name-input" id="quizNameInput" type="text" placeholder="例：田中太郎"
+    <div style="font-size:19px;font-weight:800;color:#1e3a8a;text-align:center;">情報を入力してください</div>
+    <div class="quiz-name-row">
+      <select class="quiz-grade-sel" id="quizGradeInput">
+        <option value="">学年</option>
+        <option value="1年">1年</option>
+        <option value="2年">2年</option>
+        <option value="3年">3年</option>
+        <option value="4年">4年</option>
+      </select>
+      <input class="quiz-cls-input" id="quizClsInput" type="text" placeholder="クラス（例：A）"
+        maxlength="10" onkeydown="if(event.key==='Enter')document.getElementById('quizNameInput').focus()">
+    </div>
+    <input class="quiz-name-input" id="quizNameInput" type="text" placeholder="名前（例：田中太郎）"
       maxlength="30" onkeydown="if(event.key==='Enter')quizStartAnswer()">
     <button class="quiz-start-btn" onclick="quizStartAnswer()">スタート →</button>
   </div>
@@ -2061,6 +2134,17 @@
     <div class="quiz-done-score"  id="quizDoneScore"></div>
     <div class="quiz-done-sub"    id="quizDoneSub"></div>
     <div class="quiz-done-status" id="quizDoneStatus">送信中...</div>
+    <button class="quiz-review-btn" onclick="_showQuizReview()">📖 解説・回答を見る</button>
+  </div>
+
+  <!-- 解説・回答確認ペイン -->
+  <div class="quiz-review-pane" id="quizReviewPane">
+    <div class="quiz-review-topbar">
+      <button class="quiz-review-back" onclick="_closeQuizReview()">← 結果に戻る</button>
+      <span style="font-size:15px;font-weight:800;">解説・回答</span>
+      <span id="quizReviewScore" style="font-size:13px;opacity:0.9;margin-left:auto;"></span>
+    </div>
+    <div id="quizReviewContent" style="padding-bottom:24px;"></div>
   </div>
 
   <!-- エラー -->
@@ -6758,7 +6842,7 @@ let _qs = null;
 
 async function _initQuizStudent(code) {
   const _showPane = id => {
-    ['quizNamePane','quizQPane','quizDonePane','quizErrorPane'].forEach(p => {
+    ['quizNamePane','quizQPane','quizDonePane','quizReviewPane','quizErrorPane'].forEach(p => {
       const el = document.getElementById(p);
       if (!el) return;
       const isTarget = p === id;
@@ -6799,12 +6883,20 @@ async function _initQuizStudent(code) {
 }
 
 function quizStartAnswer() {
-  const name = (document.getElementById('quizNameInput').value || '').trim();
+  const grade = document.getElementById('quizGradeInput').value;
+  const cls   = (document.getElementById('quizClsInput').value || '').trim();
+  const name  = (document.getElementById('quizNameInput').value || '').trim();
+  if (!grade) {
+    const sel = document.getElementById('quizGradeInput');
+    sel.style.borderColor = '#ef4444'; sel.focus(); return;
+  }
   if (!name) {
     const inp = document.getElementById('quizNameInput');
     inp.style.borderColor = '#ef4444'; inp.focus(); return;
   }
   _qs.studentName = name;
+  _qs.grade = grade;
+  _qs.cls   = cls;
   document.getElementById('quizNamePane').style.display = 'none';
   const qp = document.getElementById('quizQPane');
   qp.style.display = 'flex'; qp.style.flexDirection = 'column';
@@ -6815,7 +6907,8 @@ function _renderQuizQ() {
   const q   = _qs.questions[_qs.currentIdx];
   const tot = _qs.questions.length;
   document.getElementById('quizProgressEl').textContent = `${_qs.currentIdx+1} / ${tot} 問`;
-  document.getElementById('quizStudentEl').textContent  = _qs.studentName;
+  const disp = [_qs.grade, _qs.cls, _qs.studentName].filter(Boolean).join(' ');
+  document.getElementById('quizStudentEl').textContent  = disp;
   document.getElementById('quizQIdEl').textContent      = q.id;
   document.getElementById('quizQTextEl').textContent    = q.text;
 
@@ -6870,7 +6963,8 @@ async function _submitQuizAnswers() {
   document.getElementById('quizQPane').style.display = 'none';
   const dp = document.getElementById('quizDonePane');
   dp.style.display = 'flex'; dp.style.flexDirection = 'column';
-  document.getElementById('quizDoneName').textContent  = _qs.studentName + ' さんの結果';
+  const disp = [_qs.grade, _qs.cls, _qs.studentName].filter(Boolean).join(' ');
+  document.getElementById('quizDoneName').textContent  = disp + ' さんの結果';
   document.getElementById('quizDoneScore').textContent = `${score} / ${total}`;
   document.getElementById('quizDoneSub').textContent   = `正答率 ${Math.round(score/total*100)}%`;
   document.getElementById('quizDoneStatus').textContent = '送信中...';
@@ -6878,9 +6972,10 @@ async function _submitQuizAnswers() {
   try {
     const db = _initFb();
     if (!db) throw new Error('Firebase未設定');
-    const key = _qs.studentName.replace(/[.#$[\]/\s]/g,'_');
+    const key = `${_qs.grade}_${_qs.cls}_${_qs.studentName}`.replace(/[.#$[\]/\s]/g,'_');
     await db.ref(`results/${_qs.code}/${key}`).set({
-      name: _qs.studentName, answers: _qs.answers, score, total,
+      name: _qs.studentName, grade: _qs.grade, cls: _qs.cls,
+      answers: _qs.answers, score, total,
       submittedAt: Date.now()
     });
     const st = document.getElementById('quizDoneStatus');
@@ -6891,6 +6986,58 @@ async function _submitQuizAnswers() {
     st.textContent = '⚠ 送信エラー: ' + e.message;
     st.style.background = '#fee2e2'; st.style.color = '#dc2626';
   }
+}
+
+function _showQuizReview() {
+  if (!_qs) return;
+  const total = _qs.questions.length;
+  let correct = 0;
+  const cards = _qs.questions.map((q, i) => {
+    const userAns = _qs.answers[q.id];
+    const correctNums = Array.isArray(q.answer) ? q.answer.map(Number) : [Number(q.answer)];
+    const isOk = userAns !== undefined && correctNums.includes(userAns);
+    if (isOk) correct++;
+
+    const choices = (q.choices||[]).map((c, ci) => {
+      const n = ci + 1;
+      const isUser    = userAns === n;
+      const isCorrAns = correctNums.includes(n);
+      let cls = 'review-choice';
+      let badge = '';
+      if (isCorrAns) { cls += ' correct'; badge = '<span style="margin-left:auto;font-size:11px;font-weight:700;">✓ 正解</span>'; }
+      else if (isUser) { cls += ' wrong';   badge = '<span style="margin-left:auto;font-size:11px;font-weight:700;">✗ あなたの回答</span>'; }
+      return `<div class="${cls}"><span class="rc-num">${n}</span><span style="flex:1;">${c}</span>${badge}</div>`;
+    }).join('');
+
+    const hd = isOk
+      ? `<span style="color:#16a34a;font-size:18px;font-weight:900;">✓</span>`
+      : `<span style="color:#dc2626;font-size:18px;font-weight:900;">✗</span>`;
+
+    return `<div class="review-card">
+      <div class="review-card-header">
+        ${hd}
+        <span class="review-q-num">${i+1} / ${total}</span>
+        <span class="review-q-id">${q.id}</span>
+      </div>
+      <div class="review-q-text">${q.text}</div>
+      <div class="review-choices">${choices}</div>
+      ${q.explanation ? `<div class="review-explanation"><strong>解説</strong><br>${q.explanation.replace(/\n/g,'<br>')}</div>` : ''}
+    </div>`;
+  }).join('');
+
+  document.getElementById('quizReviewContent').innerHTML = cards;
+  document.getElementById('quizReviewScore').textContent = `${correct} / ${total} 正解`;
+
+  document.getElementById('quizDonePane').style.display = 'none';
+  const rp = document.getElementById('quizReviewPane');
+  rp.style.display = 'flex'; rp.style.flexDirection = 'column';
+  rp.scrollTop = 0;
+}
+
+function _closeQuizReview() {
+  document.getElementById('quizReviewPane').style.display = 'none';
+  const dp = document.getElementById('quizDonePane');
+  dp.style.display = 'flex'; dp.style.flexDirection = 'column';
 }
 
 // ════════════════════════════════════════
@@ -6960,6 +7107,13 @@ async function createQuiz() {
   document.getElementById('qtmURLBox').textContent    = url;
   document.getElementById('qtmCodeDisplay').textContent = code;
 
+  // QRコード生成
+  const qrEl = document.getElementById('qtmQRCode');
+  qrEl.innerHTML = '';
+  if (typeof QRCode !== 'undefined') {
+    new QRCode(qrEl, { text: url, width: 180, height: 180, correctLevel: QRCode.CorrectLevel.M });
+  }
+
   const recent = JSON.parse(localStorage.getItem('ptQuizRecent')||'[]');
   recent.unshift({code, title, createdAt:Date.now()});
   localStorage.setItem('ptQuizRecent', JSON.stringify(recent.slice(0,8)));
@@ -7015,8 +7169,9 @@ function _renderResults(data, code) {
 
   const rows = entries.map((e,i) => {
     const pct = Math.round(e.score/e.total*100);
+    const info = [e.grade||'', e.cls||''].filter(Boolean).join(' ');
     return `<tr>
-      <td style="font-weight:600;color:#1e293b;">${i+1}. ${e.name}</td>
+      <td style="font-weight:600;color:#1e293b;">${i+1}. ${e.name}<br><span style="font-size:11px;color:#64748b;font-weight:400;">${info}</span></td>
       <td style="text-align:center;font-weight:700;color:#1d4ed8;">${e.score}/${e.total}</td>
       <td><div class="qtm-score-bar">
         <div class="qtm-score-fill" style="width:${pct}%;max-width:80px;background:${pctColor(pct)}"></div>
@@ -7321,13 +7476,14 @@ function downloadResultsCSV() {
     <!-- 発行済みペイン -->
     <div class="qtm-pane" id="qtmCreatedPane">
       <div style="font-size:18px;font-weight:800;color:#1e3a8a;">配信準備完了！</div>
-      <div style="font-size:13px;color:#64748b;margin-top:4px;">以下のURLを学生にLINE等で送ってください</div>
-      <div class="qtm-url-box" id="qtmURLBox"></div>
+      <div style="font-size:13px;color:#64748b;margin-top:4px;">URLまたはQRコードを学生に共有してください</div>
+      <div id="qtmQRCode"></div>
+      <div class="qtm-url-box" id="qtmURLBox" onclick="copyQuizURL()" style="cursor:pointer;" title="クリックでコピー"></div>
       <button class="qtm-copy-btn" onclick="copyQuizURL()">📋 URLをコピー</button>
-      <div style="margin-top:14px;text-align:center;font-size:14px;color:#64748b;">
+      <div style="margin-top:10px;text-align:center;font-size:14px;color:#64748b;">
         クイズコード：<strong id="qtmCodeDisplay" style="font-size:20px;color:#1d4ed8;letter-spacing:4px;font-family:monospace;"></strong>
       </div>
-      <button class="qtm-btn-primary" style="margin-top:18px;" onclick="openResults()">📊 結果をリアルタイムで見る</button>
+      <button class="qtm-btn-primary" style="margin-top:14px;" onclick="openResults()">📊 結果をリアルタイムで見る</button>
       <button class="qtm-btn-secondary" onclick="showQtmPane('qtmCreatePane','📤 クイズ配信')">← 別のクイズを作る</button>
     </div>
 
