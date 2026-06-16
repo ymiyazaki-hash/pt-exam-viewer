@@ -2020,6 +2020,30 @@
     </div>
     <button class="pw-btn" id="pwBtn" onclick="checkPassword(true)" disabled>読み込み中…</button>
     <div class="pw-error" id="pwError"></div>
+
+    <!-- クイズコード入力（学生向け） -->
+    <div style="margin-top:28px;width:100%;border-top:1px solid rgba(255,255,255,0.12);padding-top:22px;">
+      <div style="font-size:12px;color:rgba(255,255,255,0.5);text-align:center;margin-bottom:10px;letter-spacing:.5px;">
+        先生からクイズコードをもらった方はこちら
+      </div>
+      <div style="display:flex;gap:8px;">
+        <input id="quizCodeInput"
+          style="flex:1;padding:11px 14px;border:1.5px solid rgba(255,255,255,0.25);border-radius:10px;
+                 background:rgba(255,255,255,0.1);color:white;font-size:16px;font-family:monospace;
+                 letter-spacing:3px;text-transform:uppercase;outline:none;text-align:center;"
+          type="text" placeholder="例：ABC123" maxlength="6"
+          oninput="this.value=this.value.toUpperCase()"
+          onkeydown="if(event.key==='Enter')joinQuizByCode()">
+        <button onclick="joinQuizByCode()"
+          style="padding:11px 18px;background:rgba(59,130,246,0.7);border:1.5px solid rgba(99,158,255,0.5);
+                 color:white;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;">
+          参加する →
+        </button>
+      </div>
+      <div id="quizCodeError" style="color:#fca5a5;font-size:12px;margin-top:6px;text-align:center;display:none;">
+        コードは6文字で入力してください
+      </div>
+    </div>
   </div>
 </div>
 
@@ -2398,6 +2422,16 @@
   let _pwVerified    = false; // 正しいパスワードが確認された
 
   // パスワード確認
+  function joinQuizByCode() {
+    const code = (document.getElementById('quizCodeInput').value || '').trim().toUpperCase();
+    const errEl = document.getElementById('quizCodeError');
+    if (code.length !== 6) {
+      errEl.style.display = 'block'; return;
+    }
+    errEl.style.display = 'none';
+    location.href = location.origin + location.pathname + '?quiz=' + code;
+  }
+
   function checkPassword(force = false) {
     const input = document.getElementById('pwInput');
     const val   = input ? input.value.trim() : '';
