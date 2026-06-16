@@ -17,7 +17,7 @@
   <!-- クイズモード: ?quiz= が付いていたら最速でログイン画面を隠す -->
   <script>
     if (new URLSearchParams(location.search).get('quiz')) {
-      document.write('<style>#loadScreen{display:none!important}#quizScreen{display:flex!important;flex-direction:column!important}</style>');
+      document.write('<style>#passwordScreen,#loadScreen,#mainContent{display:none!important}#quizScreen{display:flex!important;flex-direction:column!important;position:fixed!important;inset:0!important;z-index:2000!important}</style>');
     }
   </script>
   <style>
