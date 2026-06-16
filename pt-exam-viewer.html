@@ -7178,6 +7178,8 @@ function openQuizTeacher(pane) {
   if (pane === 'search') {
     showQtmPane('qtmSearchPane', '📊 コードで結果を見る');
     setTimeout(() => { const inp = document.getElementById('qtmSearchCode'); if (inp) inp.focus(); }, 200);
+  } else {
+    showQtmPane('qtmCreatePane', '📤 クイズ配信');
   }
 }
 
