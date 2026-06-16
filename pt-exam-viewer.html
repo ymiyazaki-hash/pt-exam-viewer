@@ -709,6 +709,17 @@
     .answer-text { font-size: 13px; color: #4a5568; margin-top: 4px; }
     .modal-nav { display: flex; justify-content: space-between; align-items: center; padding: 14px 20px; border-top: 1px solid #f0f4f8; }
     .modal-close-bottom { display: none; }
+    /* チェックボックス付きカードレイアウト */
+    .qcard-flex { display:flex; align-items:flex-start; padding:0 !important; }
+    .qc-check-wrap { flex-shrink:0; padding:14px 4px 14px 12px; display:flex; align-items:center; cursor:pointer; }
+    .qc-checkbox { width:18px; height:18px; accent-color:#3b82f6; cursor:pointer; flex-shrink:0; }
+    .qc-body { flex:1; padding:13px 14px 13px 8px; min-width:0; cursor:pointer; }
+    .question-card.qcard-flex:has(.qc-checkbox:not(:checked)) { opacity:0.45; }
+    #qCheckBar { display:none; align-items:center; gap:6px; flex-wrap:wrap; margin:6px 0 4px; }
+    #qCheckBar.visible { display:flex; }
+    #qCheckCount { font-size:12px; color:#1d4ed8; font-weight:700; }
+    .qcheck-btn { font-size:11px; padding:3px 9px; border-radius:7px; border:1.5px solid #bdd1fa; background:#eff6ff; color:#1d4ed8; font-weight:700; cursor:pointer; }
+    .qcheck-btn:hover { background:#dbeafe; }
     .nav-btn {
       padding: 8px 18px; border: 1.5px solid #e2e8f0; background: white;
       border-radius: 8px; cursor: pointer; font-size: 13px; color: #4a5568;
@@ -2315,8 +2326,14 @@
           <button id="exportListBtn" class="btn-export btn-export-list" onclick="exportAnswerKey()" disabled>📋 Word<br>解答一覧</button>
           <button id="exportListPdfBtn" class="btn-export btn-list-pdf" onclick="exportAnswerPDF()" disabled>📋 PDF<br>解答一覧</button>
         </div>
+        <div id="qCheckBar">
+          <span id="qCheckCount"></span>
+          <button class="qcheck-btn" onclick="_qSelectAll()">全選択</button>
+          <button class="qcheck-btn" onclick="_qDeselectAll()">全解除</button>
+        </div>
         <button class="btn-reset" onclick="resetFilters()">フィルターをリセット</button>
         <button class="btn-quiz-create" onclick="openQuizTeacher()">📤 クイズを配信する</button>
+        <button class="btn-quiz-create" onclick="createQuizFromChecked()" style="margin-top:6px;background:linear-gradient(135deg,#059669,#10b981);">✓ チェックした問題でクイズ配信</button>
         <button class="btn-quiz-create" onclick="openQuizTeacher('search')" style="margin-top:8px;background:linear-gradient(135deg,#1e3a8a,#3b82f6);">📊 コードで結果を見る</button>
       </div>
     </div>
@@ -2574,6 +2591,22 @@
   let currentModalIdx = -1;
   let selectedIds = new Set();
   const PAGE_SIZE = 20;
+  let _uncheckedIds = new Set(); // チェックを外した問題ID（デフォルト全チェック）
+
+  function _getCheckedQuestions() { return filteredData.filter(q => !_uncheckedIds.has(q.id)); }
+  function _updateCheckBar() {
+    const n = _getCheckedQuestions().length, total = filteredData.length;
+    const el = document.getElementById('qCheckCount');
+    if (el) el.textContent = n + ' / ' + total + ' 問チェック中';
+    const en = document.getElementById('exportNote');
+    if (en && total > 0) en.textContent = n + '件が対象';
+  }
+  function _toggleQCheck(qid, checked) {
+    if (!checked) _uncheckedIds.add(qid); else _uncheckedIds.delete(qid);
+    _updateCheckBar();
+  }
+  function _qSelectAll()   { _uncheckedIds.clear(); renderPage(); _updateCheckBar(); }
+  function _qDeselectAll() { filteredData.forEach(q => _uncheckedIds.add(q.id)); renderPage(); _updateCheckBar(); }
 
   // ── IndexedDB キャッシュ ──────────────────────────────────────────
   const IDB_NAME  = 'pt-exam-viewer';
@@ -2985,14 +3018,17 @@
     });
 
     currentPage = 1;
+    _uncheckedIds = new Set();
     const n = filteredData.length;
     document.getElementById('resultCount').textContent = `${n.toLocaleString()} 件該当`;
+    const qcb = document.getElementById('qCheckBar'); if (qcb) qcb.classList.toggle('visible', n > 0);
     ['exportBtn','exportPdfBtn','exportListBtn','exportListPdfBtn'].forEach(id => {
       const el = document.getElementById(id); if (el) el.disabled = n === 0;
     });
     const exportNote = document.getElementById('exportNote');
     if (exportNote) exportNote.textContent = n > 0 ? `${n.toLocaleString()}件が対象` : '';
     renderPage();
+    _updateCheckBar();
   }
 
   function getChecked(filterKey) {
@@ -3118,23 +3154,31 @@
     const exclNote = q.excludedHandling
       ? `<div class="card-excluded-note">【採点上の取扱い】${esc(q.excludedHandling)}${q.excludedReason ? '<br>【理由】' + esc(q.excludedReason) : ''}</div>`
       : '';
+    const qidSafe = q.id.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
     return `
-      <div class="question-card" style="animation-delay:${delay}s" onclick="openModal(${globalIdx})">
-        <div class="card-meta">
-          <span class="badge badge-session">${esc(q.examSession)}</span>
-          <span class="badge ${catClass}">${esc(q.category || '\u2015')}</span>
-          <span class="badge badge-field">${esc(q.field || '\u2015')}</span>
-          ${imgBadge}${exclBadge}
-          <span class="card-id">${esc(q.id)}</span>
-        </div>
-        <div class="card-text">${preview}</div>
-        <div class="card-footer">
-          <div class="accuracy-bar">
-            <div class="accuracy-fill" style="width:${Math.min(rate,100)}%;background:${color};animation-delay:${delay+0.15}s"></div>
+      <div class="question-card qcard-flex" style="animation-delay:${delay}s">
+        <label class="qc-check-wrap" onclick="event.stopPropagation()">
+          <input type="checkbox" class="qc-checkbox" data-qid="${esc(q.id)}"
+                 ${_uncheckedIds.has(q.id)?'':'checked'}
+                 onchange="_toggleQCheck('${qidSafe}',this.checked)">
+        </label>
+        <div class="qc-body" onclick="openModal(${globalIdx})">
+          <div class="card-meta">
+            <span class="badge badge-session">${esc(q.examSession)}</span>
+            <span class="badge ${catClass}">${esc(q.category || '\u2015')}</span>
+            <span class="badge badge-field">${esc(q.field || '\u2015')}</span>
+            ${imgBadge}${exclBadge}
+            <span class="card-id">${esc(q.id)}</span>
           </div>
-          <span class="accuracy-text">正答率 ${rate.toFixed(1)}%</span>
+          <div class="card-text">${preview}</div>
+          <div class="card-footer">
+            <div class="accuracy-bar">
+              <div class="accuracy-fill" style="width:${Math.min(rate,100)}%;background:${color};animation-delay:${delay+0.15}s"></div>
+            </div>
+            <span class="accuracy-text">正答率 ${rate.toFixed(1)}%</span>
+          </div>
+          ${exclNote}
         </div>
-        ${exclNote}
       </div>`;
   }
 
@@ -3530,7 +3574,7 @@
 
     try {
       // filteredData の表示順をそのまま使用（問1,問2,...の順）
-      const data = filteredData;
+      const data = _getCheckedQuestions();
       const today = new Date().toLocaleDateString('ja-JP');
       const categories = [...new Set(data.map(d=>d.category).filter(Boolean))].sort().join('・');
       // 試験回は「第N回〜第M回」形式に短縮（サブタイトル折り返し防止）
@@ -3742,8 +3786,10 @@ ${imgRelXml}
   }
 
   async function exportToWord() {
-    if (!filteredData || !filteredData.length) { alert('エクスポートするデータがありません'); return; }
+    const _chk = _getCheckedQuestions();
+    if (!_chk.length) { alert('チェックされた問題がありません'); return; }
     const wa = document.querySelector('input[name="answerMode"]:checked').value === 'with';
+    const _origFD = filteredData; filteredData = _chk;
     try {
       const { blob, filename } = await buildDocxBlob(wa);
       const url = URL.createObjectURL(blob);
@@ -3755,6 +3801,8 @@ ${imgRelXml}
     } catch (e) {
       console.error(e);
       alert('Wordファイルの生成に失敗しました:\n' + e.message);
+    } finally {
+      filteredData = _origFD;
     }
     showLoading(false);
   }
@@ -3773,7 +3821,9 @@ ${imgRelXml}
 
   // ── 問題 PDF 出力（ブラウザ印刷 / サーバー不要・iPad 対応）──────
   async function exportToPDF() {
-    if (!filteredData.length) { alert('データがありません'); return; }
+    const _chkPdf = _getCheckedQuestions();
+    if (!_chkPdf.length) { alert('チェックされた問題がありません'); return; }
+    const _origFDpdf = filteredData; filteredData = _chkPdf;
     const wa = document.querySelector('input[name="answerMode"]:checked').value === 'with';
 
     // 【重要】ポップアップは「クリックの同期処理中」に開く（iOS Safari対策）。
@@ -4074,13 +4124,14 @@ function closeBack(){
       alert('PDF出力に失敗しました:\n' + e.message);
     }
     showLoading(false);
+    filteredData = _origFDpdf;
   }
 
   // ── 解答一覧 PDF 出力（問番号順・設問ID付き）─────────────────
   function exportAnswerPDF() {
     if (!filteredData.length) { alert('データがありません'); return; }
 
-    const data = filteredData;
+    const data = _getCheckedQuestions();
     const today = new Date().toLocaleDateString('ja-JP');
     const categories = [...new Set(data.map(d=>d.category).filter(Boolean))].sort().join('・');
     const sessList   = [...new Set(data.map(d=>d.examSession).filter(Boolean))].sort();
@@ -7207,6 +7258,44 @@ function showQtmPane(id, title) {
     document.getElementById(p).classList.toggle('active', p===id)
   );
   document.getElementById('qtmHeaderTitle').textContent = title;
+}
+
+async function createQuizFromChecked() {
+  const db = _initFb();
+  if (!db || FIREBASE_CONFIG.apiKey === 'REPLACE_API_KEY') {
+    alert('Firebase設定が未完了です。\nFIREBASE_CONFIG を入力してください。');
+    return;
+  }
+  const checked = _getCheckedQuestions();
+  if (!checked.length) { alert('チェックされた問題がありません。\n問題を絞り込み、チェックを入れてください。'); return; }
+  const selected = checked.slice(0, 300);
+  if (checked.length > 300) {
+    if (!confirm(`チェックした${checked.length}問のうち、先頭300問でクイズを作成します。\nよろしいですか？`)) return;
+  }
+  const code  = _genCode();
+  const title = `絞り込みクイズ ${selected.length}問`;
+  await db.ref('quizzes/' + code).set({
+    title, field: '絞り込み',
+    questionIds: selected.map(q => q.id),
+    createdAt: Date.now(), isOpen: true
+  });
+  _currentQCode  = code;
+  _currentQTitle = title;
+  const url = location.origin + location.pathname + '?quiz=' + code;
+  document.getElementById('qtmURLBox').textContent     = url;
+  document.getElementById('qtmCodeDisplay').textContent = code;
+  const studentURL = location.origin + location.pathname + '?student=1';
+  document.getElementById('qtmStudentURL').textContent  = studentURL;
+  const qrEl = document.getElementById('qtmQRCode');
+  qrEl.innerHTML = '';
+  if (typeof QRCode !== 'undefined') {
+    new QRCode(qrEl, { text: url, width: 180, height: 180, correctLevel: QRCode.CorrectLevel.M });
+  }
+  const recent = JSON.parse(localStorage.getItem('ptQuizRecent') || '[]');
+  recent.unshift({ code, title, createdAt: Date.now() });
+  localStorage.setItem('ptQuizRecent', JSON.stringify(recent.slice(0, 8)));
+  openQuizTeacher();
+  showQtmPane('qtmCreatedPane', '📤 配信中');
 }
 
 async function createQuiz() {
