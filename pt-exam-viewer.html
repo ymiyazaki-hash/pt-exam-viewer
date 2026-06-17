@@ -4219,8 +4219,8 @@ ${tables}
   const PCIR = ['①','②','③','④','⑤'];
 
   function enterPractice(startIdx) {
-    practiceData = [...filteredData];
-    if (!practiceData.length) { alert('表示中の問題がありません'); return; }
+    practiceData = _getCheckedQuestions();
+    if (!practiceData.length) { alert('チェックされた問題がありません'); return; }
     practiceIdx = startIdx || 0;
     practiceState = {};  // 解答表示状態をリセット
     setDrawTool('pointer');
