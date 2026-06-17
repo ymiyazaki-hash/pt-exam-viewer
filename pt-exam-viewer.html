@@ -6344,9 +6344,10 @@ ${body}</body></html>`;
       if (e.target.closest('#drawToolbar')) return;
       if (e.pointerType === 'pen') {
         // Apple Pencil → 前回のペン/消しゴムモードを復元
+        hasPen = true;
         if (drawTool === 'pointer') setDrawTool(_lastPenMode);
-      } else if (e.pointerType === 'touch') {
-        // 指 → 操作モードへ（ペンモードを記憶しておく）
+      } else if (e.pointerType === 'touch' && hasPen) {
+        // 指 → Apple Pencilが使われたことがある場合のみ操作モードへ（パームリジェクション）
         if (drawTool !== 'pointer') { _lastPenMode = drawTool; setDrawTool('pointer'); }
       }
     }, { capture: true, passive: true });
@@ -7412,9 +7413,10 @@ function _renderResults(data, code) {
 
   const rows = entries.map((e,i) => {
     const pct = Math.round(e.score/e.total*100);
-    const info = [e.grade||'', e.cls||''].filter(Boolean).join(' ');
+    const gradeClsTxt = [e.grade||'', e.cls||''].filter(Boolean).join(' ') || '―';
     return `<tr>
-      <td style="font-weight:600;color:#1e293b;">${i+1}. ${e.name}<br><span style="font-size:11px;color:#64748b;font-weight:400;">${info}</span></td>
+      <td style="font-weight:600;color:#1e293b;font-size:13px;">${i+1}. ${e.name}</td>
+      <td style="font-size:12px;color:#475569;">${gradeClsTxt}</td>
       <td style="text-align:center;font-weight:700;color:#1d4ed8;">${e.score}/${e.total}</td>
       <td><div class="qtm-score-bar">
         <div class="qtm-score-fill" style="width:${pct}%;max-width:80px;background:${pctColor(pct)}"></div>
@@ -7454,7 +7456,7 @@ function _renderResults(data, code) {
   document.getElementById('qtmResultsContent').innerHTML = `
     <div style="font-size:12px;font-weight:700;color:#64748b;margin-bottom:8px;letter-spacing:.5px;">参加者 (${entries.length}名)</div>
     <table class="qtm-results-table">
-      <thead><tr><th>名前</th><th>点数</th><th>正答率</th></tr></thead>
+      <thead><tr><th>名前</th><th>学年・クラス</th><th>点数</th><th>正答率</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
     ${qRows ? `
@@ -7488,8 +7490,8 @@ function downloadResultsCSV() {
   db.ref('results/'+_currentQCode).get().then(snap => {
     const entries = Object.values(snap.val()||{});
     if (entries.length===0) { alert('まだ回答がありません'); return; }
-    const csv = [['名前','点数','合計','正答率'],
-      ...entries.map(e=>[e.name,e.score,e.total,Math.round(e.score/e.total*100)+'%'])
+    const csv = [['名前','学年','クラス','点数','合計','正答率'],
+      ...entries.map(e=>[e.name,e.grade||'',e.cls||'',e.score,e.total,Math.round(e.score/e.total*100)+'%'])
     ].map(r=>r.join(',')).join('\n');
     const blob = new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8;'});
     const a = document.createElement('a');
@@ -7528,8 +7530,45 @@ function downloadResultsCSV() {
           <p>試験順・正答率の低い順／高い順に並び替えできます。苦手問題をまとめて確認するときに便利！</p>
         </div>
         <div class="help-item">
-          <span class="help-badge">選択</span>
-          <p>問題カードにチェックを入れると選択されます。ヘッダーに<b>「N問選択中」</b>と表示。</p>
+          <span class="help-badge">チェック</span>
+          <p>問題カード左のチェックボックスで出題する問題を選べます。デフォルトは全選択。不要な問題を外すとWord/PDF・クイズ配信から除外されます。</p>
+        </div>
+      </div>
+
+      <!-- クイズ配信 -->
+      <div class="help-sec">
+        <div class="help-sec-title"><span class="ico">📤</span>クイズ配信（教員向け）</div>
+        <div class="help-item">
+          <span class="help-badge">配信</span>
+          <p>サイドバーの「📤 クイズを配信する」ボタンで問題セットを作成。<b>4桁のコード</b>が生成されます。QRコードをスクリーンに映して学生に共有しましょう。</p>
+        </div>
+        <div class="help-item">
+          <span class="help-badge">絞り込み配信</span>
+          <p>「✓ チェックした問題でクイズ配信」を使うと、今表示中の絞り込み結果から問題を選んで配信できます（最大300問）。</p>
+        </div>
+        <div class="help-item">
+          <span class="help-badge">結果確認</span>
+          <p>「📊 コードで結果を見る」でコードを入力すると学生の回答結果（名前・学年・クラス・点数・正答率）をリアルタイムで確認できます。CSVダウンロードも可能。</p>
+        </div>
+        <div class="help-tip">
+          💡 学生は <b>「?student=1」付きのURL</b>（例: <code style="font-size:11px">…viewer.html?student=1</code>）にアクセスしてコードを入力します。教員ページとは分離されています。
+        </div>
+      </div>
+
+      <!-- クイズ受験（学生向け） -->
+      <div class="help-sec">
+        <div class="help-sec-title"><span class="ico">🎓</span>クイズを受ける（学生向け）</div>
+        <div class="help-item">
+          <span class="help-badge">入室</span>
+          <p>先生から受け取った4桁のコードを入力し、学年・クラス・氏名を入力して「開始」を押します。</p>
+        </div>
+        <div class="help-item">
+          <span class="help-badge">回答</span>
+          <p>選択肢をタップして解答。全問終了後に結果画面が表示され、正誤と解説を確認できます。</p>
+        </div>
+        <div class="help-item">
+          <span class="help-badge">結果送信</span>
+          <p>回答は自動的にサーバーへ送信されます。先生がリアルタイムで確認できます。</p>
         </div>
       </div>
 
@@ -7555,11 +7594,11 @@ function downloadResultsCSV() {
         <div class="help-sec-title"><span class="ico">✏️</span>ペンで書き込む</div>
         <div class="help-item">
           <span class="help-badge">描画</span>
-          <p>下部ツールバーの「✏ 描画」タブを選択してペンアイコンをタップ。指またはApple Pencilで自由に書き込めます。</p>
+          <p>下部ツールバーのペン・マーカー・フェードアイコンをタップ。<b>スマホ・タブレットは指</b>でそのまま書けます。</p>
         </div>
         <div class="help-item">
           <span class="help-badge">消しゴム</span>
-          <p>ツールバーの消しゴムアイコンで書き込みを消せます。「クリア」で全消去。</p>
+          <p>消しゴムアイコンで書き込みを消せます。「クリア」で全消去。元に戻す（2本指タップ）もできます。</p>
         </div>
         <div class="help-item">
           <span class="help-badge">画像挿入</span>
@@ -7579,7 +7618,7 @@ function downloadResultsCSV() {
         </div>
         <div class="help-item">
           <span class="help-badge">PDF（問題集）</span>
-          <p>問題カード一覧から「🖨 PDF 問題」ボタンで選択した問題をまとめてWord形式でも出力できます。</p>
+          <p>問題カード一覧から「🖨 PDF 問題」ボタンで選択した問題をまとめてWord形式でも出力できます。チェックを外した問題は除外されます。</p>
         </div>
         <div class="help-item">
           <span class="help-badge">解答一覧</span>
