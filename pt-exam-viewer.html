@@ -2315,6 +2315,10 @@
             <input type="radio" name="answerMode" id="modeWithout" value="without" checked>
             <label for="modeWithout">解答なし</label>
           </div>
+          <div class="radio-option">
+            <input type="radio" name="answerMode" id="modeExplain" value="explain">
+            <label for="modeExplain">解説付き</label>
+          </div>
         </div>
         <div class="result-count" id="resultCount">読み込み中...</div>
         <div class="export-note" id="exportNote"></div>
@@ -3380,7 +3384,7 @@
   const CIR = ['①','②','③','④','⑤'];
 
   // 1問分の段落XML（2段組・10.5pt・問番号付き）
-  function buildQ(q, qNum, isLast, wa, imgInfo) {
+  function buildQ(q, qNum, isLast, wa, imgInfo, we) {
     const rate = (q.accuracyRate || 0).toFixed(1);
     const ch   = q.choices || [];
     const parts = [];
@@ -3477,6 +3481,31 @@
         rEl('＊不適切問題', {b:true, col:'B45309', sz:18}),
         {fill:'FFFBEB', sb:20, sa:20, ind:80}
       ));
+    }
+
+    // 解説（解説付きモード）
+    if (we && q.explanation) {
+      parts.push(pEl(
+        rEl('【解説】', {b:true, col:'1E3A5F', sz:20}),
+        {fill:'EFF6FF', bl:{sz:18,c:'3B82F6'}, sb:20, sa:8, ind:80}
+      ));
+      parts.push(pEl(
+        rEl(q.explanation, {col:'1E293B', sz:19}),
+        {fill:'EFF6FF', sb:8, sa:8, ind:80}
+      ));
+    }
+    if (we && q.choiceExplanations && q.choiceExplanations.some(Boolean)) {
+      const ch2 = q.choices || [];
+      q.choiceExplanations.forEach((ex, i) => {
+        if (!ex) return;
+        parts.push(pEl(
+          rEl(CIR[i] + '　' + ex, {col:'374151', sz:18}),
+          {fill:'F8FAFC', sb:4, sa:4, ind:160}
+        ));
+      });
+    }
+    if (we && (q.explanation || (q.choiceExplanations && q.choiceExplanations.some(Boolean)))) {
+      parts.push(pEl('', {sb:20, sa:0}));
     }
 
     // 区切り線
@@ -3684,7 +3713,7 @@
   }
 
   // ── .docx blob 生成（Word出力・PDF出力で共用）──────────────────
-  async function buildDocxBlob(wa) {
+  async function buildDocxBlob(wa, we) {
     if (typeof JSZip === 'undefined') throw new Error('ライブラリの読み込みに失敗しました。\nインターネット接続を確認してください。');
 
     const today = new Date().toLocaleDateString('ja-JP');
@@ -3749,7 +3778,7 @@
       categories ? pEl(rEl('【分類】　' + categories, {b:true, col:'1A4A8A', sz:28}), {sb:80, sa:60, jc:'center'}) : '',
       fields     ? pEl(rEl('【分野】　' + fields,     {col:'374151',         sz:24}), {sb:40, sa:40, jc:'center'}) : '',
       sessions   ? pEl(rEl('【試験回】　' + sessions, {col:'374151',         sz:22}), {sb:40, sa:80, jc:'center'}) : '',
-      pEl(rEl('全　' + filteredData.length + '　問　（' + (wa?'解答付き':'解答なし') + '）', {b:true, col:'374151', sz:26}), {sb:120, sa:80, jc:'center'}),
+      pEl(rEl('全　' + filteredData.length + '　問　（' + (we?'解説付き':wa?'解答付き':'解答なし') + '）', {b:true, col:'374151', sz:26}), {sb:120, sa:80, jc:'center'}),
       pEl(rEl('出力日：' + today, {col:'9CA3AF', sz:20}), {sb:200, sa:0, jc:'center'}),
       `<w:p><w:pPr><w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="900" w:right="900" w:bottom="900" w:left="900" w:header="500" w:footer="500" w:gutter="0"/></w:sectPr></w:pPr></w:p>`,
     ].join('');
@@ -3767,7 +3796,7 @@ ${imgRelXml}
 </Relationships>`;
 
     const questions = filteredData
-      .map((q, i) => buildQ(q, i + 1, i === filteredData.length - 1, wa, mediaMap[i] || null))
+      .map((q, i) => buildQ(q, i + 1, i === filteredData.length - 1, wa, mediaMap[i] || null, we))
       .join('');
 
     const docXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><w:body>${cover}${questions}<w:sectPr><w:footerReference w:type="default" r:id="rId4"/><w:cols w:num="2" w:space="568"/><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="900" w:right="900" w:bottom="900" w:left="900" w:header="500" w:footer="500" w:gutter="0"/></w:sectPr></w:body></w:document>`;
@@ -3787,17 +3816,19 @@ ${imgRelXml}
 
     const blob = await zip.generateAsync({type:'blob', mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document', compression:'DEFLATE', compressionOptions:{level:6}});
     const d = today.replace(/\//g,'');
-    const filename = `PT国家試験問題_${d}_${wa?'解答付き':'解答なし'}_${filteredData.length}件`;
+    const filename = `PT国家試験問題_${d}_${we?'解説付き':wa?'解答付き':'解答なし'}_${filteredData.length}件`;
     return { blob, filename, today };
   }
 
   async function exportToWord() {
     const _chk = _getCheckedQuestions();
     if (!_chk.length) { alert('チェックされた問題がありません'); return; }
-    const wa = document.querySelector('input[name="answerMode"]:checked').value === 'with';
+    const mode = document.querySelector('input[name="answerMode"]:checked').value;
+    const we = mode === 'explain';
+    const wa = we || mode === 'with';
     const _origFD = filteredData; filteredData = _chk;
     try {
-      const { blob, filename } = await buildDocxBlob(wa);
+      const { blob, filename } = await buildDocxBlob(wa, we);
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -3830,7 +3861,9 @@ ${imgRelXml}
     const _chkPdf = _getCheckedQuestions();
     if (!_chkPdf.length) { alert('チェックされた問題がありません'); return; }
     const _origFDpdf = filteredData; filteredData = _chkPdf;
-    const wa = document.querySelector('input[name="answerMode"]:checked').value === 'with';
+    const _pdfMode = document.querySelector('input[name="answerMode"]:checked').value;
+    const we = _pdfMode === 'explain';
+    const wa = we || _pdfMode === 'with';
 
     // 【重要】ポップアップは「クリックの同期処理中」に開く（iOS Safari対策）。
     // await を挟んだ後に window.open するとiOSではブロックされるため、最初に開く。
@@ -3858,7 +3891,7 @@ ${imgRelXml}
       const sessions   = [...new Set(filteredData.map(d=>d.examSession).filter(Boolean))].sort().join('・');
       const fields     = [...new Set(filteredData.map(d=>d.field).filter(Boolean))].sort().join('・');
       const d          = today.replace(/\//g,'');
-      const filename   = `PT国家試験問題_${d}_${wa?'解答付き':'解答なし'}_${filteredData.length}件`;
+      const filename   = `PT国家試験問題_${d}_${we?'解説付き':wa?'解答付き':'解答なし'}_${filteredData.length}件`;
 
       const CIRCLED = ['①','②','③','④','⑤'];
 
@@ -3915,11 +3948,16 @@ ${imgRelXml}
         } else if (q.excludedHandling) {
           ansHtml = '<div class="ans-badge">＊不適切問題</div>';
         }
+        let explHtml = '';
+        if (we && q.explanation) {
+          const ceHtml = (q.choiceExplanations||[]).map((ex,i)=>ex?`<div class="ce">${CIRCLED[i]||''}　${_e(ex)}</div>`:'').join('');
+          explHtml = `<div class="expl"><div class="expl-hd">【解説】</div><div class="expl-body">${_e(q.explanation)}</div>${ceHtml}</div>`;
+        }
         const exclBadge = q.excludedHandling ? ' <span class="excl-badge">⚠採点除外</span>' : '';
         return `<div class="q">
 <div class="qh"><span class="qnum">${num}問</span>　<span class="qid">${_e(q.id||'')}</span>　<span class="qmeta">${_e(q.examSession||'')}　${_e(q.category||'')}${q.field?'　'+_e(q.field):''}</span>　<span class="qpct">${rate}%</span>${exclBadge}</div>
 <div class="qt">${_e(q.text||'')}</div>
-${imgHtml}<div class="opts">${optsHtml}</div>${ansHtml}
+${imgHtml}<div class="opts">${optsHtml}</div>${ansHtml}${explHtml}
 </div>`;
       };
 
@@ -4068,6 +4106,10 @@ body{font-family:"游明朝","Yu Mincho","Hiragino Mincho Pro W3","ヒラギノ�
 .opts{padding-left:1mm}
 .opt{font-size:10.5pt;margin:0.9pt 0;line-height:1.4}
 .qimg{display:block;width:100%;height:auto;max-height:111mm;object-fit:contain;margin:2pt 0}
+.expl{margin-top:3pt;padding:3pt 5pt;background:#eff6ff;border-left:2pt solid #3b82f6;border-radius:2pt}
+.expl-hd{font-size:8.5pt;font-weight:bold;color:#1e3a8a;margin-bottom:1pt}
+.expl-body{font-size:8.5pt;color:#1e293b;line-height:1.5}
+.ce{font-size:8pt;color:#374151;margin-top:1pt;padding-left:4pt}
 .ans{font-size:10.5pt;font-weight:bold;border-top:.4pt solid #333;
      margin-top:2pt;padding-top:1pt;color:#1a5c30}
 .ans.excl{color:#b45309;border-top-color:#f59e0b;background:#fffbeb;padding:3pt 5pt;border-radius:3pt}
