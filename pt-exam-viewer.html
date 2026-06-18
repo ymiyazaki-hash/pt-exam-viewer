@@ -2301,6 +2301,11 @@
       </div>
 
       <div class="filter-section">
+        <h3>サブ分野</h3>
+        <div class="checkbox-list" id="subFieldList"></div>
+      </div>
+
+      <div class="filter-section">
         <h3>試験回</h3>
         <div class="checkbox-list" id="sessionList"></div>
       </div>
@@ -2937,17 +2942,22 @@
     const fieldSet = new Set();
     allData.forEach(d => { (d.new_fields || []).forEach(f => fieldSet.add(f.trim())); });
     const fields = [...fieldSet].sort();
+    const subFieldSet = new Set();
+    allData.forEach(d => { (d.new_sub_fields || []).forEach(f => subFieldSet.add(f.trim())); });
+    const subFields = [...subFieldSet].sort();
     const categories = [...new Set(allData.map(d => d.category).filter(Boolean))].sort();
 
     const counts = {};
     allData.forEach(d => {
       counts[d.examSession] = (counts[d.examSession] || 0) + 1;
       (d.new_fields || []).forEach(f => { const k = f.trim(); counts[k] = (counts[k] || 0) + 1; });
+      (d.new_sub_fields || []).forEach(f => { const k = f.trim(); counts[k] = (counts[k] || 0) + 1; });
       if (d.category)  counts[d.category]  = (counts[d.category]  || 0) + 1;
     });
 
     buildCheckboxList('sessionList',  sessions,   'session',  counts);
     buildCheckboxList('fieldList',    fields,     'field',    counts);
+    buildCheckboxList('subFieldList', subFields,  'subfield', counts);
     buildCheckboxList('categoryList', categories, 'category', counts);
 
     let searchTimer;
@@ -2983,6 +2993,7 @@
     const keyword         = document.getElementById('searchInput').value.toLowerCase().trim();
     const checkedSessions = getChecked('session');
     const checkedFields   = getChecked('field');
+    const checkedSubFields = getChecked('subfield');
     const checkedCategories = getChecked('category');
     const accMin = parseInt(document.getElementById('accMin').value);
     const accMax = parseInt(document.getElementById('accMax').value);
@@ -2995,6 +3006,10 @@
       if (checkedFields.length) {
         const qFields = q.new_fields || [];
         if (!checkedFields.some(cf => qFields.includes(cf))) return false;
+      }
+      if (checkedSubFields.length) {
+        const qSub = q.new_sub_fields || [];
+        if (!checkedSubFields.some(cf => qSub.includes(cf))) return false;
       }
       if (checkedCategories.length && !checkedCategories.includes(q.category))    return false;
       const rate = q.accuracyRate ?? 0;
