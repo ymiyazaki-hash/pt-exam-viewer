@@ -607,6 +607,7 @@
     .badge-category-基礎 { background: linear-gradient(135deg, #fff5f5, #fed7d7); color: #991b1b; }
     .badge-category-専門 { background: linear-gradient(135deg, #faf5ff, #e9d8fd); color: #5b21b6; }
     .badge-field { background: linear-gradient(135deg, #fffbeb, #fde68a); color: #78350f; }
+    .badge-subfield { background: linear-gradient(135deg, #f0fdf4, #bbf7d0); color: #166534; font-size: 11px; }
     .badge-excluded { background: linear-gradient(135deg, #fff7ed, #fed7aa); color: #9a3412; border: 1px solid #fdba74; }
     .card-excluded-note {
       margin-top: 8px; padding: 6px 10px; border-radius: 8px;
@@ -2934,14 +2935,14 @@
   function initApp() {
     const sessions = [...new Set(allData.map(d => d.examSession))].sort();
     const fieldSet = new Set();
-    allData.forEach(d => { if (d.field) d.field.split(',').forEach(f => fieldSet.add(f.trim())); });
+    allData.forEach(d => { (d.new_fields || []).forEach(f => fieldSet.add(f.trim())); });
     const fields = [...fieldSet].sort();
     const categories = [...new Set(allData.map(d => d.category).filter(Boolean))].sort();
 
     const counts = {};
     allData.forEach(d => {
       counts[d.examSession] = (counts[d.examSession] || 0) + 1;
-      if (d.field) d.field.split(',').forEach(f => { const k = f.trim(); counts[k] = (counts[k] || 0) + 1; });
+      (d.new_fields || []).forEach(f => { const k = f.trim(); counts[k] = (counts[k] || 0) + 1; });
       if (d.category)  counts[d.category]  = (counts[d.category]  || 0) + 1;
     });
 
@@ -2992,7 +2993,7 @@
       if (!includeExcluded && q.excludedHandling) return false;
       if (checkedSessions.length   && !checkedSessions.includes(q.examSession))   return false;
       if (checkedFields.length) {
-        const qFields = q.field ? q.field.split(',').map(f => f.trim()) : [];
+        const qFields = q.new_fields || [];
         if (!checkedFields.some(cf => qFields.includes(cf))) return false;
       }
       if (checkedCategories.length && !checkedCategories.includes(q.category))    return false;
@@ -3176,7 +3177,8 @@
           <div class="card-meta">
             <span class="badge badge-session">${esc(q.examSession)}</span>
             <span class="badge ${catClass}">${esc(q.category || '\u2015')}</span>
-            <span class="badge badge-field">${esc(q.field || '\u2015')}</span>
+            <span class="badge badge-field">${esc((q.new_fields||[])[0] || '\u2015')}</span>
+            ${(q.new_sub_fields||[])[0] ? `<span class="badge badge-subfield">${esc(q.new_sub_fields[0])}</span>` : ''}
             ${imgBadge}${exclBadge}
             <span class="card-id">${esc(q.id)}</span>
           </div>
@@ -3237,7 +3239,8 @@
     document.getElementById('modalMeta').innerHTML = `
       <span class="badge badge-session">${esc(q.examSession)}</span>
       <span class="badge ${catClass}">${esc(q.category || '―')}</span>
-      <span class="badge badge-field">${esc(q.field || '―')}</span>
+      <span class="badge badge-field">${esc((q.new_fields||[])[0] || '―')}</span>
+      ${(q.new_sub_fields||[])[0] ? `<span class="badge badge-subfield">${esc(q.new_sub_fields[0])}</span>` : ''}
       <span style="font-size:11px;color:#a0aec0;margin-left:6px">ID: ${esc(q.id)}</span>`;
 
     const imageHtml  = q.imageData ? `<img class="question-image" src="${q.imageData}" alt="問題図">` : '';
@@ -3395,7 +3398,7 @@
     parts.push(pEl(
       rEl(qNum + '問', {b:true, col:'FFFFFF', sz:22}) +
       rEl('  ' + q.id, {b:true, col:'D6E4FF', sz:21}) +
-      rEl('  ' + q.examSession + '  ' + q.category + (q.field ? '  ' + q.field : ''), {col:'BDD0F8', sz:21}) +
+      rEl('  ' + q.examSession + '  ' + q.category + ((q.new_fields||[])[0] ? '  ' + q.new_fields[0] : ''), {col:'BDD0F8', sz:21}) +
       rEl('  ' + rate + '%', {col:'C7D8FA', sz:19}) +
       (q.excludedHandling ? rEl('  ⚠採点除外', {b:true, col:'FED7AA', sz:19}) : ''),
       {kn:true, fill:'1A4A8A', bl:{sz:20,c:'0C2461'}, sb:140, sa:40, ind:60}
@@ -3623,7 +3626,7 @@
         ? `${cmpSess(sessList[0])}-${cmpSess(sessList[sessList.length-1])}`
         : sessList.map(cmpSess).join('・');
       // 分野（3種類以下はすべて列挙、4種類以上は「〇他」と省略）
-      const fields   = [...new Set(data.map(d=>d.field).filter(Boolean))].sort();
+      const fields   = [...new Set(data.flatMap(d=>d.new_fields||[]).filter(Boolean))].sort();
       const fieldStr = fields.length === 0 ? '' :
                        fields.length <= 3  ? fields.join('・') :
                        `${fields[0]}他`;
@@ -3767,7 +3770,7 @@
     });
 
     const categories = [...new Set(filteredData.map(d=>d.category).filter(Boolean))].sort().join('・');
-    const fields     = [...new Set(filteredData.map(d=>d.field).filter(Boolean))].sort().join('・');
+    const fields     = [...new Set(filteredData.flatMap(d=>d.new_fields||[]).filter(Boolean))].sort().join('・');
     const sessions   = [...new Set(filteredData.map(d=>d.examSession).filter(Boolean))].sort().join('・');
 
     const cover = [
@@ -3889,7 +3892,7 @@ ${imgRelXml}
       const today      = new Date().toLocaleDateString('ja-JP');
       const categories = [...new Set(filteredData.map(d=>d.category).filter(Boolean))].sort().join('・');
       const sessions   = [...new Set(filteredData.map(d=>d.examSession).filter(Boolean))].sort().join('・');
-      const fields     = [...new Set(filteredData.map(d=>d.field).filter(Boolean))].sort().join('・');
+      const fields     = [...new Set(filteredData.flatMap(d=>d.new_fields||[]).filter(Boolean))].sort().join('・');
       const d          = today.replace(/\//g,'');
       const filename   = `PT国家試験問題_${d}_${we?'解説付き':wa?'解答付き':'解答なし'}_${filteredData.length}件`;
 
@@ -3955,7 +3958,7 @@ ${imgRelXml}
         }
         const exclBadge = q.excludedHandling ? ' <span class="excl-badge">⚠採点除外</span>' : '';
         return `<div class="q">
-<div class="qh"><span class="qnum">${num}問</span>　<span class="qid">${_e(q.id||'')}</span>　<span class="qmeta">${_e(q.examSession||'')}　${_e(q.category||'')}${q.field?'　'+_e(q.field):''}</span>　<span class="qpct">${rate}%</span>${exclBadge}</div>
+<div class="qh"><span class="qnum">${num}問</span>　<span class="qid">${_e(q.id||'')}</span>　<span class="qmeta">${_e(q.examSession||'')}　${_e(q.category||'')}${(q.new_fields||[])[0]?'　'+_e(q.new_fields[0]):''}</span>　<span class="qpct">${rate}%</span>${exclBadge}</div>
 <div class="qt">${_e(q.text||'')}</div>
 ${imgHtml}<div class="opts">${optsHtml}</div>${ansHtml}${explHtml}
 </div>`;
@@ -4014,7 +4017,7 @@ ${imgHtml}<div class="opts">${optsHtml}</div>${ansHtml}${explHtml}
       const measureQ = (q, num, sz) => {
         const choices = q.choices || [];
         const rate    = (q.accuracyRate ?? 0).toFixed(1);
-        const headStr = `${num}問 ${q.id||''} ${q.examSession||''} ${q.category||''}${q.field?' '+q.field:''} ${rate}%`;
+        const headStr = `${num}問 ${q.id||''} ${q.examSession||''} ${q.category||''}${(q.new_fields||[])[0]?' '+q.new_fields[0]:''} ${rate}%`;
         const qhLines = Math.max(1, Math.ceil(ew(headStr) / CPL_QH));
         const qtLines = Math.max(1, Math.ceil(ew(q.text || '') / CPL_QT));
         let imgH = 0;
@@ -4186,7 +4189,7 @@ function closeBack(){
     const sessStr    = sessList.length > 3
       ? `${sessList[0]}〜${sessList[sessList.length-1]}`
       : sessList.join('・');
-    const fields     = [...new Set(data.map(d=>d.field).filter(Boolean))].sort();
+    const fields     = [...new Set(data.flatMap(d=>d.new_fields||[]).filter(Boolean))].sort();
     const fieldStr   = fields.length === 0 ? '' : fields.length <= 3 ? fields.join('・') : `${fields[0]}他`;
 
     // Word出力と同じ：5グループ/行 × 縦優先 × 100問/ページ
@@ -4501,7 +4504,7 @@ ${tables}
     document.getElementById('pracProgress').textContent =
       `${practiceIdx + 1} / ${total}`;
     document.getElementById('pracMeta').innerHTML =
-      `<b>${esc(q.id)}</b>　${esc(q.examSession)}　${esc(q.category)}　${esc(q.field||'')}`;
+      `<b>${esc(q.id)}</b>　${esc(q.examSession)}　${esc(q.category)}　${esc((q.new_fields||[])[0]||'')}`;
     document.getElementById('pracBarSub').textContent =
       `${total}問　解説中: ${practiceIdx + 1}問目`;
 
@@ -5522,7 +5525,7 @@ ${tables}
     }
     const rate = (q.accuracyRate ?? 0).toFixed(1);
     let textH = pad;
-    textH += mh(`${num}問　${q.id||''}　${q.examSession||''}　${q.category||''}${q.field?'　'+q.field:''}　正答率${rate}%`, 22, 'bold 16px sans-serif') + 8;
+    textH += mh(`${num}問　${q.id||''}　${q.examSession||''}　${q.category||''}${(q.new_fields||[])[0]?'　'+q.new_fields[0]:''}　正答率${rate}%`, 22, 'bold 16px sans-serif') + 8;
     textH += mh(q.text || '', 24, '16px sans-serif') + 10;
     choices.forEach((c, i) => { textH += mh(`${CIRC[i]||(i+1)+'.'}　${c}`, 23, '16px sans-serif') + 4; });
     if (revealed && q.answer) {
@@ -5570,7 +5573,7 @@ ${tables}
 
     let ty = pad;
     ctx.fillStyle = '#0c2461'; ctx.font = 'bold 16px sans-serif';
-    ty = _wrapDraw(ctx, `${num}問　${q.id||''}　${q.examSession||''}　${q.category||''}${q.field?'　'+q.field:''}　正答率${rate}%`, pad, ty, maxW, 22) + 8;
+    ty = _wrapDraw(ctx, `${num}問　${q.id||''}　${q.examSession||''}　${q.category||''}${(q.new_fields||[])[0]?'　'+q.new_fields[0]:''}　正答率${rate}%`, pad, ty, maxW, 22) + 8;
     ctx.fillStyle = '#111'; ctx.font = '16px sans-serif';
     ty = _wrapDraw(ctx, q.text || '', pad, ty, maxW, 24) + 10;
 
@@ -7287,7 +7290,7 @@ function openQuizTeacher(pane) {
   // 分野セレクト構築
   const sel = document.getElementById('qtmFieldSel');
   if (sel && sel.options.length <= 1 && typeof allData !== 'undefined') {
-    const fields = [...new Set(allData.map(q=>q.field).filter(Boolean))].sort();
+    const fields = [...new Set(allData.flatMap(q=>q.new_fields||[]).filter(Boolean))].sort();
     sel.innerHTML = '<option value="">全分野（ランダム）</option>' +
       fields.map(f => `<option value="${f}">${f}</option>`).join('');
   }
@@ -7359,7 +7362,7 @@ async function createQuiz() {
   const field = document.getElementById('qtmFieldSel').value;
   const count = parseInt(document.getElementById('qtmCountSel').value);
 
-  let pool = (typeof allData!=='undefined' ? allData : []).filter(q => !field || q.field===field);
+  let pool = (typeof allData!=='undefined' ? allData : []).filter(q => !field || (q.new_fields||[]).includes(field));
   if (pool.length < count) {
     alert(`「${field||'全分野'}」の問題数が${count}問に足りません（${pool.length}問）`);
     return;
