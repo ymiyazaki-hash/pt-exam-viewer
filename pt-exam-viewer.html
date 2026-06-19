@@ -8693,15 +8693,24 @@ function downloadResultsCSV() {
 }
 <script>
 function _openSchFromList(code, title, startDate, endDate, qpd, totalDays, skipCount) {
-  openQuizTeacher();
-  // 配信済みペインに情報を直接セット
+  // モーダルを開く（openQuizTeacherを使わず直接開く）
+  const modal = document.getElementById('quizTeacherModal');
+  if (modal) modal.style.display = 'flex';
+
+  // タブ見た目をスケジュール側に
+  const tq = document.getElementById('tabQuiz');
+  const ts = document.getElementById('tabSchedule');
+  if (tq) { tq.style.background = '#e2e8f0'; tq.style.color = '#475569'; }
+  if (ts) { ts.style.background = '#059669'; ts.style.color = 'white'; }
+
+  // 配信済みペインに情報をセット
   document.getElementById('schCodeDisplay').textContent = code;
   const skip = skipCount ? `（スキップ ${skipCount}日）` : '';
   document.getElementById('schSummary').innerHTML =
-    `📅 ${startDate}${endDate?' 〜 '+endDate:''}<br>📝 1日 ${qpd}問 × ${totalDays}日間${skip}`;
+    `📅 ${startDate}${endDate ? ' 〜 ' + endDate : ''}<br>📝 1日 ${qpd}問 × ${totalDays}日間${skip}`;
   _refreshTodaySchQR(code);
-  // タブをスケジュール側に切り替えてから配信済みペインを表示
-  document.getElementById('tabSchedule').click();
+
+  // 配信済みペインを表示
   showQtmPane('qtmScheduleCreatedPane', '📅 スケジュール配信中');
 }
 </script>
