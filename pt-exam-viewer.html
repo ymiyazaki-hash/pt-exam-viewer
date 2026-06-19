@@ -7633,10 +7633,11 @@ function updateSchInfo() {
 }
 
 function schExcludeWeekendsHolidays() {
-  document.querySelectorAll('#schSkipDays input[data-skip]').forEach(cb => {
-    const should = _isHoliday(cb.value);
-    if (cb.checked !== should) cb.click();
-  });
+  const cbs = [...document.querySelectorAll('#schSkipDays input[data-skip]')];
+  const holidayCbs = cbs.filter(cb => _isHoliday(cb.value));
+  const allChecked = holidayCbs.length > 0 && holidayCbs.every(cb => cb.checked);
+  // 全選択済みなら解除、それ以外は全選択
+  holidayCbs.forEach(cb => { if (cb.checked === allChecked) cb.click(); });
 }
 
 async function createSchedule() {
