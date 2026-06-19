@@ -2128,12 +2128,6 @@
       <div id="cacheBadge" class="cache-badge" style="display:none"></div>
     </div>
     <button class="btn-reload" id="reloadBtn" style="display:none" onclick="showHelpModal()">✨ 使い方</button>
-    <button id="scheduleListBtn" onclick="openScheduleList()"
-      style="display:none;background:linear-gradient(135deg,rgba(99,102,241,0.45),rgba(139,92,246,0.45));
-             border:1.5px solid rgba(167,139,250,0.6);color:white;padding:6px 12px;
-             border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">
-      📅 スケジュール
-    </button>
     <button id="fullscreenBtn" onclick="handleFullscreen()" title="全画面表示"
       style="background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.4);color:white;
              border-radius:8px;padding:6px 10px;font-size:16px;cursor:pointer;line-height:1">⛶</button>
@@ -2695,7 +2689,7 @@
         const fmt = d.toLocaleDateString('ja-JP') + ' ' + d.toLocaleTimeString('ja-JP', {hour:'2-digit', minute:'2-digit'});
         document.getElementById('cacheBadge').textContent = `保存データ（${fmt}）`;
         document.getElementById('cacheBadge').style.display = 'block';
-        document.getElementById('reloadBtn').style.display  = 'block'; document.getElementById('scheduleListBtn').style.display = 'block';
+        document.getElementById('reloadBtn').style.display  = 'block';
         initApp();
         _onAppReady(); // パスワード画面ローディング解除
         return true;
@@ -2828,7 +2822,7 @@
           const now = new Date().toLocaleDateString('ja-JP') + ' ' + new Date().toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'});
           document.getElementById('cacheBadge').textContent = `保存データ（${now}）`;
           document.getElementById('cacheBadge').style.display = 'block';
-          document.getElementById('reloadBtn').style.display  = 'block'; document.getElementById('scheduleListBtn').style.display = 'block';
+          document.getElementById('reloadBtn').style.display  = 'block';
         } catch(idbErr) {
           console.warn('キャッシュ保存スキップ（IndexedDB利用不可）:', idbErr.message);
         }
@@ -2862,7 +2856,7 @@
           const now = new Date().toLocaleDateString('ja-JP') + ' ' + new Date().toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'});
           document.getElementById('cacheBadge').textContent = `保存データ（${now}）`;
           document.getElementById('cacheBadge').style.display = 'block';
-          document.getElementById('reloadBtn').style.display  = 'block'; document.getElementById('scheduleListBtn').style.display = 'block';
+          document.getElementById('reloadBtn').style.display  = 'block';
         } catch(idbErr) {
           console.warn('キャッシュ保存スキップ（IndexedDB利用不可）:', idbErr.message);
         }
@@ -2917,7 +2911,7 @@
 
       document.getElementById('cacheBadge').textContent = `読み込み完了（${allData.length.toLocaleString()}問）`;
       document.getElementById('cacheBadge').style.display = 'block';
-      document.getElementById('reloadBtn').style.display  = 'block'; document.getElementById('scheduleListBtn').style.display = 'block';
+      document.getElementById('reloadBtn').style.display  = 'block';
       initApp();
       loadAnnotations();
       showLoading(false);
@@ -2946,7 +2940,7 @@
       }
       document.getElementById('cacheBadge').textContent = `埋め込みデータ（${allData.length.toLocaleString()}問）`;
       document.getElementById('cacheBadge').style.display = 'block';
-      document.getElementById('reloadBtn').style.display  = 'block'; document.getElementById('scheduleListBtn').style.display = 'block';
+      document.getElementById('reloadBtn').style.display  = 'block';
       initApp();
       loadAnnotations();
       showLoading(false);
@@ -8119,19 +8113,39 @@ function _renderResults(data, code) {
 }
 
 function _renderRecentQuizzes() {
-  const recent = JSON.parse(localStorage.getItem('ptQuizRecent')||'[]');
+  const quizzes   = JSON.parse(localStorage.getItem('ptQuizRecent')  || '[]');
+  const schedules = JSON.parse(localStorage.getItem('ptScheduleList') || '[]');
   const wrap = document.getElementById('qtmRecentWrap');
-  if (!wrap || recent.length===0) { if(wrap) wrap.innerHTML=''; return; }
-  wrap.innerHTML = `<div class="qtm-recent">
-    <div class="qtm-recent-title">最近のクイズ</div>
-    ${recent.map(r=>`
-      <div class="qtm-recent-item">
-        <div>
-          <div style="font-size:13px;font-weight:600;color:#1e293b;">${r.title}</div>
-          <div style="font-size:11px;color:#94a3b8;font-family:monospace;letter-spacing:2px;">${r.code}</div>
+  if (!wrap) return;
+  if (quizzes.length === 0 && schedules.length === 0) { wrap.innerHTML = ''; return; }
+
+  const schHtml = schedules.map(r => {
+    const meta = [r.startDate, r.endDate ? '〜'+r.endDate : ''].filter(Boolean).join(' ') +
+      (r.qpd ? `　${r.qpd}問/日×${r.totalDays}日` : '');
+    return `<div class="qtm-recent-item">
+      <div style="min-width:0;">
+        <div style="display:flex;align-items:center;gap:5px;">
+          <span style="font-size:10px;background:#ede9fe;color:#7c3aed;border-radius:4px;padding:1px 5px;font-weight:700;flex-shrink:0;">📅</span>
+          <span style="font-size:13px;font-weight:600;color:#1e293b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(r.title||'（無題）')}</span>
         </div>
-        <button class="qtm-recent-view" onclick="openResults('${r.code}','${r.title}')">結果を見る</button>
-      </div>`).join('')}
+        <div style="font-size:11px;color:#94a3b8;font-family:monospace;letter-spacing:2px;margin-top:1px;">${r.code}　<span style="font-family:sans-serif;letter-spacing:0;font-size:10px;">${meta}</span></div>
+      </div>
+      <button class="qtm-recent-view" onclick="_openSchFromList('${r.code}','${(r.title||'').replace(/'/g,"\\'")}','${r.startDate||''}','${r.endDate||''}',${r.qpd||0},${r.totalDays||0},${r.skipCount||0})">開く</button>
+    </div>`;
+  }).join('');
+
+  const quizHtml = quizzes.map(r => `
+    <div class="qtm-recent-item">
+      <div>
+        <div style="font-size:13px;font-weight:600;color:#1e293b;">${esc(r.title)}</div>
+        <div style="font-size:11px;color:#94a3b8;font-family:monospace;letter-spacing:2px;">${r.code}</div>
+      </div>
+      <button class="qtm-recent-view" onclick="openResults('${r.code}','${r.title}')">結果を見る</button>
+    </div>`).join('');
+
+  wrap.innerHTML = `<div class="qtm-recent">
+    <div class="qtm-recent-title">配信履歴</div>
+    ${schHtml}${quizHtml}
   </div>`;
 }
 
@@ -8610,96 +8624,8 @@ function downloadResultsCSV() {
   0%,100% { opacity:1; transform:scale(1); }
   50%      { opacity:0.4; transform:scale(1.4); }
 }
-#scheduleListModal {
-  display:none; position:fixed; inset:0; z-index:3000;
-  background:rgba(10,20,60,0.55); backdrop-filter:blur(6px);
-  align-items:flex-start; justify-content:center; overflow-y:auto; padding:20px 0 40px;
-}
-#scheduleListModal.open { display:flex; }
-.sch-list-box {
-  background:white; border-radius:20px; width:min(680px,96vw);
-  box-shadow:0 20px 60px rgba(10,20,60,0.3); overflow:hidden;
-  margin:auto;
-}
-.sch-list-hdr {
-  background:linear-gradient(135deg,#3730a3,#6d28d9);
-  color:white; padding:18px 20px;
-  display:flex; align-items:center; justify-content:space-between;
-}
-.sch-list-body { padding:20px; }
-.sch-card {
-  border:1.5px solid #e2e8f0; border-radius:12px; padding:14px 16px;
-  margin-bottom:12px; cursor:pointer; transition:all .15s;
-  display:flex; align-items:center; gap:12px;
-}
-.sch-card:hover { border-color:#818cf8; box-shadow:0 4px 16px rgba(99,102,241,.15); }
-.sch-card-info { flex:1; min-width:0; }
-.sch-card-title { font-size:15px; font-weight:800; color:#1e293b; margin-bottom:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.sch-card-meta  { font-size:11px; color:#64748b; line-height:1.7; }
-.sch-card-code  { font-family:monospace; font-size:14px; font-weight:700; color:#6d28d9; letter-spacing:3px; flex-shrink:0; }
-.sch-card-open  { padding:8px 14px; background:linear-gradient(135deg,#4f46e5,#7c3aed); color:white;
-                  border:none; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; flex-shrink:0; }
-</style>
-
-<!-- スケジュール一覧モーダル -->
-<div id="scheduleListModal" onclick="if(event.target===this)closeScheduleList()">
-  <div class="sch-list-box">
-    <div class="sch-list-hdr">
-      <div>
-        <div style="font-size:18px;font-weight:900;">📅 スケジュール配信</div>
-        <div style="font-size:12px;opacity:.8;margin-top:2px;">配信中・過去のスケジュール一覧</div>
-      </div>
-      <button onclick="closeScheduleList()"
-        style="background:rgba(255,255,255,.2);border:none;color:white;width:32px;height:32px;
-               border-radius:50%;font-size:18px;cursor:pointer;line-height:1;">✕</button>
-    </div>
-    <div class="sch-list-body">
-      <button onclick="closeScheduleList();openQuizTeacher();switchQtmTab('schedule')"
-        style="width:100%;padding:14px;background:linear-gradient(135deg,#4f46e5,#7c3aed);
-               color:white;border:none;border-radius:12px;font-size:14px;font-weight:800;
-               cursor:pointer;margin-bottom:18px;">
-        ＋ 新しいスケジュールを作成
-      </button>
-      <div id="schListContent">
-        <div style="text-align:center;color:#94a3b8;padding:40px 0;font-size:14px;">
-          スケジュールがまだありません
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
 <script>
-function openScheduleList() {
-  _renderScheduleList();
-  document.getElementById('scheduleListModal').classList.add('open');
-}
-function closeScheduleList() {
-  document.getElementById('scheduleListModal').classList.remove('open');
-}
-function _renderScheduleList() {
-  const list = JSON.parse(localStorage.getItem('ptScheduleList') || '[]');
-  const wrap = document.getElementById('schListContent');
-  if (list.length === 0) {
-    wrap.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:40px 0;font-size:14px;">スケジュールがまだありません</div>';
-    return;
-  }
-  wrap.innerHTML = list.map(r => {
-    const skip = r.skipCount ? `・スキップ ${r.skipCount}日` : '';
-    return `<div class="sch-card" onclick="closeScheduleList();_openSchFromList('${r.code}','${(r.title||'').replace(/'/g,'\\'')}','${r.startDate||''}','${r.endDate||''}',${r.qpd||0},${r.totalDays||0},${r.skipCount||0})">
-      <div class="sch-card-info">
-        <div class="sch-card-title">${esc(r.title||'（無題）')}</div>
-        <div class="sch-card-meta">
-          ${r.startDate||''}${r.endDate ? ' 〜 '+r.endDate : ''}　${r.qpd||'?'}問/日 × ${r.totalDays||'?'}日${skip}
-        </div>
-      </div>
-      <span class="sch-card-code">${r.code}</span>
-      <button class="sch-card-open" onclick="event.stopPropagation();closeScheduleList();_openSchFromList('${r.code}','${(r.title||'').replace(/'/g,'\\'')}','${r.startDate||''}','${r.endDate||''}',${r.qpd||0},${r.totalDays||0},${r.skipCount||0})">開く</button>
-    </div>`;
-  }).join('');
-}
 function _openSchFromList(code, title, startDate, endDate, qpd, totalDays, skipCount) {
-  // 発行済みペインに情報を設定してから進捗を開く
   openQuizTeacher();
   document.getElementById('schCodeDisplay').textContent = code;
   const skip = skipCount ? `（スキップ ${skipCount}日）` : '';
