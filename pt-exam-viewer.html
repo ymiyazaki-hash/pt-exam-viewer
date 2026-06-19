@@ -4358,7 +4358,7 @@ ${imgHtml}<div class="opts">${optsHtml}</div>${ansHtml}${explHtml}
       // 各ページ = 幅178.2mm × 高252mm の固定矩形。左段 left:0、右段 left:94.1mm。
       const colsH   = we ? '252mm' : '252mm';
       const colsCss = `
-.cols{position:relative;width:178.2mm;height:${colsH};overflow:hidden}
+.cols{position:relative;width:178.2mm;height:${colsH};overflow-x:hidden;overflow-y:visible}
 .col{position:absolute;top:0;width:84.1mm}
 .col-l{left:0}
 .col-r{left:94.1mm}
