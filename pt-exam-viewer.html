@@ -2330,6 +2330,8 @@
         <div class="checkbox-list" id="sessionList"></div>
       </div>
 
+      <button class="btn-reset" onclick="resetFilters()">フィルターをリセット</button>
+
       <div class="filter-section">
         <h3>出力設定</h3>
         <div class="radio-group">
@@ -2361,7 +2363,6 @@
           <button class="qcheck-btn" onclick="_qSelectAll()">全選択</button>
           <button class="qcheck-btn" onclick="_qDeselectAll()">全解除</button>
         </div>
-        <button class="btn-reset" onclick="resetFilters()">フィルターをリセット</button>
         <button class="btn-quiz-create" onclick="openQuizTeacher()">📤 クイズを配信する</button>
         <button class="btn-quiz-create" onclick="createQuizFromChecked()" style="margin-top:6px;background:linear-gradient(135deg,#059669,#10b981);">✓ チェックした問題でクイズ配信</button>
         <button class="btn-quiz-create" onclick="openQuizTeacher('search')" style="margin-top:8px;background:linear-gradient(135deg,#1e3a8a,#3b82f6);">📊 コードで結果を見る</button>
@@ -3051,11 +3052,9 @@
       return `
         <div class="ft-parent" data-fi="${fi}">
           <div class="ft-parent-row">
-            <label class="ft-parent-label">
-              <input type="checkbox" data-filter="field" value="${esc(f)}">
-              <span class="cb-label">${esc(f)}</span>
-              <span class="cb-count">${counts[f] || 0}</span>
-            </label>
+            <input type="checkbox" data-filter="field" value="${esc(f)}" style="flex-shrink:0;cursor:pointer;">
+            <span class="cb-label ft-name-click" style="flex:1;cursor:pointer;font-size:13px;font-weight:600;color:#1e293b;padding:4px 4px;">${esc(f)}</span>
+            <span class="cb-count" style="font-size:12px;color:#94a3b8;">${counts[f] || 0}</span>
             <button class="ft-toggle" id="btn_${fid}">▶</button>
           </div>
           <div class="ft-subs" id="${fid}" style="display:none">${subHtml}</div>
@@ -3068,42 +3067,38 @@
       const subCbs    = [...parentDiv.querySelectorAll('input[data-filter="subfield"]')];
       const subsDiv   = parentDiv.querySelector('.ft-subs');
       const toggleBtn = parentDiv.querySelector('.ft-toggle');
+      const nameSpan  = parentDiv.querySelector('.ft-name-click');
 
-      toggleBtn.addEventListener('click', () => {
+      // 科目名クリック・▶ボタン → 開閉トグル
+      const toggleOpen = () => {
         const open = subsDiv.style.display === 'none';
         subsDiv.style.display = open ? 'block' : 'none';
         toggleBtn.textContent = open ? '▼' : '▶';
-      });
+      };
+      toggleBtn.addEventListener('click', toggleOpen);
+      nameSpan.addEventListener('click', toggleOpen);
 
-      let _clickState = 0; // 0=未選択 1=全選択 2=全解除 3=閉じる
+      // チェックボックスクリック → 1回目:全選択、2回目:全解除
       parentCb.addEventListener('click', (e) => {
-        e.preventDefault(); // デフォルトのチェック動作をキャンセル
-        _clickState = (_clickState % 3) + 1;
-        if (_clickState === 1) {
-          // 1回目: 全選択・展開
-          parentCb.checked = true;
+        e.stopPropagation();
+        if (parentCb.checked) {
+          // 全選択
           parentCb.indeterminate = false;
           subCbs.forEach(cb => cb.checked = true);
           subsDiv.style.display = 'block';
           toggleBtn.textContent = '▼';
-        } else if (_clickState === 2) {
-          // 2回目: 全解除（展開は維持）
-          parentCb.checked = false;
+        } else {
+          // 全解除
           parentCb.indeterminate = false;
           subCbs.forEach(cb => cb.checked = false);
-        } else {
-          // 3回目: 閉じる
-          subsDiv.style.display = 'none';
-          toggleBtn.textContent = '▶';
-          _clickState = 0;
         }
         applyFilters();
       });
 
       subCbs.forEach(cb => cb.addEventListener('change', () => {
         const checked = subCbs.filter(c => c.checked).length;
-        parentCb.checked = checked === subCbs.length;
-        parentCb.indeterminate = checked > 0 && checked < subCbs.length;
+        parentCb.checked = checked > 0;
+        parentCb.indeterminate = false;
         applyFilters();
       }));
     });
@@ -3177,7 +3172,13 @@
 
   function resetFilters() {
     document.getElementById('searchInput').value = '';
-    document.querySelectorAll('.checkbox-list input[type="checkbox"]').forEach(cb => cb.checked = false);
+    document.querySelectorAll('.checkbox-list input[type="checkbox"]').forEach(cb => {
+      cb.checked = false;
+      cb.indeterminate = false;
+    });
+    // 分野の小項目を全て閉じる
+    document.querySelectorAll('#fieldTree .ft-subs').forEach(sub => sub.style.display = 'none');
+    document.querySelectorAll('#fieldTree .ft-toggle').forEach(btn => btn.textContent = '▶');
     document.getElementById('accMin').value = 0;
     document.getElementById('accMax').value = 100;
     document.getElementById('accMinVal').textContent = '0%';
