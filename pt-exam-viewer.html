@@ -7726,8 +7726,22 @@ function _refreshTodaySchQR(code) {
   const qrEl = document.getElementById('schQRCode');
   if (qrEl) {
     qrEl.innerHTML = '';
-    if (typeof QRCode !== 'undefined') new QRCode(qrEl, {text:url, width:160, height:160});
+    if (typeof QRCode !== 'undefined') {
+      new QRCode(qrEl, {text:url, width:160, height:160});
+      qrEl.style.cursor = 'zoom-in';
+      qrEl.onclick = () => _showQrFull(url);
+    }
   }
+}
+
+function _showQrFull(url) {
+  const inner = document.getElementById('qrFullInner');
+  inner.innerHTML = '';
+  if (typeof QRCode !== 'undefined') {
+    const size = Math.min(window.innerWidth, window.innerHeight) - 100;
+    new QRCode(inner, {text: url, width: size, height: size, correctLevel: QRCode.CorrectLevel.M});
+  }
+  document.getElementById('qrFullModal').classList.add('open');
 }
 
 function copySchURL() {
@@ -7923,6 +7937,7 @@ async function createQuizFromChecked() {
   qrEl.innerHTML = '';
   if (typeof QRCode !== 'undefined') {
     new QRCode(qrEl, { text: url, width: 180, height: 180, correctLevel: QRCode.CorrectLevel.M });
+    qrEl.style.cursor = 'zoom-in'; qrEl.onclick = () => _showQrFull(url);
   }
   const recent = JSON.parse(localStorage.getItem('ptQuizRecent') || '[]');
   recent.unshift({ code, title, createdAt: Date.now() });
@@ -7978,6 +7993,7 @@ async function createQuiz() {
   qrEl.innerHTML = '';
   if (typeof QRCode !== 'undefined') {
     new QRCode(qrEl, { text: url, width: 180, height: 180, correctLevel: QRCode.CorrectLevel.M });
+    qrEl.style.cursor = 'zoom-in'; qrEl.onclick = () => _showQrFull(url);
   }
 
   const recent = JSON.parse(localStorage.getItem('ptQuizRecent')||'[]');
@@ -8569,6 +8585,24 @@ function downloadResultsCSV() {
     </div>
 
   </div>
+</div>
+
+<style>
+#qrFullModal {
+  display:none; position:fixed; inset:0; z-index:9999;
+  background:rgba(0,0,0,0.85); backdrop-filter:blur(8px);
+  align-items:center; justify-content:center; cursor:pointer;
+  flex-direction:column; gap:16px;
+}
+#qrFullModal.open { display:flex; }
+#qrFullInner { background:white; border-radius:20px; padding:28px; box-shadow:0 20px 60px rgba(0,0,0,.5); }
+#qrFullLabel { color:white; font-size:13px; opacity:.7; }
+</style>
+
+<!-- QR全画面モーダル -->
+<div id="qrFullModal" onclick="document.getElementById('qrFullModal').classList.remove('open')">
+  <div id="qrFullInner"></div>
+  <div id="qrFullLabel">タップして閉じる</div>
 </div>
 
 <style>
