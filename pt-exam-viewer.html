@@ -3004,13 +3004,16 @@
     const container = document.getElementById(containerId);
     const fields = Object.keys(fieldSubMap).sort();
     container.innerHTML = fields.map((f, fi) => {
-      const subs = Object.keys(fieldSubMap[f]).sort((a,b) => fieldSubMap[f][b] - fieldSubMap[f][a]);
+      // この親分野内のカウントが2以上のサブ分野のみ表示（外れ値除去）
+      const subs = Object.keys(fieldSubMap[f])
+        .filter(s => fieldSubMap[f][s] >= 2)
+        .sort((a,b) => fieldSubMap[f][b] - fieldSubMap[f][a]);
       const fid = 'ft_' + fi;
       const subHtml = subs.map(s => `
         <label class="ft-sub-label">
           <input type="checkbox" data-filter="subfield" value="${esc(s)}">
           <span class="cb-label">${esc(s)}</span>
-          <span class="cb-count">${counts[s] || 0}</span>
+          <span class="cb-count">${fieldSubMap[f][s]}</span>
         </label>`).join('');
       return `
         <div class="ft-parent" data-fi="${fi}">
