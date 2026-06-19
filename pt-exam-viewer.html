@@ -5249,6 +5249,7 @@ ${tables}
         });
         renderInsertedMedia();
         _captureDrawMeta(q);
+        _refreshBgCapture(q); // 挿入後に再キャプチャ
       };
       if (type === 'image') {
         const tmp = new Image();
@@ -5339,6 +5340,7 @@ ${tables}
           if (lpTimer) { clearTimeout(lpTimer); lpTimer = null; }
           el.removeEventListener('pointermove', onMove);
           el.removeEventListener('pointerup', onUp);
+          _refreshBgCapture(practiceData[practiceIdx]); // ドラッグ後に再キャプチャ
         };
         el.addEventListener('pointermove', onMove);
         el.addEventListener('pointerup', onUp);
@@ -5372,6 +5374,7 @@ ${tables}
         const onUp = () => {
           el.removeEventListener('pointermove', onMove);
           el.removeEventListener('pointerup', onUp);
+          _refreshBgCapture(practiceData[practiceIdx]); // リサイズ後に再キャプチャ
         };
         el.addEventListener('pointermove', onMove);
         el.addEventListener('pointerup', onUp);
@@ -5386,6 +5389,7 @@ ${tables}
         practiceState[q2.id].insertedMedia =
           practiceState[q2.id].insertedMedia.filter(i => i.id !== item.id);
         el.remove();
+        _refreshBgCapture(q2); // 削除後に再キャプチャ
       });
 
       layer.appendChild(el);
@@ -5539,6 +5543,13 @@ ${tables}
     } catch(e) {
       console.warn('bg capture failed:', e);
     }
+  }
+
+  // 挿入メディア変更後に背景を再キャプチャ（古い _bgCapture をクリアして撮り直す）
+  function _refreshBgCapture(q) {
+    if (!q) return;
+    if (practiceState[q.id]) delete practiceState[q.id]._bgCapture;
+    setTimeout(() => _captureSlideBg(q), 400);
   }
 
   // ── 書き込み時のボディ寸法・画像位置を記録（PDF再現の位置合わせ用）──
