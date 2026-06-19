@@ -7489,6 +7489,46 @@ let _currentQCode = null;
 let _currentQTitle = null;
 let _resultsListener = null;
 
+function _buildFieldSubMap() {
+  const map = {};
+  (allData||[]).forEach(q => {
+    const f = (q.new_fields||[])[0]; const s = (q.new_sub_fields||[])[0];
+    if (f && s) { if (!map[f]) map[f]=[]; if (!map[f].includes(s)) map[f].push(s); }
+  });
+  Object.values(map).forEach(a => a.sort());
+  return map;
+}
+
+function updateQtmSubFields() {
+  const field = document.getElementById('qtmFieldSel').value;
+  const subSel = document.getElementById('qtmSubFieldSel');
+  const subLabel = document.getElementById('qtmSubLabel');
+  if (!field) {
+    subSel.style.display = 'none'; subLabel.style.display = 'none';
+    subSel.innerHTML = '<option value="">小項目を選択（任意）</option>';
+    return;
+  }
+  const map = _buildFieldSubMap();
+  const subs = map[field] || [];
+  subSel.innerHTML = '<option value="">全小項目</option>' + subs.map(s=>`<option value="${s}">${s}</option>`).join('');
+  subSel.style.display = ''; subLabel.style.display = '';
+}
+
+function updateSchSubFields() {
+  const field = document.getElementById('schFieldSel').value;
+  const subSel = document.getElementById('schSubFieldSel');
+  const subLabel = document.getElementById('schSubLabel');
+  if (!field) {
+    subSel.style.display = 'none'; subLabel.style.display = 'none';
+    subSel.innerHTML = '<option value="">小項目を選択（任意）</option>';
+    return;
+  }
+  const map = _buildFieldSubMap();
+  const subs = map[field] || [];
+  subSel.innerHTML = '<option value="">全小項目</option>' + subs.map(s=>`<option value="${s}">${s}</option>`).join('');
+  subSel.style.display = ''; subLabel.style.display = '';
+}
+
 function openQuizTeacher(pane) {
   const modal = document.getElementById('quizTeacherModal');
   modal.style.display = 'flex'; modal.style.flexDirection = 'column';
@@ -7638,13 +7678,15 @@ function updateSchInfoCounts() {
 
 function updateSchInfo() {
   if (typeof allData === 'undefined') return;
-  const cat   = (document.getElementById('schCategorySel')||{}).value || '';
-  const field  = (document.getElementById('schFieldSel')||{}).value    || '';
-  const qpd    = parseInt((document.getElementById('schQPerDay')||{}).value || 10);
+  const cat      = (document.getElementById('schCategorySel')||{}).value || '';
+  const field    = (document.getElementById('schFieldSel')||{}).value    || '';
+  const subField = (document.getElementById('schSubFieldSel')||{}).value || '';
+  const qpd      = parseInt((document.getElementById('schQPerDay')||{}).value || 10);
   const startDate = (document.getElementById('schStartDate')||{}).value || '';
   const pool   = (allData||[]).filter(q =>
-    (!cat   || q.category === cat) &&
-    (!field || (q.new_fields||[]).includes(field))
+    (!cat      || q.category === cat) &&
+    (!field    || (q.new_fields||[]).includes(field)) &&
+    (!subField || (q.new_sub_fields||[]).includes(subField))
   );
   const info = document.getElementById('schInfo');
   if (!info) return;
@@ -7678,14 +7720,16 @@ async function createSchedule() {
   }
   const cat       = document.getElementById('schCategorySel').value;
   const field     = document.getElementById('schFieldSel').value;
+  const subField  = document.getElementById('schSubFieldSel').value;
   const startDate = document.getElementById('schStartDate').value;
   const qpd       = parseInt(document.getElementById('schQPerDay').value);
   const customTitle = (document.getElementById('schTitleInput').value || '').trim();
   if (!startDate) { alert('開始日を選択してください。'); return; }
 
   let pool = allData.filter(q =>
-    (!cat   || q.category === cat) &&
-    (!field || (q.new_fields||[]).includes(field))
+    (!cat      || q.category === cat) &&
+    (!field    || (q.new_fields||[]).includes(field)) &&
+    (!subField || (q.new_sub_fields||[]).includes(subField))
   );
   if (pool.length < qpd) { alert(`問題数が足りません（${pool.length}問）`); return; }
 
@@ -7711,7 +7755,7 @@ async function createSchedule() {
   }
 
   const code  = _genCode();
-  const label = [cat, field||'全分野'].filter(Boolean).join('・');
+  const label = [cat, subField||field||'全分野'].filter(Boolean).join('・');
   const autoTitle = `${label}（${qpd}問/日）`;
   const title = customTitle || autoTitle;
 
@@ -7984,14 +8028,16 @@ async function createQuiz() {
     return;
   }
   const field    = document.getElementById('qtmFieldSel').value;
+  const subField = document.getElementById('qtmSubFieldSel').value;
   const category = document.getElementById('qtmCategorySel').value;
   const count    = parseInt(document.getElementById('qtmCountSel').value);
 
   let pool = (typeof allData!=='undefined' ? allData : []).filter(q =>
     (!field    || (q.new_fields||[]).includes(field)) &&
+    (!subField || (q.new_sub_fields||[]).includes(subField)) &&
     (!category || q.category === category)
   );
-  const label = [category||'', field||'全分野'].filter(Boolean).join('・');
+  const label = [category||'', subField||field||'全分野'].filter(Boolean).join('・');
   if (pool.length < count) {
     alert(`「${label}」の問題数が${count}問に足りません（${pool.length}問）`);
     return;
@@ -8499,8 +8545,11 @@ function downloadResultsCSV() {
         <option value="専門">専門</option>
       </select>
 
-      <label class="qtm-label">分野</label>
-      <select class="qtm-select" id="qtmFieldSel"><option value="">全分野（ランダム）</option></select>
+      <label class="qtm-label">分野（大項目）</label>
+      <select class="qtm-select" id="qtmFieldSel" onchange="updateQtmSubFields()"><option value="">全分野（ランダム）</option></select>
+
+      <label class="qtm-label" id="qtmSubLabel" style="display:none">分野（小項目）</label>
+      <select class="qtm-select" id="qtmSubFieldSel" style="display:none"><option value="">小項目を選択（任意）</option></select>
 
       <label class="qtm-label">問題数</label>
       <select class="qtm-select" id="qtmCountSel">
@@ -8538,10 +8587,13 @@ function downloadResultsCSV() {
         <option value="専門">専門</option>
       </select>
 
-      <label class="qtm-label">分野</label>
-      <select class="qtm-select" id="schFieldSel" onchange="updateSchInfo()">
+      <label class="qtm-label">分野（大項目）</label>
+      <select class="qtm-select" id="schFieldSel" onchange="updateSchSubFields();updateSchInfo()">
         <option value="">全分野</option>
       </select>
+
+      <label class="qtm-label" id="schSubLabel" style="display:none">分野（小項目）</label>
+      <select class="qtm-select" id="schSubFieldSel" style="display:none" onchange="updateSchInfo()"><option value="">小項目を選択（任意）</option></select>
 
       <label class="qtm-label">開始日</label>
       <input type="date" class="qtm-select" id="schStartDate" onchange="updateSchInfo()">
