@@ -608,6 +608,21 @@
     .badge-category-専門 { background: linear-gradient(135deg, #faf5ff, #e9d8fd); color: #5b21b6; }
     .badge-field { background: linear-gradient(135deg, #fffbeb, #fde68a); color: #78350f; }
     .badge-subfield { background: linear-gradient(135deg, #f0fdf4, #bbf7d0); color: #166534; font-size: 11px; }
+    .ft-parent { margin-bottom: 2px; }
+    .ft-parent-row { display: flex; align-items: center; gap: 4px; }
+    .ft-parent-label { flex: 1; display: flex; align-items: center; gap: 6px; cursor: pointer; padding: 4px 2px; border-radius: 6px; }
+    .ft-parent-label:hover { background: #f1f5f9; }
+    .ft-parent-label input { flex-shrink: 0; }
+    .ft-parent-label .cb-label { flex: 1; font-size: 13px; font-weight: 600; color: #1e293b; }
+    .ft-parent-label .cb-count { font-size: 12px; color: #94a3b8; }
+    .ft-toggle { background: none; border: none; cursor: pointer; color: #94a3b8; font-size: 11px; padding: 2px 4px; flex-shrink: 0; }
+    .ft-toggle:hover { color: #475569; }
+    .ft-subs { padding-left: 16px; border-left: 2px solid #e2e8f0; margin-left: 8px; margin-top: 2px; margin-bottom: 4px; }
+    .ft-sub-label { display: flex; align-items: center; gap: 6px; cursor: pointer; padding: 3px 4px; border-radius: 5px; }
+    .ft-sub-label:hover { background: #f8fafc; }
+    .ft-sub-label input { flex-shrink: 0; }
+    .ft-sub-label .cb-label { flex: 1; font-size: 12px; color: #374151; }
+    .ft-sub-label .cb-count { font-size: 11px; color: #94a3b8; }
     .badge-excluded { background: linear-gradient(135deg, #fff7ed, #fed7aa); color: #9a3412; border: 1px solid #fdba74; }
     .card-excluded-note {
       margin-top: 8px; padding: 6px 10px; border-radius: 8px;
@@ -2297,12 +2312,7 @@
 
       <div class="filter-section">
         <h3>分野</h3>
-        <div class="checkbox-list" id="fieldList"></div>
-      </div>
-
-      <div class="filter-section">
-        <h3>サブ分野</h3>
-        <div class="checkbox-list" id="subFieldList"></div>
+        <div class="checkbox-list" id="fieldTree"></div>
       </div>
 
       <div class="filter-section">
@@ -2939,26 +2949,28 @@
   // ── Init ──────────────────────────────────────────────────────────
   function initApp() {
     const sessions = [...new Set(allData.map(d => d.examSession))].sort();
-    const fieldSet = new Set();
-    allData.forEach(d => { (d.new_fields || []).forEach(f => fieldSet.add(f.trim())); });
-    const fields = [...fieldSet].sort();
-    const subFieldSet = new Set();
-    allData.forEach(d => { (d.new_sub_fields || []).forEach(f => subFieldSet.add(f.trim())); });
-    const subFields = [...subFieldSet].sort();
     const categories = [...new Set(allData.map(d => d.category).filter(Boolean))].sort();
 
     const counts = {};
+    const fieldSubMap = {}; // { field: { sub: count } }
     allData.forEach(d => {
       counts[d.examSession] = (counts[d.examSession] || 0) + 1;
-      (d.new_fields || []).forEach(f => { const k = f.trim(); counts[k] = (counts[k] || 0) + 1; });
-      (d.new_sub_fields || []).forEach(f => { const k = f.trim(); counts[k] = (counts[k] || 0) + 1; });
-      if (d.category)  counts[d.category]  = (counts[d.category]  || 0) + 1;
+      if (d.category) counts[d.category] = (counts[d.category] || 0) + 1;
+      (d.new_fields || []).forEach(f => {
+        const fk = f.trim();
+        counts[fk] = (counts[fk] || 0) + 1;
+        if (!fieldSubMap[fk]) fieldSubMap[fk] = {};
+        (d.new_sub_fields || []).forEach(s => {
+          const sk = s.trim();
+          counts[sk] = (counts[sk] || 0) + 1;
+          fieldSubMap[fk][sk] = (fieldSubMap[fk][sk] || 0) + 1;
+        });
+      });
     });
 
     buildCheckboxList('sessionList',  sessions,   'session',  counts);
-    buildCheckboxList('fieldList',    fields,     'field',    counts);
-    buildCheckboxList('subFieldList', subFields,  'subfield', counts);
     buildCheckboxList('categoryList', categories, 'category', counts);
+    buildFieldTree('fieldTree', fieldSubMap, counts);
 
     let searchTimer;
     document.getElementById('searchInput').addEventListener('input', () => {
@@ -2988,12 +3000,69 @@
     `).join('');
   }
 
+  function buildFieldTree(containerId, fieldSubMap, counts) {
+    const container = document.getElementById(containerId);
+    const fields = Object.keys(fieldSubMap).sort();
+    container.innerHTML = fields.map(f => {
+      const subs = Object.keys(fieldSubMap[f]).sort((a,b) => fieldSubMap[f][b] - fieldSubMap[f][a]);
+      const fid = 'ft_' + f.charCodeAt(0);
+      const subHtml = subs.map(s => `
+        <label class="ft-sub-label">
+          <input type="checkbox" data-filter="subfield" data-parent="${esc(f)}" value="${esc(s)}" onchange="onSubFieldChange('${esc(f)}')">
+          <span class="cb-label">${esc(s)}</span>
+          <span class="cb-count">${counts[s] || 0}</span>
+        </label>`).join('');
+      return `
+        <div class="ft-parent">
+          <div class="ft-parent-row">
+            <label class="ft-parent-label">
+              <input type="checkbox" data-filter="field" value="${esc(f)}" onchange="onFieldChange('${esc(f)}')">
+              <span class="cb-label">${esc(f)}</span>
+              <span class="cb-count">${counts[f] || 0}</span>
+            </label>
+            <button class="ft-toggle" onclick="toggleFieldSubs('${fid}')" id="btn_${fid}">▶</button>
+          </div>
+          <div class="ft-subs" id="${fid}" style="display:none">${subHtml}</div>
+        </div>`;
+    }).join('');
+  }
+
+  function toggleFieldSubs(fid) {
+    const el = document.getElementById(fid);
+    const btn = document.getElementById('btn_' + fid);
+    const open = el.style.display === 'none';
+    el.style.display = open ? 'block' : 'none';
+    btn.textContent = open ? '▼' : '▶';
+  }
+
+  function onFieldChange(field) {
+    const parentCb = document.querySelector(`input[data-filter="field"][value="${CSS.escape(field)}"]`);
+    const subCbs = document.querySelectorAll(`input[data-filter="subfield"][data-parent="${CSS.escape(field)}"]`);
+    subCbs.forEach(cb => cb.checked = parentCb.checked);
+    // auto-expand when checked
+    if (parentCb.checked) {
+      const fid = 'ft_' + field.charCodeAt(0);
+      const el = document.getElementById(fid);
+      if (el && el.style.display === 'none') toggleFieldSubs(fid);
+    }
+    applyFilters();
+  }
+
+  function onSubFieldChange(field) {
+    const subCbs = [...document.querySelectorAll(`input[data-filter="subfield"][data-parent="${CSS.escape(field)}"]`)];
+    const parentCb = document.querySelector(`input[data-filter="field"][value="${CSS.escape(field)}"]`);
+    const checkedCount = subCbs.filter(cb => cb.checked).length;
+    parentCb.checked = checkedCount === subCbs.length;
+    parentCb.indeterminate = checkedCount > 0 && checkedCount < subCbs.length;
+    applyFilters();
+  }
+
   // ── Filters ───────────────────────────────────────────────────────
   function applyFilters() {
     const keyword         = document.getElementById('searchInput').value.toLowerCase().trim();
-    const checkedSessions = getChecked('session');
-    const checkedFields   = getChecked('field');
-    const checkedSubFields = getChecked('subfield');
+    const checkedSessions   = getChecked('session');
+    const checkedFields     = getChecked('field');
+    const checkedSubFields  = getChecked('subfield');
     const checkedCategories = getChecked('category');
     const accMin = parseInt(document.getElementById('accMin').value);
     const accMax = parseInt(document.getElementById('accMax').value);
@@ -3003,13 +3072,12 @@
     filteredData = allData.filter(q => {
       if (!includeExcluded && q.excludedHandling) return false;
       if (checkedSessions.length   && !checkedSessions.includes(q.examSession))   return false;
-      if (checkedFields.length) {
+      if (checkedFields.length || checkedSubFields.length) {
         const qFields = q.new_fields || [];
-        if (!checkedFields.some(cf => qFields.includes(cf))) return false;
-      }
-      if (checkedSubFields.length) {
-        const qSub = q.new_sub_fields || [];
-        if (!checkedSubFields.some(cf => qSub.includes(cf))) return false;
+        const qSub   = q.new_sub_fields || [];
+        const subMatch  = checkedSubFields.length && qSub.some(s => checkedSubFields.includes(s));
+        const fieldOnly = checkedFields.some(f => qFields.includes(f)) && qSub.length === 0;
+        if (!subMatch && !fieldOnly) return false;
       }
       if (checkedCategories.length && !checkedCategories.includes(q.category))    return false;
       const rate = q.accuracyRate ?? 0;
