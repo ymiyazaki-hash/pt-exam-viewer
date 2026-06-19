@@ -15,6 +15,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" crossorigin="anonymous"></script>
   <!-- 学生モード: ?student=1 が付いていたらパスワード画面を隠してコード入力画面を表示 -->
   <script>
     (function() {
@@ -4895,6 +4896,13 @@ ${tables}
     requestAnimationFrame(() => initDrawCanvas());
     setTimeout(() => initDrawCanvas(), 160); // rAF未発火時のフォールバック（確実に採寸）
 
+    // 描画前に背景をキャプチャ（PDF完全再現用）。描画後のキャプチャを避けるため
+    // 問題表示から300ms後に実行（画像読み込み・レイアウト完了を待つ）
+    const _bgQ = practiceData[practiceIdx];
+    if (_bgQ && !(practiceState[_bgQ.id] && practiceState[_bgQ.id]._bgCapture)) {
+      setTimeout(() => _captureSlideBg(_bgQ), 300);
+    }
+
     // セッション追加チェックボックスを現在の問題に合わせて更新
     _syncSessAddCheck();
   }
@@ -5505,6 +5513,34 @@ ${tables}
     });
   })();
 
+  // ── スライド背景を html2canvas でキャプチャ（PDF完全再現用）──────────
+  // 書き込みが始まる前に呼ばれるため、描画レイヤーなしの純粋な問題表示が得られる
+  async function _captureSlideBg(q) {
+    if (!q) return;
+    if (!practiceState[q.id]) practiceState[q.id] = {};
+    if (practiceState[q.id]._bgCapture) return; // 既にキャプチャ済み
+    if (typeof html2canvas === 'undefined') return;
+    const body = document.querySelector('.expln-body');
+    if (!body || !body.offsetWidth) return;
+    try {
+      const ignoreIds = new Set(['drawCanvas','markerCanvas','fadeCanvas']);
+      const captured = await html2canvas(body, {
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#1e293b', // .expln-body の背景色
+        ignoreElements: el => ignoreIds.has(el.id),
+        logging: false,
+        scale: window.devicePixelRatio || 1
+      });
+      if (!practiceState[q.id]) return;
+      practiceState[q.id]._bgCapture = captured.toDataURL('image/jpeg', 0.92);
+      practiceState[q.id]._bgW = body.clientWidth;
+      practiceState[q.id]._bgH = Math.max(body.clientHeight, body.scrollHeight);
+    } catch(e) {
+      console.warn('bg capture failed:', e);
+    }
+  }
+
   // ── 書き込み時のボディ寸法・画像位置を記録（PDF再現の位置合わせ用）──
   function _captureDrawMeta(q) {
     if (!q) return;
@@ -5768,6 +5804,32 @@ ${tables}
   }
 
   async function composePageCanvas(q, num, st) {
+    // ── 背景キャプチャがある場合はそれを使って完全再現（ズレなし）──
+    if (st._bgCapture) {
+      const W = st._bgW || (st.drawMeta && st.drawMeta.bodyW) || 900;
+      const H = st._bgH || (st.drawMeta && st.drawMeta.bodyH) || 1280;
+      const SCALE = window.devicePixelRatio || 2;
+      const cv = document.createElement('canvas');
+      cv.width  = Math.round(W * SCALE);
+      cv.height = Math.round(H * SCALE);
+      const ctx = cv.getContext('2d');
+      ctx.scale(SCALE, SCALE);
+      // 背景（問題表示のスクリーンショット）
+      const bgImg = new Image();
+      bgImg.src = st._bgCapture;
+      await new Promise(r => { bgImg.onload = r; bgImg.onerror = r; });
+      ctx.drawImage(bgImg, 0, 0, W, H);
+      // 手書きレイヤー（同じ座標系なのでそのまま重ねる）
+      if (st.drawing) {
+        const drawImg = new Image();
+        drawImg.src = st.drawing;
+        await new Promise(r => { drawImg.onload = r; drawImg.onerror = r; });
+        ctx.drawImage(drawImg, 0, 0, W, H);
+      }
+      return cv.toDataURL('image/jpeg', 0.92);
+    }
+
+    // ── フォールバック：テキスト再描画方式（_bgCapture がない旧データ用）──
     const meta    = st.drawMeta;
     const W       = (meta && meta.bodyW) ? meta.bodyW : 900;
     const screenH = (meta && meta.bodyH) ? meta.bodyH : 1280;
