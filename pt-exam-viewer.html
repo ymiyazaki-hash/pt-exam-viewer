@@ -2514,8 +2514,18 @@
     const db = _initFb();
     if (!db) { alert('Firebase未設定です'); return; }
     db.ref('quizzes/' + code).get().then(snap => {
-      const title = snap.exists() ? (snap.val().title || 'クイズ') : 'コード: ' + code;
-      openResults(code, title);
+      if (snap.exists()) {
+        openResults(code, snap.val().title || 'クイズ');
+      } else {
+        // スケジュールコードか確認
+        db.ref('schedules/' + code).get().then(snap2 => {
+          if (snap2.exists()) {
+            openScheduleProgress(code);
+          } else {
+            openResults(code, 'コード: ' + code);
+          }
+        });
+      }
     }).catch(() => openResults(code, 'コード: ' + code));
   }
 
@@ -7454,7 +7464,7 @@ function closeQuizTeacher() {
 }
 
 function showQtmPane(id, title) {
-  ['qtmCreatePane','qtmSchedulePane','qtmScheduleCreatedPane','qtmSearchPane','qtmCreatedPane','qtmResultsPane'].forEach(p => {
+  ['qtmCreatePane','qtmSchedulePane','qtmScheduleCreatedPane','qtmScheduleProgressPane','qtmSearchPane','qtmCreatedPane','qtmResultsPane'].forEach(p => {
     const el = document.getElementById(p);
     if (el) el.classList.toggle('active', p===id);
   });
@@ -7548,6 +7558,153 @@ function copySchURL() {
 }
 function copySchStudentURL() {
   navigator.clipboard.writeText(document.getElementById('schStudentURL').textContent);
+}
+
+let _schProgListener = null;
+let _schProgCode = null;
+
+async function openScheduleProgress(code) {
+  const c = code || document.getElementById('schCodeDisplay').textContent.trim();
+  if (!c) return;
+  _schProgCode = c;
+
+  const db = _initFb(); if (!db) return;
+
+  // スケジュール取得
+  const snap = await db.ref('schedules/' + c).get();
+  if (!snap.exists()) { alert('スケジュールが見つかりません'); return; }
+  const sch = snap.val();
+
+  const start  = new Date(sch.startDate + 'T00:00:00');
+  const today  = new Date(); today.setHours(0,0,0,0);
+  const dayIdx = Math.floor((today - start) / 86400000);
+  const qpd    = sch.questionsPerDay;
+
+  let dayLabel;
+  if (dayIdx < 0)              dayLabel = '未開始';
+  else if (dayIdx >= sch.totalDays) dayLabel = '終了';
+  else                         dayLabel = `${dayIdx + 1}日目`;
+
+  document.getElementById('schProgTitle').textContent = sch.title || 'スケジュール';
+  document.getElementById('schProgMeta').textContent  =
+    `コード: ${c}　${sch.startDate} 開始　${dayLabel} / 計${sch.totalDays}日`;
+
+  showQtmPane('qtmScheduleProgressPane', '📊 進捗・解説');
+
+  // 今日の問題を表示
+  const todayIds = (dayIdx >= 0 && dayIdx < sch.totalDays)
+    ? (sch.questionIds || []).slice(dayIdx * qpd, (dayIdx + 1) * qpd)
+    : [];
+
+  const qMap = {};
+  (allData || []).forEach(q => { qMap[q.id] = q; });
+  const todayQs = todayIds.map(id => qMap[id]).filter(Boolean);
+
+  const pctColor = p => p >= 80 ? '#16a34a' : p >= 60 ? '#d97706' : '#dc2626';
+
+  // 問題＋解説を描画する関数（正答率も受け取る）
+  function renderQuestions(qStatMap) {
+    if (todayQs.length === 0) {
+      document.getElementById('schProgQuestions').innerHTML =
+        `<div style="color:#94a3b8;font-size:13px;text-align:center;padding:20px 0;">
+          ${dayIdx < 0 ? 'スケジュールはまだ開始していません' : dayIdx >= sch.totalDays ? 'スケジュールは終了しました' : '問題データなし'}</div>`;
+      return;
+    }
+    document.getElementById('schProgQuestions').innerHTML = todayQs.map((q, i) => {
+      const stat = qStatMap[q.id] || { correct: 0, total: 0 };
+      const pct  = stat.total > 0 ? Math.round(stat.correct / stat.total * 100) : null;
+      const answers = String(q.answer || '').split(',').map(s => s.trim());
+      const correctLabels = answers.map(a => {
+        const idx = parseInt(a) - 1;
+        return q.choices && q.choices[idx] ? `${a}. ${q.choices[idx]}` : a;
+      }).join('　');
+
+      const choicesHtml = (q.choices || []).map((ch, ci) => {
+        const num = String(ci + 1);
+        const isAns = answers.includes(num);
+        return `<div style="padding:4px 8px;border-radius:6px;margin:2px 0;font-size:13px;
+          background:${isAns ? '#dcfce7' : '#f8fafc'};
+          color:${isAns ? '#166534' : '#334155'};
+          font-weight:${isAns ? '700' : '400'};">
+          ${num}. ${esc(ch)}${isAns ? ' ✓' : ''}
+        </div>`;
+      }).join('');
+
+      const expl = q.explanation
+        ? `<div style="margin-top:10px;padding:10px 12px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;font-size:12px;color:#78350f;line-height:1.7;">
+            <span style="font-weight:700;">解説：</span>${esc(q.explanation)}</div>`
+        : '';
+
+      const statHtml = pct !== null
+        ? `<span style="font-size:11px;color:${pctColor(pct)};font-weight:700;margin-left:8px;">正答率 ${pct}%（${stat.correct}/${stat.total}名）</span>`
+        : '';
+
+      return `<div style="margin-bottom:16px;padding:14px;background:white;border:1px solid #e2e8f0;border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,.06);">
+        <div style="font-size:11px;color:#64748b;margin-bottom:6px;display:flex;align-items:center;flex-wrap:wrap;gap:4px;">
+          <span style="font-weight:700;color:#1e3a8a;">問${i+1}</span>
+          <span style="font-family:monospace;">${esc(q.id)}</span>
+          ${statHtml}
+        </div>
+        <div style="font-size:13px;color:#1e293b;line-height:1.7;margin-bottom:8px;">${esc(q.question || '')}</div>
+        <div>${choicesHtml}</div>
+        <div style="margin-top:8px;font-size:12px;color:#166534;font-weight:700;">正解：${esc(correctLabels)}</div>
+        ${expl}
+      </div>`;
+    }).join('');
+  }
+
+  renderQuestions({});
+
+  // 学生進捗をリアルタイムで監視
+  if (_schProgListener) { _schProgListener(); _schProgListener = null; }
+  const ref = db.ref('results/' + c);
+  ref.on('value', snap2 => {
+    const data = snap2.val() || {};
+    const entries = Object.values(data).sort((a, b) => (b.score / b.total) - (a.score / a.total));
+
+    // 問題別正答率を計算
+    const qStatMap = {};
+    entries.forEach(e => {
+      Object.entries(e.answers || {}).forEach(([qid, ans]) => {
+        if (!qStatMap[qid]) qStatMap[qid] = { correct: 0, total: 0 };
+        qStatMap[qid].total++;
+        const q2 = qMap[qid];
+        if (q2) {
+          const cor = String(q2.answer || '').split(',').map(s => s.trim());
+          if (cor.includes(String(ans))) qStatMap[qid].correct++;
+        }
+      });
+    });
+
+    // 学生一覧
+    if (entries.length === 0) {
+      document.getElementById('schProgStudents').innerHTML =
+        '<div style="text-align:center;color:#94a3b8;padding:16px 0;font-size:13px;">まだ回答した学生がいません</div>';
+    } else {
+      const rows = entries.map((e, i) => {
+        const pct2 = Math.round(e.score / e.total * 100);
+        const gradeClsTxt = [e.grade || '', e.cls || ''].filter(Boolean).join(' ') || '―';
+        return `<tr>
+          <td style="font-weight:600;color:#1e293b;font-size:13px;">${i+1}. ${esc(e.name)}</td>
+          <td style="font-size:12px;color:#475569;">${gradeClsTxt}</td>
+          <td style="text-align:center;font-weight:700;color:#1d4ed8;">${e.score}/${e.total}</td>
+          <td><div class="qtm-score-bar">
+            <div class="qtm-score-fill" style="width:${pct2}%;max-width:80px;background:${pctColor(pct2)}"></div>
+            <span style="font-size:12px;color:#64748b;">${pct2}%</span>
+          </div></td>
+        </tr>`;
+      }).join('');
+      document.getElementById('schProgStudents').innerHTML = `
+        <div style="font-size:12px;font-weight:700;color:#64748b;margin-bottom:8px;letter-spacing:.5px;">提出済み（${entries.length}名）</div>
+        <table class="qtm-results-table">
+          <thead><tr><th>名前</th><th>学年・クラス</th><th>点数</th><th>正答率</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>`;
+    }
+
+    renderQuestions(qStatMap);
+  });
+  _schProgListener = () => ref.off('value');
 }
 
 async function createQuizFromChecked() {
@@ -8115,7 +8272,31 @@ function downloadResultsCSV() {
         <div style="font-size:11px;color:#0369a1;font-weight:700;margin-bottom:4px;">📱 学生用ログインページ</div>
         <div id="schStudentURL" style="font-size:11px;color:#0c4a6e;font-family:monospace;word-break:break-all;cursor:pointer;" onclick="copySchStudentURL()" title="クリックでコピー"></div>
       </div>
+      <button class="qtm-btn-primary" style="margin-top:14px;" onclick="openScheduleProgress()">📊 進捗・解説を見る</button>
       <button class="qtm-btn-primary" style="margin-top:10px;background:#64748b;" onclick="switchQtmTab('schedule')">← 新しいスケジュールを作成</button>
+    </div>
+
+    <!-- スケジュール進捗ペイン -->
+    <div class="qtm-pane" id="qtmScheduleProgressPane">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+        <button onclick="showQtmPane('qtmScheduleCreatedPane','📅 スケジュール配信中')"
+          style="background:none;border:none;font-size:24px;cursor:pointer;color:#3b82f6;line-height:1;">←</button>
+        <div style="flex:1;">
+          <div style="font-size:16px;font-weight:800;color:#1e3a8a;" id="schProgTitle">進捗</div>
+          <div style="font-size:12px;color:#64748b;" id="schProgMeta"></div>
+        </div>
+        <span style="display:flex;align-items:center;gap:4px;">
+          <span style="width:8px;height:8px;background:#16a34a;border-radius:50%;display:inline-block;animation:livePulse 1.5s infinite;"></span>
+          <span style="font-size:12px;color:#16a34a;font-weight:700;">LIVE</span>
+        </span>
+      </div>
+      <div id="schProgStudents" style="margin-bottom:20px;">
+        <div style="text-align:center;color:#94a3b8;padding:24px 0;font-size:14px;">回答待ち中...</div>
+      </div>
+      <div style="font-size:12px;font-weight:700;color:#64748b;margin-bottom:10px;letter-spacing:.5px;">本日の問題と解説</div>
+      <div id="schProgQuestions">
+        <div style="text-align:center;color:#94a3b8;padding:24px 0;font-size:14px;">読み込み中...</div>
+      </div>
     </div>
 
     <!-- コード検索ペイン -->
