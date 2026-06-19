@@ -4279,6 +4279,10 @@ ${imgHtml}<div class="opts">${optsHtml}</div>${ansHtml}${explHtml}
       };
 
       // 1問の高さ(mm)を決定論的に見積もる（buildQ と同一の内容・CSSに基づく）
+      const LH_EXPL = 8.5 * 1.50 * PT;  // expl-body: 8.5pt × line-height 1.5
+      const LH_CE   = 8.0 * 1.40 * PT;  // ce: 8pt × line-height 1.4
+      const CPL_EX  = 22;               // 解説段（padding 5pt両側 ≈ 3.5mm減）
+
       const measureQ = (q, num, sz) => {
         const choices = q.choices || [];
         const rate    = (q.accuracyRate ?? 0).toFixed(1);
@@ -4298,13 +4302,25 @@ ${imgHtml}<div class="opts">${optsHtml}</div>${ansHtml}${explHtml}
           const aLines  = Math.max(1, Math.ceil(ew('正解：'+q.answer+' '+correct) / CPL_QT));
           ansH = aLines * LH_ANS + 3 * PT;     // margin-top 2pt + padding-top 1pt
         }
+        // 解説の高さ（解説付きモードのみ）
+        let explH = 0;
+        if (we && q.explanation) {
+          const hdH    = 8.5 * 1.4 * PT + 1 * PT;   // expl-hd 1行 + margin-bottom
+          const bodyLines = Math.max(1, Math.ceil(ew(q.explanation) / CPL_EX));
+          let ceH = 0;
+          (q.choiceExplanations||[]).forEach(ex => {
+            if (!ex) return;
+            ceH += Math.max(1, Math.ceil((ew(ex) + 2) / CPL_EX)) * LH_CE + 1 * PT;
+          });
+          explH = 3*PT + hdH + bodyLines*LH_EXPL + ceH + 3*PT + 3*PT; // padding top/bottom + margin-top
+        }
         const topGap = 7   * PT;               // .q margin-top
         const qhMb   = 2   * PT;               // qh↓qt（collapse後）
         const qtMb   = imgH ? 2*PT : 1.5*PT;   // qt↓(img|opts)
         const imgMb  = imgH ? 2*PT : 0;        // img↓opts
         const botGap = 2.4 * PT;               // padding-bottom 2pt + border .4pt
         return topGap + qhLines*LH_QH + qhMb + qtLines*LH_QT + qtMb
-             + imgH + imgMb + optH + ansH + botGap;
+             + imgH + imgMb + optH + ansH + explH + botGap;
       };
 
       const qH = filteredData.map((q,i) => measureQ(q, i+1, imgSizes[i]));
