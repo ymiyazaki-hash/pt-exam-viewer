@@ -7116,9 +7116,10 @@ function _genCode() {
 }
 
 // ── ページ読み込み時にクイズモードを検出 ─────────────────────────────────────
-const _quizCode = new URLSearchParams(window.location.search).get('quiz');
-if (_quizCode) {
-  // スクリプトはページ末尾なのでDOMは既にロード済み。即時実行する。
+const _quizCode     = new URLSearchParams(window.location.search).get('quiz');
+const _scheduleCode = new URLSearchParams(window.location.search).get('schedule');
+const _activeCode   = _quizCode || _scheduleCode;
+if (_activeCode) {
   const _showQuizScreen = () => {
     const ls = document.getElementById('loadScreen');
     const qs = document.getElementById('quizScreen');
@@ -7126,9 +7127,10 @@ if (_quizCode) {
     if (qs) { qs.style.display = 'flex'; qs.style.flexDirection = 'column'; }
   };
   _showQuizScreen();
-  setTimeout(_showQuizScreen, 50);   // 他スクリプトの上書き対策
-  setTimeout(_showQuizScreen, 300);  // 念のため再確認
-  _initQuizStudent(_quizCode);
+  setTimeout(_showQuizScreen, 50);
+  setTimeout(_showQuizScreen, 300);
+  if (_scheduleCode) _initScheduleStudent(_scheduleCode);
+  else               _initQuizStudent(_quizCode);
 }
 
 // ════════════════════════════════════════
@@ -7166,6 +7168,59 @@ async function _initQuizStudent(code) {
     document.title = quiz.title || 'クイズ';
 
     _qs = { code, quiz, questions, answers:{}, currentIdx:0, studentName:'' };
+    _showPane('quizNamePane');
+    setTimeout(() => { const inp = document.getElementById('quizNameInput'); if(inp) inp.focus(); }, 300);
+  } catch(e) {
+    document.getElementById('quizErrorMsg').textContent = e.message || '読み込みエラー';
+    const ep = document.getElementById('quizErrorPane');
+    ep.style.display = 'flex'; ep.style.flexDirection = 'column';
+    ['quizNamePane','quizQPane','quizDonePane'].forEach(p => {
+      const el = document.getElementById(p); if(el) el.style.display = 'none';
+    });
+  }
+}
+
+async function _initScheduleStudent(code) {
+  const _showPane = id => {
+    ['quizNamePane','quizQPane','quizDonePane','quizReviewPane','quizErrorPane'].forEach(p => {
+      const el = document.getElementById(p);
+      if (!el) return;
+      el.style.display = p === id ? 'flex' : 'none';
+      if (p === id) el.style.flexDirection = 'column';
+    });
+  };
+  try {
+    const db = _initFb();
+    if (!db) throw new Error('Firebase が設定されていません');
+
+    const snap = await db.ref('schedules/' + code).get();
+    if (!snap.exists()) throw new Error('スケジュールが見つかりません（コード: ' + code + '）');
+    const sch = snap.val();
+
+    // 今日が何日目か計算（0始まり）
+    const start   = new Date(sch.startDate + 'T00:00:00');
+    const today   = new Date(); today.setHours(0,0,0,0);
+    const dayIdx  = Math.floor((today - start) / 86400000);
+
+    if (dayIdx < 0) throw new Error(`スケジュールはまだ開始していません。\n開始日: ${sch.startDate}`);
+    if (dayIdx >= sch.totalDays) throw new Error('スケジュールは終了しました。お疲れ様でした！');
+
+    const qpd   = sch.questionsPerDay;
+    const ids   = (sch.questionIds || []).slice(dayIdx * qpd, (dayIdx + 1) * qpd);
+
+    const resp  = await fetch('data.json');
+    const allQ  = await resp.json();
+    const qMap  = {};
+    allQ.forEach(q => { qMap[q.id] = q; });
+    const questions = ids.map(id => qMap[id]).filter(Boolean);
+    if (questions.length === 0) throw new Error('問題データが読み込めませんでした');
+
+    const dayLabel = `${dayIdx + 1}日目（${sch.startDate.replace(/-/g,'/')} 開始）`;
+    document.getElementById('quizTitleEl').textContent = sch.title || 'スケジュール';
+    document.getElementById('quizMetaEl').textContent  = `${dayLabel} ／ ${questions.length}問`;
+    document.title = `${sch.title} ${dayLabel}`;
+
+    _qs = { code, quiz: { ...sch, title: `${sch.title} ${dayLabel}` }, questions, answers: {}, currentIdx: 0, studentName: '' };
     _showPane('quizNamePane');
     setTimeout(() => { const inp = document.getElementById('quizNameInput'); if(inp) inp.focus(); }, 300);
   } catch(e) {
@@ -7371,13 +7426,19 @@ let _resultsListener = null;
 function openQuizTeacher(pane) {
   const modal = document.getElementById('quizTeacherModal');
   modal.style.display = 'flex'; modal.style.flexDirection = 'column';
-  // 分野セレクト構築
-  const sel = document.getElementById('qtmFieldSel');
-  if (sel && sel.options.length <= 1 && typeof allData !== 'undefined') {
+  // 分野セレクト構築（クイズ・スケジュール両方）
+  if (typeof allData !== 'undefined') {
     const fields = [...new Set(allData.flatMap(q=>q.new_fields||[]).filter(Boolean))].sort();
-    sel.innerHTML = '<option value="">全分野（ランダム）</option>' +
-      fields.map(f => `<option value="${f}">${f}</option>`).join('');
+    const opts = '<option value="">全分野</option>' + fields.map(f=>`<option value="${f}">${f}</option>`).join('');
+    const sel = document.getElementById('qtmFieldSel');
+    if (sel && sel.options.length <= 1) sel.innerHTML = opts.replace('全分野', '全分野（ランダム）');
+    const schSel = document.getElementById('schFieldSel');
+    if (schSel && schSel.options.length <= 1) schSel.innerHTML = opts;
   }
+  // 開始日デフォルト=今日
+  const sd = document.getElementById('schStartDate');
+  if (sd && !sd.value) sd.value = new Date().toISOString().slice(0,10);
+  updateSchInfo();
   _renderRecentQuizzes();
   if (pane === 'search') {
     showQtmPane('qtmSearchPane', '📊 コードで結果を見る');
@@ -7393,10 +7454,100 @@ function closeQuizTeacher() {
 }
 
 function showQtmPane(id, title) {
-  ['qtmCreatePane','qtmSearchPane','qtmCreatedPane','qtmResultsPane'].forEach(p =>
-    document.getElementById(p).classList.toggle('active', p===id)
-  );
+  ['qtmCreatePane','qtmSchedulePane','qtmScheduleCreatedPane','qtmSearchPane','qtmCreatedPane','qtmResultsPane'].forEach(p => {
+    const el = document.getElementById(p);
+    if (el) el.classList.toggle('active', p===id);
+  });
   document.getElementById('qtmHeaderTitle').textContent = title;
+}
+
+function switchQtmTab(tab) {
+  document.getElementById('tabQuiz').style.background     = tab==='quiz'     ? '#1e3a8a' : '#e2e8f0';
+  document.getElementById('tabQuiz').style.color          = tab==='quiz'     ? 'white'   : '#475569';
+  document.getElementById('tabSchedule').style.background = tab==='schedule' ? '#059669' : '#e2e8f0';
+  document.getElementById('tabSchedule').style.color      = tab==='schedule' ? 'white'   : '#475569';
+  if (tab === 'schedule') showQtmPane('qtmSchedulePane', '📅 スケジュール配信');
+  else                    showQtmPane('qtmCreatePane',   '📤 クイズ配信');
+}
+
+function updateSchInfo() {
+  if (typeof allData === 'undefined') return;
+  const cat  = (document.getElementById('schCategorySel')||{}).value || '';
+  const field= (document.getElementById('schFieldSel')||{}).value    || '';
+  const qpd  = parseInt((document.getElementById('schQPerDay')||{}).value || 10);
+  const pool = allData.filter(q =>
+    (!cat   || q.category === cat) &&
+    (!field || (q.new_fields||[]).includes(field))
+  );
+  const totalDays = Math.floor(pool.length / qpd);
+  const info = document.getElementById('schInfo');
+  if (!info) return;
+  if (pool.length < qpd) {
+    info.textContent = `⚠ 問題数が足りません（${pool.length}問）`;
+  } else {
+    const weeks = Math.floor(totalDays / 7);
+    const days  = totalDays % 7;
+    info.innerHTML = `対象: <b>${pool.length}問</b> ／ 1日 <b>${qpd}問</b><br>期間: <b>${totalDays}日間</b>（約${weeks}週${days>0?days+'日':''}）`;
+  }
+}
+
+async function createSchedule() {
+  const db = _initFb();
+  if (!db || FIREBASE_CONFIG.apiKey === 'REPLACE_API_KEY') {
+    alert('Firebase設定が未完了です。'); return;
+  }
+  const cat       = document.getElementById('schCategorySel').value;
+  const field     = document.getElementById('schFieldSel').value;
+  const startDate = document.getElementById('schStartDate').value;
+  const qpd       = parseInt(document.getElementById('schQPerDay').value);
+  if (!startDate) { alert('開始日を選択してください。'); return; }
+
+  let pool = allData.filter(q =>
+    (!cat   || q.category === cat) &&
+    (!field || (q.new_fields||[]).includes(field))
+  );
+  if (pool.length < qpd) { alert(`問題数が足りません（${pool.length}問）`); return; }
+
+  // シャッフル
+  for (let i=pool.length-1;i>0;i--) {
+    const j=Math.floor(Math.random()*(i+1)); [pool[i],pool[j]]=[pool[j],pool[i]];
+  }
+  const totalDays = Math.floor(pool.length / qpd);
+  const usedIds   = pool.slice(0, totalDays * qpd).map(q => q.id);
+
+  const code  = _genCode();
+  const label = [cat, field||'全分野'].filter(Boolean).join('・');
+  const title = `${label} スケジュール（${qpd}問/日）`;
+
+  await db.ref('schedules/' + code).set({
+    title, category: cat, field: field||'', startDate,
+    questionsPerDay: qpd, totalDays,
+    questionIds: usedIds,
+    createdAt: Date.now()
+  });
+
+  const url        = location.origin + location.pathname + '?schedule=' + code;
+  const studentURL = location.origin + location.pathname + '?student=1';
+  document.getElementById('schURLBox').textContent     = url;
+  document.getElementById('schCodeDisplay').textContent = code;
+  document.getElementById('schStudentURL').textContent  = studentURL;
+  document.getElementById('schSummary').innerHTML =
+    `📅 開始日：${startDate}<br>📝 1日 ${qpd}問 × ${totalDays}日間<br>📚 対象：${label}（計${usedIds.length}問）`;
+
+  // QRコード生成
+  const qrEl = document.getElementById('schQRCode');
+  qrEl.innerHTML = '';
+  if (typeof QRCode !== 'undefined') new QRCode(qrEl, {text:url, width:160, height:160});
+
+  showQtmPane('qtmScheduleCreatedPane', '📅 スケジュール配信中');
+}
+
+function copySchURL() {
+  const url = document.getElementById('schURLBox').textContent;
+  navigator.clipboard.writeText(url).then(()=>{ const b=document.querySelector('.qtm-copy-btn'); if(b){const t=b.textContent;b.textContent='✓ コピーしました';setTimeout(()=>b.textContent=t,2000);} });
+}
+function copySchStudentURL() {
+  navigator.clipboard.writeText(document.getElementById('schStudentURL').textContent);
 }
 
 async function createQuizFromChecked() {
@@ -7868,6 +8019,18 @@ function downloadResultsCSV() {
   </div>
   <div class="qtm-body">
 
+    <!-- タブ切替 -->
+    <div style="display:flex;gap:6px;margin-bottom:4px;">
+      <button id="tabQuiz" onclick="switchQtmTab('quiz')"
+        style="flex:1;padding:8px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-weight:700;background:#1e3a8a;color:white;">
+        📤 クイズ配信
+      </button>
+      <button id="tabSchedule" onclick="switchQtmTab('schedule')"
+        style="flex:1;padding:8px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-weight:700;background:#e2e8f0;color:#475569;">
+        📅 スケジュール配信
+      </button>
+    </div>
+
     <!-- 作成ペイン -->
     <div class="qtm-pane active" id="qtmCreatePane">
       <div style="font-size:18px;font-weight:800;color:#1e3a8a;">クイズを作成</div>
@@ -7901,6 +8064,58 @@ function downloadResultsCSV() {
 
       <button class="qtm-btn-primary" onclick="createQuiz()">クイズを作成 →</button>
       <div id="qtmRecentWrap"></div>
+    </div>
+
+    <!-- スケジュール作成ペイン -->
+    <div class="qtm-pane" id="qtmSchedulePane">
+      <div style="font-size:18px;font-weight:800;color:#1e3a8a;">スケジュール配信</div>
+      <div style="font-size:13px;color:#64748b;margin-top:4px;">毎日自動的に異なる問題を出題します</div>
+
+      <label class="qtm-label">カテゴリ</label>
+      <select class="qtm-select" id="schCategorySel" onchange="updateSchInfo()">
+        <option value="">全カテゴリ</option>
+        <option value="基礎">基礎</option>
+        <option value="実地">実地</option>
+        <option value="専門">専門</option>
+      </select>
+
+      <label class="qtm-label">分野</label>
+      <select class="qtm-select" id="schFieldSel" onchange="updateSchInfo()">
+        <option value="">全分野</option>
+      </select>
+
+      <label class="qtm-label">開始日</label>
+      <input type="date" class="qtm-select" id="schStartDate" onchange="updateSchInfo()">
+
+      <label class="qtm-label">1日あたりの問題数</label>
+      <select class="qtm-select" id="schQPerDay" onchange="updateSchInfo()">
+        <option value="5">5問</option>
+        <option value="10" selected>10問</option>
+        <option value="15">15問</option>
+        <option value="20">20問</option>
+      </select>
+
+      <div id="schInfo" style="padding:10px 12px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;font-size:13px;color:#0369a1;margin:4px 0;"></div>
+
+      <button class="qtm-btn-primary" onclick="createSchedule()">スケジュールを作成 →</button>
+    </div>
+
+    <!-- スケジュール発行済みペイン -->
+    <div class="qtm-pane" id="qtmScheduleCreatedPane">
+      <div style="font-size:18px;font-weight:800;color:#1e3a8a;">配信準備完了！</div>
+      <div style="font-size:13px;color:#64748b;margin-top:4px;">URLまたはQRコードを学生に共有してください</div>
+      <div id="schQRCode"></div>
+      <div class="qtm-url-box" id="schURLBox" onclick="copySchURL()" style="cursor:pointer;" title="クリックでコピー"></div>
+      <button class="qtm-copy-btn" onclick="copySchURL()">📋 URLをコピー</button>
+      <div style="margin-top:10px;text-align:center;font-size:14px;color:#64748b;">
+        スケジュールコード：<strong id="schCodeDisplay" style="font-size:20px;color:#1d4ed8;letter-spacing:4px;font-family:monospace;"></strong>
+      </div>
+      <div id="schSummary" style="margin-top:10px;padding:10px 12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;font-size:12px;color:#166534;line-height:1.8;"></div>
+      <div style="margin-top:10px;padding:10px 12px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;text-align:left;">
+        <div style="font-size:11px;color:#0369a1;font-weight:700;margin-bottom:4px;">📱 学生用ログインページ</div>
+        <div id="schStudentURL" style="font-size:11px;color:#0c4a6e;font-family:monospace;word-break:break-all;cursor:pointer;" onclick="copySchStudentURL()" title="クリックでコピー"></div>
+      </div>
+      <button class="qtm-btn-primary" style="margin-top:10px;background:#64748b;" onclick="switchQtmTab('schedule')">← 新しいスケジュールを作成</button>
     </div>
 
     <!-- コード検索ペイン -->
