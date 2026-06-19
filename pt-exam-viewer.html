@@ -7336,10 +7336,6 @@ function _showQuizReview() {
     const ansLabel = correctNums.map(n => circled[n-1] || String(n)).join('・');
     const ansBadge = `<span style="margin-left:auto;background:${isOk?'#dcfce7':'#fef3c7'};color:${isOk?'#15803d':'#92400e'};font-size:12px;font-weight:800;padding:3px 10px;border-radius:20px;flex-shrink:0;">正解：${ansLabel}</span>`;
 
-    const explHtml = q.explanation
-      ? `<div class="review-explanation"><strong>解説</strong><br>${_e(q.explanation).replace(/\n/g,'<br>')}</div>`
-      : '';
-
     return '<div class="review-card">' +
       '<div class="review-card-header">' + hd +
       `<span class="review-q-num">${i+1} / ${total}</span>` +
@@ -7347,7 +7343,6 @@ function _showQuizReview() {
       (q.imageData ? `<img src="${q.imageData}" alt="問題図" class="quiz-q-img">` : '') +
       `<div class="review-q-text">${_e(q.text)}</div>` +
       `<div class="review-choices">${choices}</div>` +
-      explHtml + ceHtml +
       '</div>';
   }).join('');
 
