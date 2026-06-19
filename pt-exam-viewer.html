@@ -4252,10 +4252,9 @@ ${imgHtml}<div class="opts">${optsHtml}</div>${ansHtml}${explHtml}
       // ② レイアウト定数（PDF専用・固定値。画面に一切依存しない）
       const PT       = 0.352777778;   // 1pt = 0.3528mm
       const COL_W    = 84.1;          // 段の幅(mm) = (210 - 15.9×2 - 10) / 2
-      // 充填上限(mm)。各段はこの高さまで詰める。固定高ページ(252mm)に対し
-      // 約7mmの下余白を残し、端末ごとの微小な描画差で末尾がはみ出さないようにする。
-      const FILL_H   = 245.0;
-      const IMG_MAXH = 111.0;         // 画像の最大高さ(mm)。縦長画像も幅を犠牲にせず大きく
+      // 解説付きは解説テキスト分だけ実高さがブレやすいため安全余白を大きく取る
+      const FILL_H   = we ? 200.0 : 245.0;
+      const IMG_MAXH = we ? 72.0  : 111.0;  // 解説付きは画像も小さめに
 
       // 1行あたりの全角文字数。実際の折返し(約22字)よりやや少なめの保守値にして
       // 行数を過小評価しない＝高さを過小評価しない（オーバーフロー防止）。
@@ -4357,8 +4356,9 @@ ${imgHtml}<div class="opts">${optsHtml}</div>${ansHtml}${explHtml}
       // 1ページが2枚に分裂する（66ページ問題の原因）。絶対配置は純粋な幾何配置
       // なので、どのブラウザの印刷でも左右段が必ず横並びになる。
       // 各ページ = 幅178.2mm × 高252mm の固定矩形。左段 left:0、右段 left:94.1mm。
+      const colsH   = we ? '210mm' : '252mm';
       const colsCss = `
-.cols{position:relative;width:178.2mm;height:252mm;overflow:hidden}
+.cols{position:relative;width:178.2mm;height:${colsH};overflow:hidden}
 .col{position:absolute;top:0;width:84.1mm}
 .col-l{left:0}
 .col-r{left:94.1mm}
