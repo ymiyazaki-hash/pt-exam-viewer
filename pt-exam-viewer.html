@@ -3041,9 +3041,12 @@
 
       parentCb.addEventListener('change', () => {
         subCbs.forEach(cb => cb.checked = parentCb.checked);
-        if (parentCb.checked && subsDiv.style.display === 'none') {
+        if (parentCb.checked) {
           subsDiv.style.display = 'block';
           toggleBtn.textContent = '▼';
+        } else {
+          subsDiv.style.display = 'none';
+          toggleBtn.textContent = '▶';
         }
         applyFilters();
       });
