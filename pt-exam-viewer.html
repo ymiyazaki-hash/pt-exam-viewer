@@ -7443,12 +7443,17 @@ async function createQuiz() {
     alert('Firebase設定が未完了です。\nFIREBASE_CONFIG を入力してください。');
     return;
   }
-  const field = document.getElementById('qtmFieldSel').value;
-  const count = parseInt(document.getElementById('qtmCountSel').value);
+  const field    = document.getElementById('qtmFieldSel').value;
+  const category = document.getElementById('qtmCategorySel').value;
+  const count    = parseInt(document.getElementById('qtmCountSel').value);
 
-  let pool = (typeof allData!=='undefined' ? allData : []).filter(q => !field || (q.new_fields||[]).includes(field));
+  let pool = (typeof allData!=='undefined' ? allData : []).filter(q =>
+    (!field    || (q.new_fields||[]).includes(field)) &&
+    (!category || q.category === category)
+  );
+  const label = [category||'', field||'全分野'].filter(Boolean).join('・');
   if (pool.length < count) {
-    alert(`「${field||'全分野'}」の問題数が${count}問に足りません（${pool.length}問）`);
+    alert(`「${label}」の問題数が${count}問に足りません（${pool.length}問）`);
     return;
   }
   // Fisher-Yates シャッフル
@@ -7457,7 +7462,7 @@ async function createQuiz() {
   }
   const selected = pool.slice(0,count);
   const code  = _genCode();
-  const title = (field||'全分野') + ' ' + count + '問テスト';
+  const title = label + ' ' + count + '問テスト';
 
   await db.ref('quizzes/'+code).set({
     title, field:field||'全分野',
@@ -7867,6 +7872,14 @@ function downloadResultsCSV() {
     <div class="qtm-pane active" id="qtmCreatePane">
       <div style="font-size:18px;font-weight:800;color:#1e3a8a;">クイズを作成</div>
       <div style="font-size:13px;color:#64748b;margin-top:4px;">分野と問題数を選んで配信URLを発行します</div>
+
+      <label class="qtm-label">カテゴリ</label>
+      <select class="qtm-select" id="qtmCategorySel">
+        <option value="">全カテゴリ</option>
+        <option value="基礎">基礎</option>
+        <option value="実地">実地</option>
+        <option value="専門">専門</option>
+      </select>
 
       <label class="qtm-label">分野</label>
       <select class="qtm-select" id="qtmFieldSel"><option value="">全分野（ランダム）</option></select>
