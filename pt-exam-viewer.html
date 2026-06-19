@@ -1735,6 +1735,44 @@
     #pwLoadingArea p {
       color: rgba(255,255,255,0.82); font-size: 13px; margin: 0; line-height: 1.7;
     }
+    /* ── ローディングクイズ ── */
+    #loadQuizCard {
+      margin-top: 18px; padding: 20px 22px 18px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 18px; text-align: left;
+      animation: fadeInUp 0.5s cubic-bezier(0.4,0,0.2,1) both;
+    }
+    #lqHeader {
+      font-size: 11px; font-weight: 800; letter-spacing: 0.1em;
+      color: rgba(255,255,255,0.45); text-transform: uppercase; margin-bottom: 12px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    #lqScore { font-size: 12px; color: #fde68a; font-weight: 700; }
+    #lqQNum  { font-size: 11px; color: rgba(255,255,255,0.35); margin-bottom: 6px; }
+    #lqQText {
+      font-size: 14px; color: rgba(255,255,255,0.92); font-weight: 600;
+      line-height: 1.6; margin-bottom: 12px;
+    }
+    .lq-choice {
+      width: 100%; text-align: left; padding: 9px 13px; margin-bottom: 6px;
+      background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 10px; color: rgba(255,255,255,0.82); font-size: 13px;
+      cursor: pointer; transition: all 0.18s; display: block;
+    }
+    .lq-choice:hover:not(:disabled) { background: rgba(255,255,255,0.13); border-color: rgba(255,255,255,0.3); }
+    .lq-choice.correct { background: rgba(34,197,94,0.25); border-color: #4ade80; color: #bbf7d0; }
+    .lq-choice.wrong   { background: rgba(239,68,68,0.22);  border-color: #f87171; color: #fecaca; }
+    .lq-choice:disabled { cursor: default; }
+    #lqResult { font-size: 13px; min-height: 20px; margin: 6px 0 10px; font-weight: 700; }
+    #lqResult.ok  { color: #4ade80; }
+    #lqResult.ng  { color: #f87171; }
+    #lqNextBtn {
+      display: none; width: 100%; padding: 9px; border: none;
+      background: linear-gradient(135deg, #2563eb, #7c3aed);
+      color: white; border-radius: 10px; font-size: 13px; font-weight: 700;
+      cursor: pointer; margin-top: 2px;
+    }
     /* データ準備中は入力欄・ボタンを半透明に */
     .pw-input:disabled { opacity: 0.45; cursor: wait; }
     .pw-btn:disabled  { opacity: 0.45; cursor: wait; background: #64748b; }
@@ -2084,6 +2122,18 @@
         </div>
       </div>
     </div>
+    <div id="loadQuizCard" style="display:none">
+      <div id="lqHeader">
+        <span>⏳ 読み込み中… 問題に挑戦！</span>
+        <span id="lqScore">0問正解</span>
+      </div>
+      <div id="lqQNum"></div>
+      <div id="lqQText"></div>
+      <div id="lqChoices"></div>
+      <div id="lqResult"></div>
+      <button id="lqNextBtn" onclick="_lqNext()">次の問題 →</button>
+    </div>
+
     <div class="pw-input-wrap">
       <span class="pw-input-icon">🔒</span>
       <input id="pwInput" class="pw-input" type="password" placeholder="パスワードを入力してください" maxlength="20"
@@ -2599,6 +2649,83 @@
     _loginPending = true; // アプリ準備完了後に自動ログイン
   }
 
+  // ── ローディングクイズ ──────────────────────────────────────────────
+  const _LQ_QS = [
+    { q:'正常歩行における立脚相と遊脚相の比率はどれか。', c:['30%：70%','40%：60%','60%：40%','70%：30%','50%：50%'], a:2 },
+    { q:'MMT（徒手筋力検査）でグレード3の定義はどれか。', c:['収縮は触れるが関節運動なし','重力除去位で全可動域運動可能','重力に抗して全可動域運動可能だが抵抗に勝てない','最大抵抗に抗して全可動域運動可能','わずかな抵抗に勝てる'], a:2 },
+    { q:'FIM（機能的自立度評価法）の総項目数はどれか。', c:['13項目','15項目','18項目','20項目','22項目'], a:2 },
+    { q:'バレー徴候陽性で疑われる障害はどれか。', c:['小脳障害','下位運動ニューロン障害','上位運動ニューロン障害','末梢神経障害','筋疾患'], a:2 },
+    { q:'肩関節外転の関節可動域（ROM）参考値はどれか。', c:['90°','120°','150°','180°','200°'], a:3 },
+    { q:'ICF（国際生活機能分類）で「活動」に分類されるのはどれか。', c:['脊髄損傷','痙縮','歩行','段差のある環境','家族のサポート不足'], a:2 },
+    { q:'ブルンストロームステージⅢの特徴はどれか。', c:['随意運動なし','連合反応のみ出現','随意的な共同運動が出現','分離運動が出現','正常に近い運動'], a:2 },
+    { q:'COPD患者に典型的な胸郭の形態はどれか。', c:['漏斗胸','鳩胸','扁平胸','樽状胸','側弯変形'], a:3 },
+    { q:'バーセルインデックス（BI）の最高点はどれか。', c:['50点','75点','100点','125点','150点'], a:2 },
+    { q:'脊髄の頸膨大が存在するレベルはどれか。', c:['C1〜C4','C3〜C6','C5〜T1','C7〜T3','T1〜T4'], a:2 },
+    { q:'健常成人の安静時呼吸数（正常値）はどれか。', c:['5〜10回/分','12〜20回/分','25〜30回/分','30〜35回/分','35〜40回/分'], a:1 },
+    { q:'下腿三頭筋の支配神経はどれか。', c:['大腿神経','閉鎖神経','坐骨神経（深腓骨神経）','坐骨神経（脛骨神経）','上臀神経'], a:3 },
+    { q:'正常歩行の1歩行周期における踵接地から次の踵接地までの時間を何というか。', c:['歩幅','歩行率','歩行周期','重複歩距離','歩行速度'], a:2 },
+    { q:'パーキンソン病の4大徴候に含まれないのはどれか。', c:['安静時振戦','筋固縮','無動','姿勢反射障害','失調'], a:4 },
+    { q:'短下肢装具（AFO）の内反尖足への適応として最も適切なのはどれか。', c:['制動なし底屈フリー','底屈制動・背屈フリー','底屈制動・背屈制動','背屈補助バネ付き','固定式（固定足継手）'], a:1 },
+  ];
+
+  let _lqIdx = 0, _lqOrder = [], _lqCorrect = 0, _lqTotal = 0, _lqAnswered = false;
+
+  function _startLoadingQuiz() {
+    _lqOrder = [...Array(_LQ_QS.length).keys()].sort(() => Math.random() - 0.5);
+    _lqIdx = 0; _lqCorrect = 0; _lqTotal = 0;
+    document.getElementById('loadQuizCard').style.display = 'block';
+    _lqShowQ();
+  }
+
+  function _lqShowQ() {
+    if (_lqIdx >= _lqOrder.length) _lqIdx = 0;
+    const q = _LQ_QS[_lqOrder[_lqIdx]];
+    _lqAnswered = false;
+    document.getElementById('lqQNum').textContent = `問 ${_lqTotal + 1}`;
+    document.getElementById('lqQText').textContent = q.q;
+    document.getElementById('lqResult').textContent = '';
+    document.getElementById('lqResult').className = '';
+    document.getElementById('lqNextBtn').style.display = 'none';
+    const choicesEl = document.getElementById('lqChoices');
+    choicesEl.innerHTML = '';
+    q.c.forEach((txt, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'lq-choice';
+      btn.textContent = `${i+1}. ${txt}`;
+      btn.onclick = () => _lqAnswer(i, q.a);
+      choicesEl.appendChild(btn);
+    });
+  }
+
+  function _lqAnswer(chosen, correct) {
+    if (_lqAnswered) return;
+    _lqAnswered = true; _lqTotal++;
+    const btns = document.querySelectorAll('.lq-choice');
+    btns.forEach((b, i) => {
+      b.disabled = true;
+      if (i === correct) b.classList.add('correct');
+      else if (i === chosen) b.classList.add('wrong');
+    });
+    const res = document.getElementById('lqResult');
+    if (chosen === correct) {
+      _lqCorrect++;
+      res.textContent = '⭕ 正解！'; res.className = 'ok';
+    } else {
+      res.textContent = `❌ 不正解　正解：${correct+1}. ${_LQ_QS[_lqOrder[_lqIdx]].c[correct]}`;
+      res.className = 'ng';
+    }
+    document.getElementById('lqScore').textContent = `${_lqCorrect}/${_lqTotal}問正解`;
+    document.getElementById('lqNextBtn').style.display = 'block';
+    _lqIdx++;
+  }
+
+  function _lqNext() { _lqShowQ(); }
+
+  function _stopLoadingQuiz() {
+    const card = document.getElementById('loadQuizCard');
+    if (card) card.style.display = 'none';
+  }
+
   // データ・アプリ準備完了時に呼ぶ（DOMContentLoaded → initApp の後）
   function _onAppReady() {
     _appReady = true;
@@ -2608,6 +2735,7 @@
     const btn      = document.getElementById('pwBtn');
     const sub      = document.getElementById('pwSubText');
     if (loadArea) loadArea.style.display = 'none';
+    _stopLoadingQuiz();
     if (sub)  sub.textContent = 'パスワードを入力してください';
     if (input) { input.disabled = false; input.focus(); }
     if (btn)   { btn.disabled = false; btn.textContent = 'ログイン'; }
@@ -2895,6 +3023,7 @@
     try {
       const resp = await fetch('./data.json');
       if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      _startLoadingQuiz();
 
       // 受信サイズを表示しながらダウンロード
       const contentLength = resp.headers.get('Content-Length');
