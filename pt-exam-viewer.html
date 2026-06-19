@@ -7128,6 +7128,7 @@ function _genCode() {
 // ── ページ読み込み時にクイズモードを検出 ─────────────────────────────────────
 const _quizCode     = new URLSearchParams(window.location.search).get('quiz');
 const _scheduleCode = new URLSearchParams(window.location.search).get('schedule');
+const _scheduleDParam = new URLSearchParams(window.location.search).get('d');
 const _activeCode   = _quizCode || _scheduleCode;
 if (_activeCode) {
   const _showQuizScreen = () => {
@@ -7215,6 +7216,12 @@ async function _initScheduleStudent(code) {
     const start = new Date(sch.startDate + 'T00:00:00');
     if (today < start) throw new Error(`スケジュールはまだ開始していません。\n開始日: ${sch.startDate}`);
     if (skipSet.has(todayStr)) throw new Error('本日はお休みの日です。明日また挑戦してください！');
+
+    // 日付パラメータ（d=YYYYMMDD）が付いている場合は今日と一致するか確認
+    const todayD = todayStr.replace(/-/g,'');
+    if (_scheduleDParam && _scheduleDParam !== todayD) {
+      throw new Error('このURLは本日のものではありません。\n先生から今日のQRコード・URLをもらってください。');
+    }
 
     // startDate から today まで、スキップ日を除いた日数を数える
     let dayIdx = -1;
@@ -7676,29 +7683,44 @@ async function createSchedule() {
     createdAt: Date.now()
   });
 
-  const url        = location.origin + location.pathname + '?schedule=' + code;
-  const studentURL = location.origin + location.pathname + '?student=1';
-  document.getElementById('schURLBox').textContent      = url;
   document.getElementById('schCodeDisplay').textContent = code;
-  document.getElementById('schStudentURL').textContent  = studentURL;
   document.getElementById('schSummary').innerHTML =
     `📅 ${startDate} 〜 ${endDate}<br>📝 1日 ${qpd}問 × ${totalDays}日間` +
     (skipDates.length ? `（スキップ ${skipDates.length}日）` : '') +
     `<br>📚 対象：${label}（計${usedIds.length}問）`;
 
-  const qrEl = document.getElementById('schQRCode');
-  qrEl.innerHTML = '';
-  if (typeof QRCode !== 'undefined') new QRCode(qrEl, {text:url, width:160, height:160});
-
+  _refreshTodaySchQR(code);
   showQtmPane('qtmScheduleCreatedPane', '📅 スケジュール配信中');
+}
+
+function _todayD() {
+  const t = new Date();
+  return `${t.getFullYear()}${String(t.getMonth()+1).padStart(2,'0')}${String(t.getDate()).padStart(2,'0')}`;
+}
+
+function _refreshTodaySchQR(code) {
+  const d   = _todayD();
+  const url = location.origin + location.pathname + '?schedule=' + code + '&d=' + d;
+  const DAY_JP = ['日','月','火','水','木','金','土'];
+  const t = new Date();
+  const label = `${t.getFullYear()}/${String(t.getMonth()+1).padStart(2,'0')}/${String(t.getDate()).padStart(2,'0')}(${DAY_JP[t.getDay()]})`;
+  const lbl = document.getElementById('schTodayLabel');
+  if (lbl) lbl.textContent = label;
+  const box = document.getElementById('schURLBox');
+  if (box) box.textContent = url;
+  const qrEl = document.getElementById('schQRCode');
+  if (qrEl) {
+    qrEl.innerHTML = '';
+    if (typeof QRCode !== 'undefined') new QRCode(qrEl, {text:url, width:160, height:160});
+  }
 }
 
 function copySchURL() {
   const url = document.getElementById('schURLBox').textContent;
-  navigator.clipboard.writeText(url).then(()=>{ const b=document.querySelector('.qtm-copy-btn'); if(b){const t=b.textContent;b.textContent='✓ コピーしました';setTimeout(()=>b.textContent=t,2000);} });
-}
-function copySchStudentURL() {
-  navigator.clipboard.writeText(document.getElementById('schStudentURL').textContent);
+  navigator.clipboard.writeText(url).then(() => {
+    const b = document.querySelector('.qtm-copy-btn');
+    if (b) { const t=b.textContent; b.textContent='✓ コピーしました'; setTimeout(()=>b.textContent=t,2000); }
+  });
 }
 
 let _schProgListener = null;
@@ -7729,6 +7751,14 @@ async function openScheduleProgress(code) {
   document.getElementById('schProgTitle').textContent = sch.title || 'スケジュール';
   document.getElementById('schProgMeta').textContent  =
     `コード: ${c}　${sch.startDate} 開始　${dayLabel} / 計${sch.totalDays}日`;
+
+  // 発行済みペインにもコードとQRをセット（検索経由で来た場合に備えて）
+  document.getElementById('schCodeDisplay').textContent = c;
+  if (!document.getElementById('schSummary').textContent) {
+    document.getElementById('schSummary').innerHTML =
+      `📅 ${sch.startDate} 開始　📝 1日 ${sch.questionsPerDay}問 × ${sch.totalDays}日間`;
+  }
+  _refreshTodaySchQR(c);
 
   showQtmPane('qtmScheduleProgressPane', '📊 進捗・解説');
 
@@ -8412,19 +8442,23 @@ function downloadResultsCSV() {
 
     <!-- スケジュール発行済みペイン -->
     <div class="qtm-pane" id="qtmScheduleCreatedPane">
-      <div style="font-size:18px;font-weight:800;color:#1e3a8a;">配信準備完了！</div>
-      <div style="font-size:13px;color:#64748b;margin-top:4px;">URLまたはQRコードを学生に共有してください</div>
-      <div id="schQRCode"></div>
-      <div class="qtm-url-box" id="schURLBox" onclick="copySchURL()" style="cursor:pointer;" title="クリックでコピー"></div>
-      <button class="qtm-copy-btn" onclick="copySchURL()">📋 URLをコピー</button>
-      <div style="margin-top:10px;text-align:center;font-size:14px;color:#64748b;">
-        スケジュールコード：<strong id="schCodeDisplay" style="font-size:20px;color:#1d4ed8;letter-spacing:4px;font-family:monospace;"></strong>
+      <div style="font-size:18px;font-weight:800;color:#1e3a8a;">スケジュール作成完了！</div>
+      <div style="margin-top:4px;text-align:center;font-size:14px;color:#64748b;">
+        コード：<strong id="schCodeDisplay" style="font-size:22px;color:#1d4ed8;letter-spacing:4px;font-family:monospace;"></strong>
       </div>
       <div id="schSummary" style="margin-top:10px;padding:10px 12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;font-size:12px;color:#166534;line-height:1.8;"></div>
-      <div style="margin-top:10px;padding:10px 12px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;text-align:left;">
-        <div style="font-size:11px;color:#0369a1;font-weight:700;margin-bottom:4px;">📱 学生用ログインページ</div>
-        <div id="schStudentURL" style="font-size:11px;color:#0c4a6e;font-family:monospace;word-break:break-all;cursor:pointer;" onclick="copySchStudentURL()" title="クリックでコピー"></div>
+
+      <!-- 本日のQR -->
+      <div style="margin-top:14px;padding:14px;background:#fffbeb;border:1.5px solid #fde68a;border-radius:12px;">
+        <div style="font-size:13px;font-weight:800;color:#92400e;margin-bottom:8px;text-align:center;">
+          📅 本日（<span id="schTodayLabel"></span>）のQR・URL
+        </div>
+        <div style="font-size:11px;color:#78350f;margin-bottom:8px;text-align:center;">毎日このページを開き直すと自動更新されます</div>
+        <div id="schQRCode" style="display:flex;justify-content:center;margin:8px 0;"></div>
+        <div class="qtm-url-box" id="schURLBox" onclick="copySchURL()" style="cursor:pointer;font-size:10px;" title="クリックでコピー"></div>
+        <button class="qtm-copy-btn" onclick="copySchURL()">📋 本日のURLをコピー</button>
       </div>
+
       <button class="qtm-btn-primary" style="margin-top:14px;" onclick="openScheduleProgress()">📊 進捗・解説を見る</button>
       <button class="qtm-btn-primary" style="margin-top:10px;background:#64748b;" onclick="switchQtmTab('schedule')">← 新しいスケジュールを作成</button>
     </div>
