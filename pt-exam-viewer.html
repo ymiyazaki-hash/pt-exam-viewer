@@ -3664,8 +3664,8 @@
       rEl(qNum + '問', {b:true, col:'FFFFFF', sz:22}) +
       rEl('  ' + q.id, {b:true, col:'D6E4FF', sz:21}) +
       rEl('  ' + q.examSession + '  ' + q.category + ((q.new_fields||[])[0] ? '  ' + q.new_fields[0] : ''), {col:'BDD0F8', sz:21}) +
-      rEl('  ' + rate + '%', {col:'C7D8FA', sz:19}) +
-      (q.excludedHandling ? rEl('  ⚠採点除外', {b:true, col:'FED7AA', sz:19}) : ''),
+      rEl('  ' + rate + '%', {col:'C7D8FA', sz:21}) +
+      (q.excludedHandling ? rEl('  ⚠採点除外', {b:true, col:'FED7AA', sz:21}) : ''),
       {kn:true, fill:'1A4A8A', bl:{sz:20,c:'0C2461'}, sb:140, sa:40, ind:60}
     ));
 
@@ -3692,12 +3692,12 @@
         const origTexts = wAnswers.map(a => ch[parseInt(a)-1]||'').filter(Boolean).join('・');
         parts.push(pEl(
           rEl('⚠ 採点対象から除外（正答なし）　採点除外（全員得点）', {b:true, col:'B45309', sz:21}) +
-          rEl('　元の想定正答：' + origAns + '番　' + origTexts, {col:'92400E', sz:19}),
+          rEl('　元の想定正答：' + origAns + '番　' + origTexts, {col:'92400E', sz:21}),
           {fill:'FFFBEB', bl:{sz:18,c:'F59E0B'}, sb:40, sa:40, ind:80}
         ));
         if (q.excludedReason) {
           parts.push(pEl(
-            rEl('【理由】' + q.excludedReason, {col:'7C2D12', sz:18}),
+            rEl('【理由】' + q.excludedReason, {col:'7C2D12', sz:21}),
             {fill:'FFFBEB', sb:16, sa:16, ind:80}
           ));
         }
@@ -3738,7 +3738,7 @@
               finalDisp = aa.map(x=>x[0]).join('または');
             }
             parts.push(pEl(
-              rEl('当初の発表答え　' + origDisp + '　→　最終正解　' + finalDisp, {col:'B45309', sz:18}),
+              rEl('当初の発表答え　' + origDisp + '　→　最終正解　' + finalDisp, {col:'B45309', sz:21}),
               {fill:'FFFBEB', bl:{sz:12,c:'F59E0B'}, sb:20, sa:20, ind:80}
             ));
           }
@@ -3746,7 +3746,7 @@
       }
     } else if (q.excludedHandling) {
       parts.push(pEl(
-        rEl('＊不適切問題', {b:true, col:'B45309', sz:18}),
+        rEl('＊不適切問題', {b:true, col:'B45309', sz:21}),
         {fill:'FFFBEB', sb:20, sa:20, ind:80}
       ));
     }
@@ -3754,11 +3754,11 @@
     // 解説（解説付きモード）
     if (we && q.explanation) {
       parts.push(pEl(
-        rEl('【解説】', {b:true, col:'1E3A5F', sz:20}),
+        rEl('【解説】', {b:true, col:'1E3A5F', sz:21}),
         {fill:'EFF6FF', bl:{sz:18,c:'3B82F6'}, sb:20, sa:8, ind:80}
       ));
       parts.push(pEl(
-        rEl(q.explanation, {col:'1E293B', sz:19}),
+        rEl(q.explanation, {col:'1E293B', sz:21}),
         {fill:'EFF6FF', sb:8, sa:8, ind:80}
       ));
     }
@@ -3767,7 +3767,7 @@
       q.choiceExplanations.forEach((ex, i) => {
         if (!ex) return;
         parts.push(pEl(
-          rEl(CIR[i] + '　' + ex, {col:'374151', sz:18}),
+          rEl(CIR[i] + '　' + ex, {col:'374151', sz:21}),
           {fill:'F8FAFC', sb:4, sa:4, ind:160}
         ));
       });
@@ -3907,9 +3907,9 @@
 
       // ヘッダー行（短いヘッダーで折り返し防止）
       const hdrCells = Array(GRP).fill(0).map(() =>
-        tcEl('問', WN, {b:true, center:true, fill:'1A4A8A', col:'FFFFFF', sz:17}) +
-        tcEl('正', WA, {b:true, center:true, fill:'1A4A8A', col:'FFFFFF', sz:17}) +
-        tcEl('設問ID', WI, {b:true, center:true, fill:'1A4A8A', col:'FFFFFF', sz:17})
+        tcEl('問', WN, {b:true, center:true, fill:'1A4A8A', col:'FFFFFF', sz:21}) +
+        tcEl('正', WA, {b:true, center:true, fill:'1A4A8A', col:'FFFFFF', sz:21}) +
+        tcEl('設問ID', WI, {b:true, center:true, fill:'1A4A8A', col:'FFFFFF', sz:21})
       ).join('');
       const headerRow = `<w:tr><w:trPr><w:tblHeader/><w:trHeight w:val="400" w:hRule="exact"/></w:trPr>${hdrCells}</w:tr>`;
 
@@ -3931,9 +3931,9 @@
             const klAns    = klIsExcl ? '除外' : String(q.answer || '');
             const klAnsCol = klIsExcl ? 'B45309' : '111827';
             const klFill   = klIsExcl ? 'FFFBEB' : bg;
-            return tcEl(String(idx+1), WN, {center:true,  fill:bg,     sz:16, col:'1A4A8A', b:true, pageBreak:pb}) +
-                   tcEl(klAns,         WA, {center:true,  fill:klFill, sz:18, col:klAnsCol, b:true}) +
-                   tcEl(q.id,          WI, {center:false, fill:bg,     sz:14, col:'4A5568'});
+            return tcEl(String(idx+1), WN, {center:true,  fill:bg,     sz:21, col:'1A4A8A', b:true, pageBreak:pb}) +
+                   tcEl(klAns,         WA, {center:true,  fill:klFill, sz:21, col:klAnsCol, b:true}) +
+                   tcEl(q.id,          WI, {center:false, fill:bg,     sz:21, col:'4A5568'});
           }
           return tcEl('', WN, {fill:bg, pageBreak:pb}) + tcEl('', WA, {fill:bg}) + tcEl('', WI, {fill:bg});
         }).join('');
@@ -3945,9 +3945,9 @@
       // タイトル・サブタイトル（極力コンパクトに）
       const titleP = pEl(rEl('PT国家試験　解答一覧', {b:true, col:'111827', sz:24}), {sb:0, sa:20});
       const subP   = pEl(
-        rEl(`${today}　全${data.length}問`, {col:'6B7280', sz:16}) +
-        (categories ? rEl('　' + categories, {col:'374151', sz:16}) : '') +
-        (sessStr    ? rEl('　' + sessStr,    {col:'374151', sz:16}) : ''),
+        rEl(`${today}　全${data.length}問`, {col:'6B7280', sz:21}) +
+        (categories ? rEl('　' + categories, {col:'374151', sz:21}) : '') +
+        (sessStr    ? rEl('　' + sessStr,    {col:'374151', sz:21}) : ''),
         {sb:0, sa:40}
       );
       const body = titleP + subP + table;
@@ -4391,16 +4391,16 @@ body{font-family:"游明朝","Yu Mincho","Hiragino Mincho Pro W3","ヒラギノ�
 .opt{font-size:10.5pt;margin:0.9pt 0;line-height:1.4}
 .qimg{display:block;width:100%;height:auto;max-height:111mm;object-fit:contain;margin:2pt 0}
 .expl{margin-top:3pt;padding:3pt 5pt;background:#eff6ff;border-left:2pt solid #3b82f6;border-radius:2pt}
-.expl-hd{font-size:8.5pt;font-weight:bold;color:#1e3a8a;margin-bottom:1pt}
-.expl-body{font-size:8.5pt;color:#1e293b;line-height:1.5}
-.ce{font-size:8pt;color:#374151;margin-top:1pt;padding-left:4pt}
+.expl-hd{font-size:10.5pt;font-weight:bold;color:#1e3a8a;margin-bottom:1pt}
+.expl-body{font-size:10.5pt;color:#1e293b;line-height:1.5}
+.ce{font-size:10.5pt;color:#374151;margin-top:1pt;padding-left:4pt}
 .ans{font-size:10.5pt;font-weight:bold;border-top:.4pt solid #333;
      margin-top:2pt;padding-top:1pt;color:#1a5c30}
 .ans.excl{color:#b45309;border-top-color:#f59e0b;background:#fffbeb;padding:3pt 5pt;border-radius:3pt}
-.ans-reason{font-size:8.5pt;color:#7c2d12;padding:1pt 5pt;background:#fffbeb}
-.ans-badge{font-size:8.5pt;font-weight:800;color:#b45309;border-top:.4pt solid #f59e0b;margin-top:2pt;padding-top:1pt}
-.orig-ans{font-size:8.5pt;font-weight:500}
-.excl-badge{font-size:7.5pt;font-weight:700;color:#9a3412;background:#fed7aa;border:.4pt solid #fdba74;border-radius:2pt;padding:0 3pt;margin-left:4pt}
+.ans-reason{font-size:10.5pt;color:#7c2d12;padding:1pt 5pt;background:#fffbeb}
+.ans-badge{font-size:10.5pt;font-weight:800;color:#b45309;border-top:.4pt solid #f59e0b;margin-top:2pt;padding-top:1pt}
+.orig-ans{font-size:10.5pt;font-weight:500}
+.excl-badge{font-size:10.5pt;font-weight:700;color:#9a3412;background:#fed7aa;border:.4pt solid #fdba74;border-radius:2pt;padding:0 3pt;margin-left:4pt}
 /* ── 操作バー（画面のみ。印刷では非表示）── */
 .toolbar{position:fixed;top:0;left:0;right:0;z-index:99999;display:flex;gap:10px;
   justify-content:center;align-items:center;padding:10px;background:#0c2461;
@@ -4512,17 +4512,17 @@ function closeBack(){
 body{font-family:'Hiragino Sans','Meiryo','Yu Gothic',sans-serif;font-size:10pt;
      -webkit-print-color-adjust:exact;print-color-adjust:exact}
 h1{font-size:13pt;font-weight:800;color:#111827;margin-bottom:2pt}
-.sub{font-size:8.5pt;color:#6b7280;margin-bottom:6pt}
+.sub{font-size:10.5pt;color:#6b7280;margin-bottom:6pt}
 .pb{page-break-before:always;height:0}
 table{border-collapse:collapse;width:100%;table-layout:fixed;margin-bottom:0}
-th{background:#1a4a8a;color:white;text-align:center;padding:3pt 2pt;font-size:8pt;font-weight:700;border:.4pt solid #0c2461}
-td{border:.4pt solid #cbd5e0;padding:2.5pt 3pt;font-size:8.5pt;vertical-align:middle}
+th{background:#1a4a8a;color:white;text-align:center;padding:3pt 2pt;font-size:10.5pt;font-weight:700;border:.4pt solid #0c2461}
+td{border:.4pt solid #cbd5e0;padding:2.5pt 3pt;font-size:10.5pt;vertical-align:middle}
 tr.even td{background:#eef2f7}
 tr.odd  td{background:#ffffff}
 td.qnum{font-weight:800;color:#1a4a8a;text-align:center}
 td.ans{font-weight:900;color:#111827;font-size:11pt;text-align:center}
-td.excl-ans{font-weight:900;color:#b45309;font-size:9pt;text-align:center;background:#fffbeb!important}
-td.qid{color:#4a5568;font-size:7.5pt}
+td.excl-ans{font-weight:900;color:#b45309;font-size:10.5pt;text-align:center;background:#fffbeb!important}
+td.qid{color:#4a5568;font-size:10.5pt}
 td.empty{background:#f8fafc}
 th.hn{width:4.5%}th.ha{width:5.5%}th.hi{width:8%}
 </style></head><body>
