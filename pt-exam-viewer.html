@@ -2072,7 +2072,16 @@
     <p id="pwSubText" style="display:none">パスワードを入力してください</p>
     <div id="pwLoadingArea">
       <div class="pw-spinner"></div>
-      <p>データを読み込み中です…<br>しばらくお待ちください</p>
+      <p id="pwLoadingText">データを読み込み中です…</p>
+      <div style="width:240px;margin:0 auto;">
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:rgba(255,255,255,0.7);margin-bottom:5px;">
+          <span id="pwLoadPct">0%</span>
+          <span id="pwLoadSize"></span>
+        </div>
+        <div style="background:rgba(255,255,255,0.2);border-radius:20px;height:8px;overflow:hidden;">
+          <div id="pwLoadBar" style="height:100%;width:0%;background:linear-gradient(90deg,#ffe066,#fff);border-radius:20px;transition:width 0.2s ease;"></div>
+        </div>
+      </div>
     </div>
     <div class="pw-input-wrap">
       <span class="pw-input-icon">🔒</span>
@@ -2887,18 +2896,31 @@
 
       // 受信サイズを表示しながらダウンロード
       const contentLength = resp.headers.get('Content-Length');
-      const totalMB = contentLength ? (parseInt(contentLength) / 1024 / 1024).toFixed(0) + 'MB' : '';
+      const total = contentLength ? parseInt(contentLength) : 0;
+      const totalMB = total ? (total / 1024 / 1024).toFixed(0) + 'MB' : '';
       const reader = resp.body.getReader();
       const chunks = [];
       let received = 0;
+      const _bar  = document.getElementById('pwLoadBar');
+      const _pct  = document.getElementById('pwLoadPct');
+      const _size = document.getElementById('pwLoadSize');
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
         chunks.push(value);
         received += value.length;
         const recMB = (received / 1024 / 1024).toFixed(1);
+        const pct   = total ? Math.min(99, Math.round(received / total * 100)) : 0;
+        if (_bar)  _bar.style.width  = pct + '%';
+        if (_pct)  _pct.textContent  = pct + '%';
+        if (_size) _size.textContent = recMB + (totalMB ? '/' + totalMB : 'MB');
         showLoading(true, `データを受信中… ${recMB}${totalMB ? '/' + totalMB : 'MB'}`);
       }
+      // 完了
+      if (_bar)  _bar.style.width  = '100%';
+      if (_pct)  _pct.textContent  = '100%';
+      if (document.getElementById('pwLoadingText'))
+        document.getElementById('pwLoadingText').textContent = 'データを展開中…';
       // Uint8Array → 文字列
       const all = new Uint8Array(received);
       let pos = 0;
