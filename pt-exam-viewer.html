@@ -7207,12 +7207,24 @@ async function _initScheduleStudent(code) {
     if (!snap.exists()) throw new Error('スケジュールが見つかりません（コード: ' + code + '）');
     const sch = snap.val();
 
-    // 今日が何日目か計算（0始まり）
-    const start   = new Date(sch.startDate + 'T00:00:00');
-    const today   = new Date(); today.setHours(0,0,0,0);
-    const dayIdx  = Math.floor((today - start) / 86400000);
+    // 今日が何日目か計算（スキップ日を除く、0始まり）
+    const today = new Date(); today.setHours(0,0,0,0);
+    const todayStr = _dateStr(today);
+    const skipSet  = new Set(sch.skipDates || []);
 
-    if (dayIdx < 0) throw new Error(`スケジュールはまだ開始していません。\n開始日: ${sch.startDate}`);
+    const start = new Date(sch.startDate + 'T00:00:00');
+    if (today < start) throw new Error(`スケジュールはまだ開始していません。\n開始日: ${sch.startDate}`);
+    if (skipSet.has(todayStr)) throw new Error('本日はお休みの日です。明日また挑戦してください！');
+
+    // startDate から today まで、スキップ日を除いた日数を数える
+    let dayIdx = -1;
+    const cur = new Date(sch.startDate + 'T00:00:00');
+    while (cur <= today) {
+      if (!skipSet.has(_dateStr(cur))) dayIdx++;
+      if (_dateStr(cur) === todayStr) break;
+      cur.setDate(cur.getDate() + 1);
+    }
+
     if (dayIdx >= sch.totalDays) throw new Error('スケジュールは終了しました。お疲れ様でした！');
 
     const qpd   = sch.questionsPerDay;
@@ -7480,25 +7492,138 @@ function switchQtmTab(tab) {
   else                    showQtmPane('qtmCreatePane',   '📤 クイズ配信');
 }
 
-function updateSchInfo() {
-  if (typeof allData === 'undefined') return;
-  const cat  = (document.getElementById('schCategorySel')||{}).value || '';
-  const field= (document.getElementById('schFieldSel')||{}).value    || '';
-  const qpd  = parseInt((document.getElementById('schQPerDay')||{}).value || 10);
-  const pool = allData.filter(q =>
+// 日本の祝日（2025〜2028）
+const JP_HOLIDAYS = new Set([
+  '2025-01-01','2025-01-13','2025-02-11','2025-02-23','2025-02-24',
+  '2025-03-20','2025-04-29','2025-05-03','2025-05-04','2025-05-05','2025-05-06',
+  '2025-07-21','2025-08-11','2025-09-15','2025-09-23','2025-10-13',
+  '2025-11-03','2025-11-23','2025-11-24',
+  '2026-01-01','2026-01-12','2026-02-11','2026-02-23','2026-03-20',
+  '2026-04-29','2026-05-03','2026-05-04','2026-05-05',
+  '2026-07-20','2026-08-11','2026-09-21','2026-09-22','2026-09-23','2026-10-12',
+  '2026-11-03','2026-11-23',
+  '2027-01-01','2027-01-11','2027-02-11','2027-02-23','2027-03-21',
+  '2027-04-29','2027-05-03','2027-05-04','2027-05-05',
+  '2027-07-19','2027-08-11','2027-09-20','2027-09-23','2027-10-11',
+  '2027-11-03','2027-11-23',
+  '2028-01-01','2028-01-10','2028-02-11','2028-02-23','2028-03-20',
+  '2028-04-29','2028-05-03','2028-05-04','2028-05-05',
+  '2028-07-17','2028-08-11','2028-09-18','2028-09-22','2028-10-09',
+  '2028-11-03','2028-11-23'
+]);
+
+function _isHoliday(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  const dow = d.getDay();
+  return dow === 0 || dow === 6 || JP_HOLIDAYS.has(dateStr);
+}
+
+function _dateStr(d) {
+  return d.toISOString().slice(0,10);
+}
+
+function _addDays(dateStr, n) {
+  const d = new Date(dateStr + 'T00:00:00');
+  d.setDate(d.getDate() + n);
+  return _dateStr(d);
+}
+
+// 開始日からmaxDays日分のカレンダーチップを生成
+function _buildSkipDays(startDate, maxDays) {
+  const wrap = document.getElementById('schSkipDays');
+  const wrapParent = document.getElementById('schSkipWrap');
+  if (!wrap || !startDate || maxDays <= 0) { if(wrapParent) wrapParent.style.display='none'; return; }
+  wrapParent.style.display = 'block';
+  const DAY_JP = ['日','月','火','水','木','金','土'];
+  wrap.innerHTML = '';
+  for (let i = 0; i < maxDays; i++) {
+    const ds = _addDays(startDate, i);
+    const d  = new Date(ds + 'T00:00:00');
+    const dow = d.getDay();
+    const isWkend = dow === 0 || dow === 6;
+    const isHol   = JP_HOLIDAYS.has(ds);
+    const label = `${ds.slice(5).replace('-','/')}(${DAY_JP[dow]})`;
+    const chip  = document.createElement('label');
+    chip.style.cssText = `display:inline-flex;align-items:center;gap:3px;padding:3px 7px;
+      border-radius:20px;font-size:11px;cursor:pointer;border:1px solid #e2e8f0;
+      background:${isWkend||isHol ? '#fee2e2' : '#f1f5f9'};
+      color:${isWkend ? '#991b1b' : isHol ? '#7c3aed' : '#334155'};`;
+    const cb = document.createElement('input');
+    cb.type = 'checkbox'; cb.value = ds; cb.style.display='none';
+    cb.dataset.skip = '1';
+    cb.addEventListener('change', () => {
+      chip.style.background = cb.checked ? '#fca5a5' : (isWkend||isHol ? '#fee2e2' : '#f1f5f9');
+      chip.style.outline = cb.checked ? '2px solid #dc2626' : 'none';
+      updateSchInfoCounts();
+    });
+    chip.appendChild(cb);
+    chip.appendChild(document.createTextNode(label));
+    wrap.appendChild(chip);
+  }
+}
+
+function updateSchInfoCounts() {
+  const startDate = (document.getElementById('schStartDate')||{}).value || '';
+  const info = document.getElementById('schInfo');
+  if (!info || !startDate) return;
+  const cat   = (document.getElementById('schCategorySel')||{}).value || '';
+  const field  = (document.getElementById('schFieldSel')||{}).value    || '';
+  const qpd    = parseInt((document.getElementById('schQPerDay')||{}).value || 10);
+  const pool   = (allData||[]).filter(q =>
     (!cat   || q.category === cat) &&
     (!field || (q.new_fields||[]).includes(field))
   );
-  const totalDays = Math.floor(pool.length / qpd);
+  const maxDays = Math.floor(pool.length / qpd);
+
+  // スキップ済み日を取得
+  const skipped = new Set([...document.querySelectorAll('#schSkipDays input[data-skip]:checked')].map(c=>c.value));
+  // 有効日数を数える
+  let activeDays = 0, calDay = 0;
+  while (activeDays < maxDays) {
+    const ds = _addDays(startDate, calDay);
+    if (!skipped.has(ds)) activeDays++;
+    calDay++;
+    if (calDay > 730) break;
+  }
+  const endDate = _addDays(startDate, calDay - 1);
+  const skipCount = skipped.size;
+
+  info.innerHTML = `対象: <b>${pool.length}問</b> ／ 1日 <b>${qpd}問</b> × <b>${maxDays}日</b><br>` +
+    `スキップ: <b>${skipCount}日</b>　実施期間: <b>${startDate}</b> 〜 <b>${endDate}</b>`;
+}
+
+function updateSchInfo() {
+  if (typeof allData === 'undefined') return;
+  const cat   = (document.getElementById('schCategorySel')||{}).value || '';
+  const field  = (document.getElementById('schFieldSel')||{}).value    || '';
+  const qpd    = parseInt((document.getElementById('schQPerDay')||{}).value || 10);
+  const startDate = (document.getElementById('schStartDate')||{}).value || '';
+  const pool   = (allData||[]).filter(q =>
+    (!cat   || q.category === cat) &&
+    (!field || (q.new_fields||[]).includes(field))
+  );
   const info = document.getElementById('schInfo');
   if (!info) return;
   if (pool.length < qpd) {
     info.textContent = `⚠ 問題数が足りません（${pool.length}問）`;
-  } else {
-    const weeks = Math.floor(totalDays / 7);
-    const days  = totalDays % 7;
-    info.innerHTML = `対象: <b>${pool.length}問</b> ／ 1日 <b>${qpd}問</b><br>期間: <b>${totalDays}日間</b>（約${weeks}週${days>0?days+'日':''}）`;
+    document.getElementById('schSkipWrap').style.display = 'none';
+    return;
   }
+  const maxDays = Math.floor(pool.length / qpd);
+  if (startDate) {
+    _buildSkipDays(startDate, maxDays);
+    updateSchInfoCounts();
+  } else {
+    info.innerHTML = `対象: <b>${pool.length}問</b> ／ 1日 <b>${qpd}問</b> × <b>${maxDays}日</b>（開始日を選択してください）`;
+    document.getElementById('schSkipWrap').style.display = 'none';
+  }
+}
+
+function schExcludeWeekendsHolidays() {
+  document.querySelectorAll('#schSkipDays input[data-skip]').forEach(cb => {
+    const should = _isHoliday(cb.value);
+    if (cb.checked !== should) cb.click();
+  });
 }
 
 async function createSchedule() {
@@ -7522,8 +7647,22 @@ async function createSchedule() {
   for (let i=pool.length-1;i>0;i--) {
     const j=Math.floor(Math.random()*(i+1)); [pool[i],pool[j]]=[pool[j],pool[i]];
   }
+
+  // スキップ日を収集
+  const skipDates = [...document.querySelectorAll('#schSkipDays input[data-skip]:checked')].map(c=>c.value);
+  const skipSet   = new Set(skipDates);
+
   const totalDays = Math.floor(pool.length / qpd);
   const usedIds   = pool.slice(0, totalDays * qpd).map(q => q.id);
+
+  // 実際の終了日を計算（スキップを考慮）
+  let activeDays = 0, calDay = 0, endDate = startDate;
+  while (activeDays < totalDays) {
+    const ds = _addDays(startDate, calDay);
+    if (!skipSet.has(ds)) { activeDays++; endDate = ds; }
+    calDay++;
+    if (calDay > 1000) break;
+  }
 
   const code  = _genCode();
   const label = [cat, field||'全分野'].filter(Boolean).join('・');
@@ -7533,18 +7672,20 @@ async function createSchedule() {
     title, category: cat, field: field||'', startDate,
     questionsPerDay: qpd, totalDays,
     questionIds: usedIds,
+    skipDates,
     createdAt: Date.now()
   });
 
   const url        = location.origin + location.pathname + '?schedule=' + code;
   const studentURL = location.origin + location.pathname + '?student=1';
-  document.getElementById('schURLBox').textContent     = url;
+  document.getElementById('schURLBox').textContent      = url;
   document.getElementById('schCodeDisplay').textContent = code;
   document.getElementById('schStudentURL').textContent  = studentURL;
   document.getElementById('schSummary').innerHTML =
-    `📅 開始日：${startDate}<br>📝 1日 ${qpd}問 × ${totalDays}日間<br>📚 対象：${label}（計${usedIds.length}問）`;
+    `📅 ${startDate} 〜 ${endDate}<br>📝 1日 ${qpd}問 × ${totalDays}日間` +
+    (skipDates.length ? `（スキップ ${skipDates.length}日）` : '') +
+    `<br>📚 対象：${label}（計${usedIds.length}問）`;
 
-  // QRコード生成
   const qrEl = document.getElementById('schQRCode');
   qrEl.innerHTML = '';
   if (typeof QRCode !== 'undefined') new QRCode(qrEl, {text:url, width:160, height:160});
@@ -8250,9 +8391,21 @@ function downloadResultsCSV() {
         <option value="10" selected>10問</option>
         <option value="15">15問</option>
         <option value="20">20問</option>
+        <option value="25">25問</option>
+        <option value="30">30問</option>
+        <option value="40">40問</option>
+        <option value="50">50問</option>
       </select>
 
-      <div id="schInfo" style="padding:10px 12px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;font-size:13px;color:#0369a1;margin:4px 0;"></div>
+      <div id="schInfo" style="padding:10px 12px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;font-size:13px;color:#0369a1;margin:4px 0;line-height:1.8;"></div>
+
+      <div id="schSkipWrap" style="display:none;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin:10px 0 6px;">
+          <label class="qtm-label" style="margin:0;">実施しない日を選択</label>
+          <button onclick="schExcludeWeekendsHolidays()" style="padding:4px 10px;background:#64748b;color:white;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;">土日祝を外す</button>
+        </div>
+        <div id="schSkipDays" style="max-height:180px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:8px;padding:8px;background:#f8fafc;display:flex;flex-wrap:wrap;gap:4px;"></div>
+      </div>
 
       <button class="qtm-btn-primary" onclick="createSchedule()">スケジュールを作成 →</button>
     </div>
