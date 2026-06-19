@@ -8119,77 +8119,77 @@ function _renderRecentQuizzes() {
   if (!wrap) return;
   if (quizzes.length === 0 && schedules.length === 0) { wrap.innerHTML = ''; return; }
 
-  wrap.innerHTML = `<div class="qtm-recent">
-    <div class="qtm-recent-title">配信履歴</div>
-    <div id="schHistoryList"></div>
-    <div id="quizHistoryList"></div>
-  </div>`;
+  wrap.innerHTML = '<div class="qtm-recent"><div class="qtm-recent-title">配信履歴</div><div id="schHistoryList"></div><div id="quizHistoryList"></div></div>';
 
-  // スケジュール履歴（DOM構築でイベント付与）
+  function makeBtns(...defs) {
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;gap:5px;flex-shrink:0;margin-top:6px;';
+    defs.forEach(([label, bg, color, fn]) => {
+      const b = document.createElement('button');
+      b.textContent = label;
+      b.style.cssText = `padding:5px 10px;background:${bg};color:${color};border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;`;
+      b.addEventListener('click', fn);
+      wrap.appendChild(b);
+    });
+    return wrap;
+  }
+
+  // スケジュール履歴
   const schList = document.getElementById('schHistoryList');
   schedules.forEach((r, i) => {
     const meta = [r.startDate, r.endDate ? '〜'+r.endDate : ''].filter(Boolean).join(' ') +
       (r.qpd ? `　${r.qpd}問/日×${r.totalDays}日` : '');
     const row = document.createElement('div');
-    row.className = 'qtm-recent-item';
-    row.style.flexWrap = 'wrap';
-    row.style.gap = '6px';
-    row.innerHTML = `
-      <div style="min-width:0;flex:1;">
-        <div style="display:flex;align-items:center;gap:5px;">
-          <span style="font-size:10px;background:#ede9fe;color:#7c3aed;border-radius:4px;padding:1px 5px;font-weight:700;flex-shrink:0;">📅</span>
-          <span class="sch-hist-title" style="font-size:13px;font-weight:600;color:#1e293b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(r.title||'（無題）')}</span>
-        </div>
-        <div style="font-size:11px;color:#94a3b8;font-family:monospace;letter-spacing:1px;margin-top:1px;">${r.code}　<span style="font-family:sans-serif;letter-spacing:0;font-size:10px;">${meta}</span></div>
+    row.style.cssText = 'padding:10px 0;border-bottom:1px solid #f1f5f9;';
+
+    const info = document.createElement('div');
+    info.innerHTML =
+      `<div style="display:flex;align-items:center;gap:5px;margin-bottom:3px;">
+        <span style="font-size:10px;background:#ede9fe;color:#6d28d9;border-radius:4px;padding:1px 6px;font-weight:700;">📅 スケジュール</span>
       </div>
-      <div style="display:flex;gap:5px;flex-shrink:0;">
-        <button class="qtm-recent-view sch-open-btn" style="background:#6d28d9;">開く</button>
-        <button class="qtm-recent-view sch-rename-btn" style="background:#0369a1;">名前変更</button>
-        <button class="qtm-recent-view sch-del-btn" style="background:#dc2626;">削除</button>
-      </div>`;
-    row.querySelector('.sch-open-btn').addEventListener('click', () => {
-      _openSchFromList(r.code, r.title||'', r.startDate||'', r.endDate||'', r.qpd||0, r.totalDays||0, r.skipCount||0);
-    });
-    row.querySelector('.sch-rename-btn').addEventListener('click', () => {
-      const newTitle = prompt('新しい配信名を入力してください', r.title||'');
-      if (newTitle === null) return;
-      const list = JSON.parse(localStorage.getItem('ptScheduleList')||'[]');
-      list[i].title = newTitle.trim() || list[i].title;
-      localStorage.setItem('ptScheduleList', JSON.stringify(list));
-      _renderRecentQuizzes();
-    });
-    row.querySelector('.sch-del-btn').addEventListener('click', () => {
-      if (!confirm(`「${r.title||r.code}」を履歴から削除しますか？`)) return;
-      const list = JSON.parse(localStorage.getItem('ptScheduleList')||'[]');
-      list.splice(i, 1);
-      localStorage.setItem('ptScheduleList', JSON.stringify(list));
-      _renderRecentQuizzes();
-    });
+      <div style="font-size:13px;font-weight:700;color:#1e293b;margin-bottom:2px;">${esc(r.title || '（無題）')}</div>
+      <div style="font-size:11px;color:#64748b;">${r.code}${meta ? '　' + meta : ''}</div>`;
+
+    const btns = makeBtns(
+      ['開く',    '#ddd6fe', '#4c1d95', () => _openSchFromList(r.code, r.title||'', r.startDate||'', r.endDate||'', r.qpd||0, r.totalDays||0, r.skipCount||0)],
+      ['名前変更','#bae6fd', '#0c4a6e', () => {
+        const t = prompt('新しい配信名を入力してください', r.title||'');
+        if (t === null) return;
+        const list = JSON.parse(localStorage.getItem('ptScheduleList')||'[]');
+        if (list[i]) { list[i].title = t.trim() || list[i].title; localStorage.setItem('ptScheduleList', JSON.stringify(list)); _renderRecentQuizzes(); }
+      }],
+      ['削除',    '#fecaca', '#7f1d1d', () => {
+        if (!confirm(`「${r.title||r.code}」を履歴から削除しますか？`)) return;
+        const list = JSON.parse(localStorage.getItem('ptScheduleList')||'[]');
+        list.splice(i, 1); localStorage.setItem('ptScheduleList', JSON.stringify(list)); _renderRecentQuizzes();
+      }]
+    );
+    row.appendChild(info);
+    row.appendChild(btns);
     schList.appendChild(row);
   });
 
-  // 通常クイズ履歴（DOM構築でイベント付与）
+  // 通常クイズ履歴
   const quizList = document.getElementById('quizHistoryList');
   quizzes.forEach((r, i) => {
     const row = document.createElement('div');
-    row.className = 'qtm-recent-item';
-    row.innerHTML = `
-      <div style="flex:1;min-width:0;">
-        <div style="font-size:13px;font-weight:600;color:#1e293b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(r.title)}</div>
-        <div style="font-size:11px;color:#94a3b8;font-family:monospace;letter-spacing:2px;">${r.code}</div>
-      </div>
-      <div style="display:flex;gap:5px;flex-shrink:0;">
-        <button class="qtm-recent-view qz-open-btn">結果を見る</button>
-        <button class="qtm-recent-view qz-del-btn" style="background:#dc2626;">削除</button>
-      </div>`;
-    row.querySelector('.qz-open-btn').addEventListener('click', () => openResults(r.code, r.title));
-    row.querySelector('.qz-del-btn').addEventListener('click', () => {
-      if (!confirm(`「${r.title}」を履歴から削除しますか？`)) return;
-      const list = JSON.parse(localStorage.getItem('ptQuizRecent')||'[]');
-      list.splice(i, 1);
-      localStorage.setItem('ptQuizRecent', JSON.stringify(list));
-      _renderRecentQuizzes();
-    });
+    row.style.cssText = 'padding:10px 0;border-bottom:1px solid #f1f5f9;';
+
+    const info = document.createElement('div');
+    info.innerHTML =
+      `<div style="font-size:13px;font-weight:700;color:#1e293b;margin-bottom:2px;">${esc(r.title||'クイズ')}</div>
+       <div style="font-size:11px;color:#64748b;">${r.code}</div>`;
+
+    const btns = makeBtns(
+      ['結果を見る','#dbeafe','#1e3a8a', () => openResults(r.code, r.title)],
+      ['削除',      '#fecaca','#7f1d1d', () => {
+        if (!confirm(`「${r.title}」を履歴から削除しますか？`)) return;
+        const list = JSON.parse(localStorage.getItem('ptQuizRecent')||'[]');
+        list.splice(i, 1); localStorage.setItem('ptQuizRecent', JSON.stringify(list)); _renderRecentQuizzes();
+      }]
+    );
+    row.appendChild(info);
+    row.appendChild(btns);
     quizList.appendChild(row);
   });
 }
