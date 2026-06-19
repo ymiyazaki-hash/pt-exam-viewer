@@ -3075,14 +3075,27 @@
         toggleBtn.textContent = open ? '▼' : '▶';
       });
 
-      parentCb.addEventListener('change', () => {
-        subCbs.forEach(cb => cb.checked = parentCb.checked);
-        if (parentCb.checked) {
+      let _clickState = 0; // 0=未選択 1=全選択 2=全解除 3=閉じる
+      parentCb.addEventListener('click', (e) => {
+        e.preventDefault(); // デフォルトのチェック動作をキャンセル
+        _clickState = (_clickState % 3) + 1;
+        if (_clickState === 1) {
+          // 1回目: 全選択・展開
+          parentCb.checked = true;
+          parentCb.indeterminate = false;
+          subCbs.forEach(cb => cb.checked = true);
           subsDiv.style.display = 'block';
           toggleBtn.textContent = '▼';
+        } else if (_clickState === 2) {
+          // 2回目: 全解除（展開は維持）
+          parentCb.checked = false;
+          parentCb.indeterminate = false;
+          subCbs.forEach(cb => cb.checked = false);
         } else {
+          // 3回目: 閉じる
           subsDiv.style.display = 'none';
           toggleBtn.textContent = '▶';
+          _clickState = 0;
         }
         applyFilters();
       });
