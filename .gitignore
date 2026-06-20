@@ -1,0 +1,4 @@
+data.backup_*.json
+*.backup_*.json
+/tmp/ptimg/
+pt-exam-full-backup-*.json
