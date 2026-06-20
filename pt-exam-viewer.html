@@ -5124,11 +5124,13 @@ ${tables}
 
   function pracNext() {
     savePracMemo();
+    try { saveDrawingState(); } catch(_) {}
     if (practiceIdx < practiceData.length - 1) { practiceIdx++; renderPracQ(); }
   }
 
   function pracPrev() {
     savePracMemo();
+    try { saveDrawingState(); } catch(_) {}
     if (practiceIdx > 0) { practiceIdx--; renderPracQ(); }
   }
 
@@ -6267,11 +6269,9 @@ ${body}</body></html>`;
     if (!canvas || !canvas.width) return;
     if (!practiceState[q.id]) practiceState[q.id] = {};
     _captureDrawMeta(q); // PDF再現用にボディ寸法・画像位置を記録
-    // toDataURL は重いので非同期で実行（描画をブロックしない）
-    setTimeout(() => {
-      if (!canvas.width) return;
-      practiceState[q.id].drawing = canvas.toDataURL();
-    }, 0);
+    // 同期保存：setTimeoutにすると initDrawCanvas がキャンバスをクリアした後に
+    // 保存が走り、描画が消えるレースコンディションが起きる
+    try { practiceState[q.id].drawing = canvas.toDataURL(); } catch(_) {}
   }
 
   function pushUndoState() {
