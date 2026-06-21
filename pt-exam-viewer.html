@@ -2418,6 +2418,13 @@
         <button class="btn-quiz-create" onclick="createQuizFromChecked()" style="margin-top:6px;background:linear-gradient(135deg,#059669,#10b981);">✓ チェックした問題でクイズ配信</button>
         <button class="btn-quiz-create" onclick="openQuizTeacher('search')" style="margin-top:8px;background:linear-gradient(135deg,#1e3a8a,#3b82f6);">📊 コードで結果を見る</button>
       </div>
+
+      <div class="filter-section">
+        <h3>教員ツール</h3>
+        <button class="btn-quiz-create" id="teacherModeBtn" onclick="_toggleTeacherMode()" style="background:linear-gradient(135deg,#7c3aed,#a78bfa);">🔓 教員モード：オフ</button>
+        <button class="btn-quiz-create" onclick="openExplAdmin()" style="margin-top:6px;background:linear-gradient(135deg,#b45309,#f59e0b);">📥 解説修正の提案を確認</button>
+        <div style="font-size:11px;color:#94a3b8;margin-top:6px;line-height:1.5">教員モードをオンにすると、各問題の解説に「修正を提案」ボタンが出ます。</div>
+      </div>
     </div>
 
     <div class="main" id="mainScroll">
@@ -2449,6 +2456,31 @@
     </div>
     <div class="modal-close-bottom">
       <button onclick="closeModal()">✕ 閉じる</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── 解説修正の提案フォーム（教員用） ── -->
+<div class="modal-overlay" id="explEditOverlay">
+  <div class="modal" id="explEditModal" style="max-width:780px">
+    <div class="modal-header">
+      <div class="meta" id="ee_meta"></div>
+      <button class="modal-close" onclick="closeExplEdit()">✕</button>
+    </div>
+    <div class="modal-body" id="ee_body" style="padding:18px"></div>
+  </div>
+</div>
+
+<!-- ── 解説修正提案の管理画面（管理者用） ── -->
+<div class="modal-overlay" id="explAdminOverlay">
+  <div class="modal" id="explAdminModal" style="max-width:920px">
+    <div class="modal-header">
+      <div class="meta">📥 解説修正の提案一覧</div>
+      <button class="modal-close" onclick="closeExplAdmin()">✕</button>
+    </div>
+    <div class="modal-body" id="ea_body" style="padding:18px"></div>
+    <div class="modal-close-bottom">
+      <button onclick="closeExplAdmin()">✕ 閉じる</button>
     </div>
   </div>
 </div>
@@ -3606,6 +3638,9 @@
           <div class="expl-choices-list">${ceHtml}</div>
         </div>
         ${refsHtml}
+        ${_isTeacher() ? `<div style="margin-top:16px;text-align:right">
+          <button onclick="openExplEdit('${esc(q.id)}')" style="background:linear-gradient(135deg,#7c3aed,#a78bfa);color:#fff;border:none;border-radius:10px;padding:10px 18px;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 2px 6px rgba(124,58,237,.3)">✏ この解説の修正を提案する</button>
+        </div>` : ''}
       </div>`;
 
     document.getElementById('prevBtn').disabled = globalIdx === 0;
@@ -3630,6 +3665,179 @@
     if (e.key === 'ArrowLeft'  && currentModalIdx > 0)                          { currentModalIdx--; renderModal(currentModalIdx); }
     if (e.key === 'ArrowRight' && currentModalIdx < filteredData.length - 1)    { currentModalIdx++; renderModal(currentModalIdx); }
   });
+
+  // ══════════ 解説修正の提案機能（教員が提案 → 管理者が確認 → Claudeで反映） ══════════
+  const TEACHER_PASS = 'kyoju';        // 教員モードを解除するパスワード（変更可）
+  const ADMIN_PASS   = 'miyazaki2026'; // 提案を確認する管理画面のパスワード（変更可）
+
+  function _isTeacher() { return localStorage.getItem('ptTeacherMode') === '1'; }
+
+  function _updateTeacherBtn() {
+    const b = document.getElementById('teacherModeBtn');
+    if (!b) return;
+    const on = _isTeacher();
+    b.textContent = on ? '🔒 教員モード：オン' : '🔓 教員モード：オフ';
+    b.style.background = on ? 'linear-gradient(135deg,#059669,#10b981)' : 'linear-gradient(135deg,#7c3aed,#a78bfa)';
+  }
+
+  function _toggleTeacherMode() {
+    if (_isTeacher()) {
+      localStorage.removeItem('ptTeacherMode');
+    } else {
+      const p = prompt('教員モードのパスワードを入力してください');
+      if (p === null) return;
+      if (p !== TEACHER_PASS) { alert('パスワードが違います'); return; }
+      localStorage.setItem('ptTeacherMode', '1');
+    }
+    _updateTeacherBtn();
+    if (currentModalIdx >= 0 && document.getElementById('modalOverlay').classList.contains('open')) renderModal(currentModalIdx);
+  }
+
+  function _findQ(qid) { return allData.find(q => q.id === qid); }
+
+  function openExplEdit(qid) {
+    const q = _findQ(qid);
+    if (!q) return;
+    const ce = Array.isArray(q.choiceExplanations) ? q.choiceExplanations : [];
+    const circ = ['①','②','③','④','⑤'];
+    const choiceRows = (q.choices || []).map((c, i) => `
+      <div style="margin-bottom:10px">
+        <div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:3px">${circ[i]||(i+1)} ${esc(c)}</div>
+        <textarea id="ee_ce_${i}" style="width:100%;min-height:46px;font-size:13px;padding:7px;border:1px solid #cbd5e1;border-radius:7px;box-sizing:border-box">${esc(String(ce[i]||''))}</textarea>
+      </div>`).join('');
+    document.getElementById('ee_meta').textContent = `✏ 解説修正の提案　${q.examSession || ''}　${q.id}`;
+    document.getElementById('ee_body').innerHTML = `
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px 12px;font-size:13px;color:#475569;margin-bottom:14px">${esc(q.text || '')}</div>
+      <div style="font-size:14px;font-weight:800;color:#7c3aed;margin:4px 0 6px">解説（本文）</div>
+      <textarea id="ee_expl" style="width:100%;min-height:90px;font-size:14px;padding:9px;border:1px solid #cbd5e1;border-radius:8px;box-sizing:border-box">${esc(String(q.explanation||''))}</textarea>
+      <div style="font-size:14px;font-weight:800;color:#7c3aed;margin:16px 0 6px">選択肢別解説</div>
+      ${choiceRows}
+      <div style="font-size:14px;font-weight:800;color:#b45309;margin:16px 0 6px">修正コメント（どこをどう直すか・理由など／任意）</div>
+      <textarea id="ee_comment" placeholder="例：選択肢3の説明が逆になっています。正しくは…" style="width:100%;min-height:60px;font-size:13px;padding:9px;border:1px solid #cbd5e1;border-radius:8px;box-sizing:border-box"></textarea>
+      <div style="font-size:13px;color:#475569;margin:14px 0 4px">お名前（任意）</div>
+      <input id="ee_name" value="${esc(localStorage.getItem('ptTeacherName')||'')}" style="width:100%;font-size:13px;padding:8px;border:1px solid #cbd5e1;border-radius:7px;box-sizing:border-box">
+      <div id="ee_status" style="font-size:13px;margin-top:10px;min-height:18px"></div>
+      <div style="display:flex;gap:10px;margin-top:8px">
+        <button onclick="_submitExplEdit('${esc(q.id)}')" style="flex:1;background:linear-gradient(135deg,#059669,#10b981);color:#fff;border:none;border-radius:10px;padding:12px;font-size:15px;font-weight:800;cursor:pointer">📤 修正案を送信</button>
+        <button onclick="closeExplEdit()" style="background:#e5e7eb;color:#374151;border:none;border-radius:10px;padding:12px 18px;font-size:15px;font-weight:700;cursor:pointer">キャンセル</button>
+      </div>`;
+    document.getElementById('explEditOverlay').classList.add('open');
+  }
+
+  function closeExplEdit() { document.getElementById('explEditOverlay').classList.remove('open'); }
+
+  async function _submitExplEdit(qid) {
+    const q = _findQ(qid);
+    if (!q) return;
+    const st = document.getElementById('ee_status');
+    const newExpl = (document.getElementById('ee_expl').value || '').trim();
+    const ce = Array.isArray(q.choiceExplanations) ? q.choiceExplanations : [];
+    const newCE = (q.choices || []).map((c, i) => (document.getElementById('ee_ce_'+i).value || '').trim());
+    const comment = (document.getElementById('ee_comment').value || '').trim();
+    const name = (document.getElementById('ee_name').value || '').trim();
+    localStorage.setItem('ptTeacherName', name);
+    const changedExpl = newExpl !== String(q.explanation||'').trim();
+    const changedCE = newCE.some((t,i)=> t !== String(ce[i]||'').trim());
+    if (!changedExpl && !changedCE && !comment) { st.style.color='#dc2626'; st.textContent='変更点かコメントを入力してください。'; return; }
+    const db = _initFb();
+    if (!db) { st.style.color='#dc2626'; st.textContent='送信できません（Firebase未接続）。'; return; }
+    st.style.color='#475569'; st.textContent='送信中...';
+    try {
+      await db.ref('explEdits').push({
+        id: q.id, examSession: q.examSession || '', field: (q.new_fields||[])[0] || q.field || '',
+        origExplanation: String(q.explanation||''), origChoiceExpl: ce.map(String),
+        newExplanation: newExpl, newChoiceExpl: newCE,
+        comment: comment, editor: name, status: 'new', createdAt: Date.now()
+      });
+      st.style.color='#059669'; st.textContent='✓ 送信しました。ありがとうございます！';
+      setTimeout(closeExplEdit, 1200);
+    } catch(e) { st.style.color='#dc2626'; st.textContent='送信エラー: ' + e.message; }
+  }
+
+  // ── 管理画面（提案の確認） ──
+  let _eaCache = {};
+  async function openExplAdmin() {
+    const p = prompt('管理画面のパスワードを入力してください');
+    if (p === null) return;
+    if (p !== ADMIN_PASS) { alert('パスワードが違います'); return; }
+    document.getElementById('explAdminOverlay').classList.add('open');
+    document.getElementById('ea_body').innerHTML = '<div style="text-align:center;color:#64748b;padding:30px">読み込み中...</div>';
+    const db = _initFb();
+    if (!db) { document.getElementById('ea_body').innerHTML = '<div style="color:#dc2626;padding:20px">Firebase未接続です。</div>'; return; }
+    try {
+      const snap = await db.ref('explEdits').once('value');
+      _eaCache = snap.val() || {};
+      _renderExplAdmin(_eaCache);
+    } catch(e) {
+      document.getElementById('ea_body').innerHTML = '<div style="color:#dc2626;padding:20px">読み込みエラー: '+esc(e.message)+'</div>';
+    }
+  }
+  function closeExplAdmin() { document.getElementById('explAdminOverlay').classList.remove('open'); }
+
+  function _renderExplAdmin(val) {
+    const keys = Object.keys(val).sort((a,b)=> (val[b].createdAt||0)-(val[a].createdAt||0));
+    if (!keys.length) { document.getElementById('ea_body').innerHTML = '<div style="text-align:center;color:#64748b;padding:30px">提案はまだありません。</div>'; return; }
+    const circ = ['①','②','③','④','⑤'];
+    const e2 = s => esc(String(s==null?'':s));
+    const newCount = keys.filter(k=> val[k].status!=='done').length;
+    const head = `<div style="font-size:13px;color:#475569;margin-bottom:12px">未対応 <b style="color:#b45309">${newCount}</b> 件 / 全 ${keys.length} 件</div>`;
+    const cards = keys.map(k => {
+      const e = val[k];
+      const done = e.status === 'done';
+      const dt = e.createdAt ? new Date(e.createdAt).toLocaleString('ja-JP') : '';
+      const ceRows = (e.newChoiceExpl||[]).map((t,i)=>{
+        const before = (e.origChoiceExpl||[])[i] || '';
+        if (String(t)===String(before)) return '';
+        return `<div style="margin:4px 0;font-size:12px"><b>${circ[i]||(i+1)}</b> <span style="color:#dc2626;text-decoration:line-through">${e2(before)}</span> → <span style="color:#059669">${e2(t)}</span></div>`;
+      }).filter(Boolean).join('');
+      const explChanged = String(e.newExplanation||'') !== String(e.origExplanation||'');
+      return `<div style="border:1px solid ${done?'#cbd5e1':'#fbbf24'};border-radius:10px;padding:12px 14px;margin-bottom:12px;background:${done?'#f8fafc':'#fffbeb'}">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+          <div style="font-weight:800;color:#1e293b">${e2(e.examSession)}　${e2(e.id)} ${done?'<span style="color:#64748b;font-weight:600">（対応済み）</span>':''}</div>
+          <div style="font-size:11px;color:#94a3b8">${e2(dt)}${e.editor?'　/　'+e2(e.editor):''}</div>
+        </div>
+        ${e.comment?`<div style="margin:8px 0;font-size:13px;background:#fff;border-left:3px solid #b45309;padding:6px 10px;border-radius:4px"><b>コメント：</b>${e2(e.comment)}</div>`:''}
+        ${explChanged?`<div style="margin:8px 0;font-size:12px"><b>解説本文：</b><div style="color:#dc2626;text-decoration:line-through;margin:2px 0">${e2(e.origExplanation)}</div><div style="color:#059669">${e2(e.newExplanation)}</div></div>`:''}
+        ${ceRows}
+        <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+          <button onclick="_eaCopy('${k}')" style="background:#3b82f6;color:#fff;border:none;border-radius:7px;padding:7px 12px;font-size:13px;font-weight:700;cursor:pointer">📋 修正案をコピー</button>
+          <button onclick="_eaToggleDone('${k}')" style="background:${done?'#64748b':'#059669'};color:#fff;border:none;border-radius:7px;padding:7px 12px;font-size:13px;font-weight:700;cursor:pointer">${done?'未対応に戻す':'✓ 対応済みにする'}</button>
+          <button onclick="_eaDelete('${k}')" style="background:#ef4444;color:#fff;border:none;border-radius:7px;padding:7px 12px;font-size:13px;font-weight:700;cursor:pointer">🗑 削除</button>
+        </div>
+      </div>`;
+    }).join('');
+    document.getElementById('ea_body').innerHTML = head + cards;
+  }
+
+  function _eaCopy(k) {
+    const e = _eaCache[k]; if (!e) return;
+    const circ = ['①','②','③','④','⑤'];
+    let t = `【${e.examSession||''} ${e.id}】解説修正の提案\n`;
+    if (e.comment) t += `■コメント\n${e.comment}\n`;
+    t += `\n■解説本文（修正案）\n${e.newExplanation||''}\n`;
+    t += `\n■選択肢別解説（修正案）\n` + (e.newChoiceExpl||[]).map((x,i)=>`${circ[i]||(i+1)} ${x||''}`).join('\n');
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(t).then(()=>alert('修正案をコピーしました。Claudeへの依頼に貼り付けてください。'),
+        ()=>prompt('下記をコピーしてください：', t));
+    } else { prompt('下記をコピーしてください：', t); }
+  }
+  async function _eaToggleDone(k) {
+    const db = _initFb(); if (!db) return;
+    const cur = (_eaCache[k]||{}).status === 'done';
+    await db.ref('explEdits/'+k).update({ status: cur ? 'new' : 'done' });
+    _eaCache[k].status = cur ? 'new' : 'done';
+    _renderExplAdmin(_eaCache);
+  }
+  async function _eaDelete(k) {
+    if (!confirm('この提案を削除しますか？')) return;
+    const db = _initFb(); if (!db) return;
+    await db.ref('explEdits/'+k).remove();
+    delete _eaCache[k];
+    _renderExplAdmin(_eaCache);
+  }
+
+  if (document.readyState !== 'loading') _updateTeacherBtn();
+  else document.addEventListener('DOMContentLoaded', _updateTeacherBtn);
 
   // ── Word Export（JSZip + OOXML 2段組・コンパクト・画像付き）──
 
