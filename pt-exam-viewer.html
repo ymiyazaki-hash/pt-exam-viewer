@@ -2420,9 +2420,8 @@
       </div>
 
       <div class="filter-section">
-        <h3>解説の修正依頼</h3>
-        <button class="btn-quiz-create" onclick="openExplAdmin()" style="background:linear-gradient(135deg,#b45309,#f59e0b);">📥 修正依頼の一覧を確認</button>
-        <div style="font-size:11px;color:#94a3b8;margin-top:6px;line-height:1.5">各問題の解説の下、またはプレゼンモードの「✏ 修正依頼」から依頼できます。</div>
+        <h3>管理者</h3>
+        <button class="btn-quiz-create" onclick="openExplAdmin()" style="background:linear-gradient(135deg,#334155,#64748b);">🔑 管理者ログイン</button>
       </div>
     </div>
 
@@ -3731,6 +3730,9 @@
   // ── 管理画面（提案の確認） ──
   let _eaCache = {};
   async function openExplAdmin() {
+    const p = prompt('管理者パスワードを入力してください');
+    if (p === null) return;
+    if (p !== 'yuji') { alert('パスワードが違います'); return; }
     document.getElementById('explAdminOverlay').classList.add('open');
     document.getElementById('ea_body').innerHTML = '<div style="text-align:center;color:#64748b;padding:30px">読み込み中...</div>';
     const db = _initFb();
@@ -3756,6 +3758,7 @@
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button onclick="_eaCopyAll(false)" style="background:linear-gradient(135deg,#7c3aed,#a78bfa);color:#fff;border:none;border-radius:8px;padding:9px 14px;font-size:13px;font-weight:800;cursor:pointer">📋 未対応をまとめてコピー</button>
           <button onclick="_eaCopyAll(true)" style="background:#3b82f6;color:#fff;border:none;border-radius:8px;padding:9px 14px;font-size:13px;font-weight:700;cursor:pointer">全件コピー</button>
+          <button onclick="_eaDeleteAll()" style="background:#dc2626;color:#fff;border:none;border-radius:8px;padding:9px 14px;font-size:13px;font-weight:700;cursor:pointer">🗑 全件削除</button>
         </div>
       </div>`;
     const cards = keys.map(k => {
@@ -3800,6 +3803,17 @@
     const text = '以下の解説の修正・追記依頼をまとめて反映してください。\n\n' +
       keys.map((k,i)=> (i+1)+'. '+_eaText(_eaCache[k])).join('\n\n');
     _doCopy(text, keys.length + ' 件をまとめてコピーしました。Claudeに貼り付けてください。');
+  }
+  async function _eaDeleteAll() {
+    const n = Object.keys(_eaCache).length;
+    if (!n) { alert('削除する依頼がありません。'); return; }
+    if (!confirm(n + ' 件の依頼をすべて削除します。よろしいですか？（元に戻せません）\nコピー済みかご確認ください。')) return;
+    const db = _initFb(); if (!db) return;
+    try {
+      await db.ref('explEdits').remove();
+      _eaCache = {};
+      _renderExplAdmin(_eaCache);
+    } catch(e) { alert('削除エラー: ' + e.message); }
   }
   async function _eaToggleDone(k) {
     const db = _initFb(); if (!db) return;
