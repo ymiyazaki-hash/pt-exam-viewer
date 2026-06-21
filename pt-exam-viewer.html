@@ -1472,6 +1472,12 @@
       pointer-events: none; z-index: 13;
       background: transparent;
     }
+    /* 画像専用インク：.expln-right 内で画像の表示矩形に重ねて配置（JSで位置・サイズ指定） */
+    #imgInkCanvas {
+      position: absolute; pointer-events: none; z-index: 6;
+      background: transparent; display: none;
+    }
+    #imgInkCanvas.on { display: block; }
     #laserDot {
       display: none; position: fixed;
       width: 22px; height: 22px; border-radius: 50%;
@@ -2528,6 +2534,8 @@
       <div class="expln-img-area" id="pracImg">
         <div class="expln-right-empty">🖼</div>
       </div>
+      <!-- 画像専用インク：画像の表示位置・サイズに追従（CSSで自動スケール） -->
+      <canvas id="imgInkCanvas"></canvas>
     </div>
     <!-- 挿入メディアレイヤー（z-index:7、操作モード時に前面へ） -->
     <div id="insertedMediaLayer"></div>
@@ -5106,10 +5114,12 @@ ${tables}
       // 画像あり：left-expandedのみ解除（right-expandedは維持）
       if (body) body.classList.remove('left-expanded');
       if (expandBtn) { expandBtn.textContent = '⛶'; expandBtn.title = '左パネルを拡大'; }
+      _imgInkRestore(q);   // 画像専用インクを復元＆画像に追従配置
     } else {
       imgArea.className = 'expln-img-area';
       imgArea.innerHTML = '';
       if (imgPortrait) imgPortrait.innerHTML = '';
+      const _ink = _imgInkEl(); if (_ink) _ink.classList.remove('on');
       // 画像なし：自動で左パネル全画面に・right-expandedも解除
       if (body) { body.classList.add('left-expanded'); body.classList.remove('right-expanded'); }
       if (expandBtn) { expandBtn.textContent = '⊠'; expandBtn.title = '元の表示に戻す'; }
@@ -5170,8 +5180,9 @@ ${tables}
       const totalW = body.getBoundingClientRect().width;
       const newW   = Math.min(Math.max(startW + (e.clientX - startX) / _cz, totalW * 0.2), totalW * 0.8);
       left.style.width = (newW / totalW * 100).toFixed(1) + '%';
+      _layoutImgInk();
     });
-    resizer.addEventListener('pointerup',     () => { dragging = false; resizer.classList.remove('dragging'); });
+    resizer.addEventListener('pointerup',     () => { dragging = false; resizer.classList.remove('dragging'); requestAnimationFrame(() => { try { initDrawCanvas(); } catch(_){} _layoutImgInk(); }); });
     resizer.addEventListener('pointercancel', () => { dragging = false; resizer.classList.remove('dragging'); });
   })();
 
@@ -5184,6 +5195,7 @@ ${tables}
     btn.title = expanded ? '元の表示に戻す' : '左パネルを拡大';
     const rbtn = document.getElementById('rightExpandBtn');
     if (rbtn) { rbtn.textContent = '⛶'; rbtn.title = '右パネルを拡大'; }
+    requestAnimationFrame(() => { try { initDrawCanvas(); } catch(_){} _layoutImgInk(); });
   }
 
   function toggleRightExpand() {
@@ -5195,6 +5207,7 @@ ${tables}
     btn.title = expanded ? '元の表示に戻す' : '右パネルを拡大';
     const lbtn = document.getElementById('leftExpandBtn');
     if (lbtn) { lbtn.textContent = '⛶'; lbtn.title = '左パネルを拡大'; }
+    requestAnimationFrame(() => { try { initDrawCanvas(); } catch(_){} _layoutImgInk(); });
   }
 
   let _pracTabsHidden = false;
@@ -6502,6 +6515,7 @@ ${body}</body></html>`;
       _scheduleUndoCapture();
     }
     updateUndoBtn();
+    _layoutImgInk();  // 画像インクを現在の画像表示位置に追従
   }
 
   function saveDrawingState() {
@@ -6516,17 +6530,130 @@ ${body}</body></html>`;
     try { practiceState[q.id].drawing = canvas.toDataURL(); } catch(_) {}
   }
 
+  // ══════════ 画像専用インク：書いた線を画像に貼り付け・追従させる ══════════
+  let _imgMode = false;
+  let _imgScale = 1;
+  let _imgLX=0,_imgLY=0,_imgPX=0,_imgPY=0;
+  const imgUndoStacks = {};
+  const imgRedoStacks = {};
+  function _imgInkEl() { return document.getElementById('imgInkCanvas'); }
+  function _pracImgEl() { const a = document.getElementById('pracImg'); return a ? a.querySelector('img') : null; }
+  function _imgDisplayRect() {
+    const img = _pracImgEl();
+    if (!img || !img.naturalWidth || !img.offsetWidth) return null;
+    const bw = img.offsetWidth, bh = img.offsetHeight, bx = img.offsetLeft, by = img.offsetTop;
+    const natA = img.naturalWidth / img.naturalHeight, boxA = bw / bh;
+    let dw, dh;
+    if (boxA > natA) { dh = bh; dw = bh * natA; } else { dw = bw; dh = bw / natA; }
+    return { left: bx + (bw - dw) / 2, top: by + (bh - dh) / 2, w: dw, h: dh };
+  }
+  function _layoutImgInk() {
+    const ink = _imgInkEl(); if (!ink) return;
+    const r = _imgDisplayRect();
+    if (!r || r.w < 2 || r.h < 2) { ink.classList.remove('on'); return; }
+    ink.style.left = r.left + 'px'; ink.style.top = r.top + 'px';
+    ink.style.width = r.w + 'px'; ink.style.height = r.h + 'px';
+    ink.classList.add('on');
+  }
+  function _imgInkSetRes(img) {
+    const ink = _imgInkEl(); if (!ink || !img) return;
+    let w = img.naturalWidth || 800, h = img.naturalHeight || 600;
+    const cap = 1400, m = Math.max(w, h);
+    if (m > cap) { const s = cap / m; w = Math.round(w * s); h = Math.round(h * s); }
+    ink.width = w; ink.height = h;   // サイズ設定でクリアされる
+  }
+  function _imgInkRestore(q) {
+    const ink = _imgInkEl(); if (!ink) return;
+    const img = _pracImgEl();
+    if (!img) { ink.classList.remove('on'); return; }
+    const apply = () => {
+      _imgInkSetRes(img);
+      const data = (practiceState[q.id] || {}).imgInk;
+      if (data) { const im = new Image(); im.onload = () => { try { ink.getContext('2d').drawImage(im, 0, 0, ink.width, ink.height); } catch(_){} }; im.src = data; }
+      _layoutImgInk();
+    };
+    if (img.complete && img.naturalWidth) apply();
+    else img.addEventListener('load', apply, { once: true });
+  }
+  function _imgInkSave() {
+    const q = practiceData[practiceIdx]; const ink = _imgInkEl();
+    if (!q || !ink || !ink.width) return;
+    if (!practiceState[q.id]) practiceState[q.id] = {};
+    try { practiceState[q.id].imgInk = ink.toDataURL(); } catch(_){}
+  }
+  function _imgPt(e) {
+    const ink = _imgInkEl(); const r = ink.getBoundingClientRect();
+    return { x: (e.clientX - r.left) / r.width * ink.width, y: (e.clientY - r.top) / r.height * ink.height };
+  }
+  function _overImage(e) {
+    const ink = _imgInkEl(); if (!ink || !ink.classList.contains('on')) return false;
+    const r = ink.getBoundingClientRect();
+    return e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
+  }
+  function _imgStrokeBegin(e) {
+    const ink = _imgInkEl(); const r = ink.getBoundingClientRect();
+    _imgScale = ink.width / r.width;
+    const p = _imgPt(e);
+    _imgLX = _imgPX = p.x; _imgLY = _imgPY = p.y;
+    const q = practiceData[practiceIdx];
+    if (q) {
+      if (!imgUndoStacks[q.id]) imgUndoStacks[q.id] = [];
+      try { imgUndoStacks[q.id].push(ink.getContext('2d').getImageData(0, 0, ink.width, ink.height)); } catch(_){}
+      if (imgUndoStacks[q.id].length > 20) imgUndoStacks[q.id].shift();
+      imgRedoStacks[q.id] = [];
+      _recordAct('i');
+      updateUndoRedoBtn();
+    }
+    const ctx = ink.getContext('2d');
+    if (drawTool !== 'eraser') {
+      const sz = drawSize * _imgScale;
+      ctx.beginPath(); ctx.arc(p.x, p.y, sz / 2, 0, Math.PI * 2);
+      ctx.fillStyle = drawColor; ctx.globalAlpha = (drawTool === 'marker' ? 0.4 : 1); ctx.fill(); ctx.globalAlpha = 1;
+    }
+  }
+  function _imgStrokeMove(evts) {
+    const ink = _imgInkEl(); const ctx = ink.getContext('2d');
+    const erase = drawTool === 'eraser';
+    ctx.lineCap = ctx.lineJoin = 'round';
+    if (erase) ctx.globalCompositeOperation = 'destination-out';
+    ctx.strokeStyle = erase ? 'rgba(0,0,0,1)' : drawColor;
+    ctx.globalAlpha = (drawTool === 'marker' ? 0.4 : 1);
+    const base = (erase ? drawSize * 6 : drawSize) * _imgScale;
+    for (const ev of evts) {
+      const p = _imgPt(ev);
+      ctx.lineWidth = base;
+      const mx = (_imgLX + p.x) / 2, my = (_imgLY + p.y) / 2;
+      ctx.beginPath();
+      ctx.moveTo((_imgPX + _imgLX) / 2, (_imgPY + _imgLY) / 2);
+      ctx.quadraticCurveTo(_imgLX, _imgLY, mx, my);
+      ctx.stroke();
+      _imgPX = _imgLX; _imgPY = _imgLY; _imgLX = p.x; _imgLY = p.y;
+    }
+    ctx.globalAlpha = 1;
+    if (erase) ctx.globalCompositeOperation = 'source-over';
+  }
+
+  // ── 取り消し/やり直し（本体キャンバス＋画像インクを操作順で統合） ──
+  const _actSeq = {};       // {qid:['b'|'i', ...]}
+  const _actRedoSeq = {};
+  function _recordAct(t) {
+    const q = practiceData[practiceIdx]; if (!q) return;
+    if (!_actSeq[q.id]) _actSeq[q.id] = [];
+    _actSeq[q.id].push(t);
+    _actRedoSeq[q.id] = [];
+  }
+
   function pushUndoState() {
     const q = practiceData[practiceIdx];
     if (!q) return;
     const canvas = document.getElementById('drawCanvas');
     if (!canvas || !canvas.width) return;
     if (!drawUndoStacks[q.id]) drawUndoStacks[q.id] = [];
-    // getImageData は toDataURL より10〜50倍高速（PNG圧縮なし）
     const ctx = canvas.getContext('2d');
     drawUndoStacks[q.id].push(ctx.getImageData(0, 0, canvas.width, canvas.height));
     if (drawUndoStacks[q.id].length > 20) drawUndoStacks[q.id].shift();
-    drawRedoStacks[q.id] = []; // 新規描画でリドゥをクリア
+    drawRedoStacks[q.id] = [];
+    _recordAct('b');
     updateUndoRedoBtn();
   }
 
@@ -6534,34 +6661,65 @@ ${body}</body></html>`;
     const q = practiceData[practiceIdx];
     const u = document.getElementById('btnUndoDraw');
     const r = document.getElementById('btnRedoDraw');
-    if (u) u.disabled = !(q && drawUndoStacks[q.id]?.length);
-    if (r) r.disabled = !(q && drawRedoStacks[q.id]?.length);
+    if (u) u.disabled = !(q && _actSeq[q.id]?.length);
+    if (r) r.disabled = !(q && _actRedoSeq[q.id]?.length);
   }
   function updateUndoBtn() { updateUndoRedoBtn(); } // 後方互換
 
   function undoDraw() {
     const q = practiceData[practiceIdx];
-    if (!q || !drawUndoStacks[q.id]?.length) return;
-    const canvas = document.getElementById('drawCanvas');
-    const ctx = canvas.getContext('2d');
-    if (!drawRedoStacks[q.id]) drawRedoStacks[q.id] = [];
-    // リドゥ用に現在状態を保存（getImageData で高速）
-    drawRedoStacks[q.id].push(ctx.getImageData(0, 0, canvas.width, canvas.height));
-    const prev = drawUndoStacks[q.id].pop();
-    ctx.putImageData(prev, 0, 0); // putImageData は即座・同期（drawImage より速い）
-    saveDrawingState(); updateUndoRedoBtn();
+    if (!q || !_actSeq[q.id]?.length) return;
+    const t = _actSeq[q.id].pop();
+    if (!_actRedoSeq[q.id]) _actRedoSeq[q.id] = [];
+    if (t === 'i') {
+      const ink = _imgInkEl();
+      if (ink && imgUndoStacks[q.id]?.length) {
+        const ctx = ink.getContext('2d');
+        if (!imgRedoStacks[q.id]) imgRedoStacks[q.id] = [];
+        imgRedoStacks[q.id].push(ctx.getImageData(0, 0, ink.width, ink.height));
+        ctx.putImageData(imgUndoStacks[q.id].pop(), 0, 0);
+        _imgInkSave();
+      }
+      _actRedoSeq[q.id].push('i');
+    } else {
+      const canvas = document.getElementById('drawCanvas');
+      if (canvas && drawUndoStacks[q.id]?.length) {
+        const ctx = canvas.getContext('2d');
+        if (!drawRedoStacks[q.id]) drawRedoStacks[q.id] = [];
+        drawRedoStacks[q.id].push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+        ctx.putImageData(drawUndoStacks[q.id].pop(), 0, 0);
+        saveDrawingState();
+      }
+      _actRedoSeq[q.id].push('b');
+    }
+    updateUndoRedoBtn();
   }
 
   function redoDraw() {
     const q = practiceData[practiceIdx];
-    if (!q || !drawRedoStacks[q.id]?.length) return;
-    const canvas = document.getElementById('drawCanvas');
-    const ctx = canvas.getContext('2d');
-    if (!drawUndoStacks[q.id]) drawUndoStacks[q.id] = [];
-    drawUndoStacks[q.id].push(ctx.getImageData(0, 0, canvas.width, canvas.height));
-    const next = drawRedoStacks[q.id].pop();
-    ctx.putImageData(next, 0, 0);
-    saveDrawingState(); updateUndoRedoBtn();
+    if (!q || !_actRedoSeq[q.id]?.length) return;
+    const t = _actRedoSeq[q.id].pop();
+    if (!_actSeq[q.id]) _actSeq[q.id] = [];
+    if (t === 'i') {
+      const ink = _imgInkEl();
+      if (ink && imgRedoStacks[q.id]?.length) {
+        const ctx = ink.getContext('2d');
+        imgUndoStacks[q.id].push(ctx.getImageData(0, 0, ink.width, ink.height));
+        ctx.putImageData(imgRedoStacks[q.id].pop(), 0, 0);
+        _imgInkSave();
+      }
+      _actSeq[q.id].push('i');
+    } else {
+      const canvas = document.getElementById('drawCanvas');
+      if (canvas && drawRedoStacks[q.id]?.length) {
+        const ctx = canvas.getContext('2d');
+        drawUndoStacks[q.id].push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+        ctx.putImageData(drawRedoStacks[q.id].pop(), 0, 0);
+        saveDrawingState();
+      }
+      _actSeq[q.id].push('b');
+    }
+    updateUndoRedoBtn();
   }
 
   function clearDraw() {
@@ -6573,6 +6731,18 @@ ${body}</body></html>`;
       const c = document.getElementById(id);
       if (c) c.getContext('2d').clearRect(0, 0, c.width, c.height);
     });
+    // 画像インクもクリア（取り消し可能に）
+    const ink = _imgInkEl();
+    if (ink && ink.width) {
+      const q = practiceData[practiceIdx];
+      if (q) {
+        if (!imgUndoStacks[q.id]) imgUndoStacks[q.id] = [];
+        try { imgUndoStacks[q.id].push(ink.getContext('2d').getImageData(0, 0, ink.width, ink.height)); } catch(_){}
+        imgRedoStacks[q.id] = []; _recordAct('i');
+      }
+      ink.getContext('2d').clearRect(0, 0, ink.width, ink.height);
+      _imgInkSave();
+    }
     _fadeStrokes.length = 0; _currentFadePoints = null;
     saveDrawingState();
     updateUndoRedoBtn();
@@ -7065,6 +7235,13 @@ ${body}</body></html>`;
       if (drawTool === 'pointer' || drawTool === 'laserpointer') return;
       if (hasPen && e.pointerType === 'touch') return; // Apple Pencil使用中は指タッチ無視
       if (!e.isPrimary) { isDrawPointerDown = false; return; }
+      // ペン・マーカー・消しゴムを画像上で始めたら、画像専用インクに描く（画像に追従）
+      if ((drawTool === 'pen' || drawTool === 'marker' || drawTool === 'eraser') && _overImage(e)) {
+        isDrawPointerDown = true; _imgMode = true;
+        try { cv().setPointerCapture(e.pointerId); } catch(_) {}
+        _imgStrokeBegin(e);
+        return;
+      }
       isDrawPointerDown = true;
       // setPointerCapture を最優先で実行（pushUndoState より前）
       // → これより後の処理が重くてもイベントが途切れない
@@ -7097,6 +7274,7 @@ ${body}</body></html>`;
         if (drawUndoStacks[_q.id].length > 20) drawUndoStacks[_q.id].shift();
         drawRedoStacks[_q.id] = [];
         _preUndoCapture = null;
+        _recordAct('b');
         updateUndoRedoBtn();
       }
       const c = cv(), ctx = c.getContext('2d');
@@ -7208,6 +7386,7 @@ ${body}</body></html>`;
     function onMove(e) {
       if (!isDrawPointerDown || !e.isPrimary) return;
       if (drawTool === 'select') { e.preventDefault(); _selMove(e); return; }
+      if (_imgMode) { e.preventDefault(); _imgStrokeMove(e.getCoalescedEvents ? e.getCoalescedEvents() : [e]); return; }
       if (hasPen && drawTool !== 'pointer' && e.pointerType === 'touch') return;
       e.preventDefault();
       const evts = (e.getCoalescedEvents ? e.getCoalescedEvents() : [e]);
@@ -7227,6 +7406,7 @@ ${body}</body></html>`;
       if (!isDrawPointerDown) return;
       isDrawPointerDown = false;
 
+      if (_imgMode) { _imgMode = false; _imgInkSave(); return; }
       if (drawTool === 'select') { _selUp(); return; }
 
       if (drawTool === 'pen') {
@@ -7395,6 +7575,7 @@ ${body}</body></html>`;
         drawUndoStacks[q.id].push(_selSnap);
         if (drawUndoStacks[q.id].length > 20) drawUndoStacks[q.id].shift();
         drawRedoStacks[q.id] = [];
+        _recordAct('b');
         updateUndoRedoBtn();
       }
       saveDrawingState();
