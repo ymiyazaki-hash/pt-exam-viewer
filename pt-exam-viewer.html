@@ -3406,7 +3406,18 @@
       && origSet.size === finalSet.size
       && [...origSet].every(v => finalSet.has(v));
 
-    if (sameAsOrig) return ''; // 変化なしは表示しない
+    if (sameAsOrig) {
+      // 当初の答えと最終正解の集合が一致＝複数の選択肢が正解と認められたケース
+      if ((handling).includes('複数')) {
+        return `<div class="expln-accepted-answers">
+          <span class="aa-label">複数正答</span>
+          <span class="aa-change-row">
+            <span class="aa-final"><b>${finalDisplay}</b>　のいずれも正解として採点</span>
+          </span>
+        </div>`;
+      }
+      return ''; // 変化なしは表示しない
+    }
 
     // 「当初の発表答え → 最終正解」を表示
     const label3 = is3tori ? '（3通り）' : '';
@@ -7595,9 +7606,16 @@ function quizNextQ() {
 async function _submitQuizAnswers() {
   let score = 0;
   _qs.questions.forEach(q => {
-    const ans     = _qs.answers[q.id];
-    const correct = Array.isArray(q.answer) ? q.answer.map(Number) : [Number(q.answer)];
-    if (ans !== undefined && correct.includes(ans)) score++;
+    const ans = _qs.answers[q.id];
+    if (ans === undefined) return;
+    // 採点除外問題：回答していれば全員得点
+    if (q.excludedHandling && q.excludedHandling.includes('除外')) { score++; return; }
+    // 最終正解（不適切の複数正答は acceptedAnswers の和集合、それ以外は answer）
+    const correct = (q.acceptedAnswers && q.acceptedAnswers.length > 0)
+      ? [...new Set(q.acceptedAnswers.flatMap(x => x))].map(Number)
+      : (Array.isArray(q.answer) ? q.answer.map(Number)
+                                 : String(q.answer || '').split(',').map(s => Number(s.trim())));
+    if (correct.includes(ans)) score++;
   });
   const total = _qs.questions.length;
 
