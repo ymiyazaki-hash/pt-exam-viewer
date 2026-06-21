@@ -2302,7 +2302,7 @@
     <div class="quiz-done-score"  id="quizDoneScore"></div>
     <div class="quiz-done-sub"    id="quizDoneSub"></div>
     <div class="quiz-done-status" id="quizDoneStatus">送信中...</div>
-    <button class="quiz-review-btn" onclick="_showQuizReview()">📖 解説・回答を見る</button>
+    <button class="quiz-review-btn" onclick="_showQuizReview()">📖 解答をみる</button>
   </div>
 
   <!-- 解説・回答確認ペイン -->
@@ -3686,24 +3686,37 @@
     openExplEdit(practiceData[practiceIdx].id);
   }
 
+  let _eeSubmitting = false;
   function openExplEdit(qid) {
     const q = _findQ(qid);
     if (!q) return;
+    _eeSubmitting = false;
     const label = _qLabel(q);
+    const circ = ['①','②','③','④','⑤'];
+    const choicesHtml = (q.choices || []).map((c, i) =>
+      `<div style="display:flex;gap:8px;padding:3px 0;font-size:13.5px;color:#334155;line-height:1.5">
+         <span style="font-weight:800;color:#475569;flex-shrink:0">${circ[i] || (i+1)}</span><span>${esc(c)}</span>
+       </div>`).join('');
+    const imgHtml = q.imageData
+      ? `<img src="${q.imageData}" alt="問題図" style="max-width:100%;border-radius:8px;margin:8px 0;border:1px solid #e2e8f0">` : '';
     document.getElementById('ee_meta').textContent = '✏ 解説の修正・追記依頼';
     document.getElementById('ee_body').innerHTML = `
-      <div style="background:#ede9fe;border:1px solid #c4b5fd;border-radius:10px;padding:10px 12px;margin-bottom:12px">
+      <div style="background:#ede9fe;border:1px solid #c4b5fd;border-radius:10px;padding:10px 12px;margin-bottom:10px">
         <div style="font-size:12px;color:#6d28d9;font-weight:700">対象問題（自動入力）</div>
         <div style="font-size:18px;font-weight:800;color:#5b21b6">${esc(label)}</div>
       </div>
-      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:9px 11px;font-size:12.5px;color:#64748b;margin-bottom:14px;max-height:120px;overflow:auto">${esc(q.text || '')}</div>
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:11px 13px;margin-bottom:14px;max-height:42vh;overflow:auto">
+        <div style="font-size:14px;color:#1e293b;font-weight:600;line-height:1.6;margin-bottom:6px">${esc(q.text || '')}</div>
+        ${imgHtml}
+        ${choicesHtml}
+      </div>
       <div style="font-size:15px;font-weight:800;color:#b45309;margin:2px 0 6px">修正・追記してほしい内容</div>
-      <textarea id="ee_comment" placeholder="例：選択肢3の解説が逆です。正しくは…／〇〇の補足を追記してほしい など" style="width:100%;min-height:130px;font-size:15px;padding:11px;border:2px solid #c4b5fd;border-radius:10px;box-sizing:border-box"></textarea>
+      <textarea id="ee_comment" placeholder="例：選択肢3の解説が逆です。正しくは…／〇〇の補足を追記してほしい など" style="width:100%;min-height:90px;font-size:15px;padding:11px;border:2px solid #c4b5fd;border-radius:10px;box-sizing:border-box"></textarea>
       <div style="font-size:13px;color:#475569;margin:14px 0 4px">お名前（任意）</div>
       <input id="ee_name" value="${esc(localStorage.getItem('ptTeacherName')||'')}" style="width:100%;font-size:14px;padding:9px;border:1px solid #cbd5e1;border-radius:8px;box-sizing:border-box">
       <div id="ee_status" style="font-size:13px;margin-top:10px;min-height:18px"></div>
       <div style="display:flex;gap:10px;margin-top:10px">
-        <button onclick="_submitExplEdit('${esc(q.id)}')" style="flex:1;background:linear-gradient(135deg,#059669,#10b981);color:#fff;border:none;border-radius:12px;padding:14px;font-size:16px;font-weight:800;cursor:pointer">📤 送信する</button>
+        <button id="ee_submit" onclick="_submitExplEdit('${esc(q.id)}')" style="flex:1;background:linear-gradient(135deg,#059669,#10b981);color:#fff;border:none;border-radius:12px;padding:14px;font-size:16px;font-weight:800;cursor:pointer">📤 送信する</button>
         <button onclick="closeExplEdit()" style="background:#e5e7eb;color:#374151;border:none;border-radius:12px;padding:14px 20px;font-size:16px;font-weight:700;cursor:pointer">キャンセル</button>
       </div>`;
     document.getElementById('explEditOverlay').classList.add('open');
@@ -3713,15 +3726,19 @@
   function closeExplEdit() { document.getElementById('explEditOverlay').classList.remove('open'); }
 
   async function _submitExplEdit(qid) {
+    if (_eeSubmitting) return;                    // 二重送信防止
     const q = _findQ(qid);
     if (!q) return;
     const st = document.getElementById('ee_status');
+    const btn = document.getElementById('ee_submit');
     const comment = (document.getElementById('ee_comment').value || '').trim();
     const name = (document.getElementById('ee_name').value || '').trim();
     localStorage.setItem('ptTeacherName', name);
     if (!comment) { st.style.color='#dc2626'; st.textContent='修正・追記の内容を入力してください。'; return; }
     const db = _initFb();
     if (!db) { st.style.color='#dc2626'; st.textContent='送信できません（Firebase未接続）。'; return; }
+    _eeSubmitting = true;
+    if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; btn.style.cursor = 'default'; btn.textContent = '送信中...'; }
     st.style.color='#475569'; st.textContent='送信中...';
     try {
       await db.ref('explEdits').push({
@@ -3730,8 +3747,12 @@
         comment: comment, editor: name, status: 'new', createdAt: Date.now()
       });
       st.style.color='#059669'; st.textContent='✓ 送信しました。ありがとうございます！';
-      setTimeout(closeExplEdit, 1100);
-    } catch(e) { st.style.color='#dc2626'; st.textContent='送信エラー: ' + e.message; }
+      setTimeout(() => { closeExplEdit(); _eeSubmitting = false; }, 1100);
+    } catch(e) {
+      st.style.color='#dc2626'; st.textContent='送信エラー: ' + e.message;
+      _eeSubmitting = false;
+      if (btn) { btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer'; btn.textContent = '📤 送信する'; }
+    }
   }
 
   // ── 管理画面（提案の確認） ──
@@ -7979,8 +8000,12 @@ function _showQuizReview() {
   let correct = 0;
   const cards = _qs.questions.map((q, i) => {
     const userAns = _qs.answers[q.id];
-    const correctNums = Array.isArray(q.answer) ? q.answer.map(Number) : [Number(q.answer)];
-    const isOk = userAns !== undefined && correctNums.includes(userAns);
+    const _excl = q.excludedHandling && q.excludedHandling.includes('除外');
+    const correctNums = (q.acceptedAnswers && q.acceptedAnswers.length)
+      ? [...new Set(q.acceptedAnswers.flatMap(x => x))].map(Number)
+      : (Array.isArray(q.answer) ? q.answer.map(Number)
+         : String(q.answer || '').split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n)));
+    const isOk = _excl ? (userAns !== undefined) : (userAns !== undefined && correctNums.includes(userAns));
     if (isOk) correct++;
 
     const choices = (q.choices||[]).map((c, ci) => {
@@ -8015,7 +8040,7 @@ function _showQuizReview() {
       ? `<span style="color:#16a34a;font-size:18px;font-weight:900;">✓</span>`
       : `<span style="color:#dc2626;font-size:18px;font-weight:900;">✗</span>`;
 
-    const ansLabel = correctNums.map(n => circled[n-1] || String(n)).join('・');
+    const ansLabel = _excl ? '採点除外（全員正解）' : correctNums.map(n => circled[n-1] || String(n)).join('・');
     const ansBadge = `<span style="margin-left:auto;background:${isOk?'#dcfce7':'#fef3c7'};color:${isOk?'#15803d':'#92400e'};font-size:12px;font-weight:800;padding:3px 10px;border-radius:20px;flex-shrink:0;">正解：${ansLabel}</span>`;
 
     return '<div class="review-card">' +
