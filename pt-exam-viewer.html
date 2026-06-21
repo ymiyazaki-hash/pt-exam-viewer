@@ -2420,10 +2420,9 @@
       </div>
 
       <div class="filter-section">
-        <h3>教員ツール</h3>
-        <button class="btn-quiz-create" id="teacherModeBtn" onclick="_toggleTeacherMode()" style="background:linear-gradient(135deg,#7c3aed,#a78bfa);">🔓 教員モード：オフ</button>
-        <button class="btn-quiz-create" onclick="openExplAdmin()" style="margin-top:6px;background:linear-gradient(135deg,#b45309,#f59e0b);">📥 解説修正の提案を確認</button>
-        <div style="font-size:11px;color:#94a3b8;margin-top:6px;line-height:1.5">教員モードをオンにすると、各問題の解説に「修正を提案」ボタンが出ます。</div>
+        <h3>解説の修正依頼</h3>
+        <button class="btn-quiz-create" onclick="openExplAdmin()" style="background:linear-gradient(135deg,#b45309,#f59e0b);">📥 修正依頼の一覧を確認</button>
+        <div style="font-size:11px;color:#94a3b8;margin-top:6px;line-height:1.5">各問題の解説の下、またはプレゼンモードの「✏ 修正依頼」から依頼できます。</div>
       </div>
     </div>
 
@@ -2494,7 +2493,7 @@
     <div class="expln-meta" id="pracMeta"></div>
     <button class="btn-show-answer" id="btnShowAnswer" onclick="showAnswer()">解答を表示 ▼</button>
     <button class="btn-show-expl" id="btnShowExpl" onclick="toggleExpl()">📖 解説</button>
-    <button class="btn-show-expl" id="pracEditBtn" style="display:none;background:linear-gradient(135deg,#7c3aed,#a78bfa);color:#fff" onclick="_openExplEditFromPractice()">✏ 修正依頼</button>
+    <button class="btn-show-expl" id="pracEditBtn" style="background:linear-gradient(135deg,#7c3aed,#a78bfa);color:#fff" onclick="_openExplEditFromPractice()">✏ 修正依頼</button>
     <div class="expln-nav-wrap">
       <button class="expln-nav-btn" id="pracPrevBtn" onclick="pracPrev()">‹</button>
       <span class="expln-pos" id="pracProgress">1 / 0</span>
@@ -3639,9 +3638,9 @@
           <div class="expl-choices-list">${ceHtml}</div>
         </div>
         ${refsHtml}
-        ${_isTeacher() ? `<div style="margin-top:16px;text-align:right">
+        <div style="margin-top:16px;text-align:right">
           <button onclick="openExplEdit('${esc(q.id)}')" style="background:linear-gradient(135deg,#7c3aed,#a78bfa);color:#fff;border:none;border-radius:10px;padding:10px 18px;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 2px 6px rgba(124,58,237,.3)">✏ この解説の修正を提案する</button>
-        </div>` : ''}
+        </div>
       </div>`;
 
     document.getElementById('prevBtn').disabled = globalIdx === 0;
@@ -3667,36 +3666,7 @@
     if (e.key === 'ArrowRight' && currentModalIdx < filteredData.length - 1)    { currentModalIdx++; renderModal(currentModalIdx); }
   });
 
-  // ══════════ 解説修正の提案機能（教員が提案 → 管理者が確認 → Claudeで反映） ══════════
-  const TEACHER_PASS = 'kyoju';        // 教員モードを解除するパスワード（変更可）
-  const ADMIN_PASS   = 'miyazaki2026'; // 提案を確認する管理画面のパスワード（変更可）
-
-  function _isTeacher() { return localStorage.getItem('ptTeacherMode') === '1'; }
-
-  function _updateTeacherBtn() {
-    const on = _isTeacher();
-    const b = document.getElementById('teacherModeBtn');
-    if (b) {
-      b.textContent = on ? '🔒 教員モード：オン' : '🔓 教員モード：オフ';
-      b.style.background = on ? 'linear-gradient(135deg,#059669,#10b981)' : 'linear-gradient(135deg,#7c3aed,#a78bfa)';
-    }
-    const pe = document.getElementById('pracEditBtn');
-    if (pe) pe.style.display = on ? 'inline-flex' : 'none';
-  }
-
-  function _toggleTeacherMode() {
-    if (_isTeacher()) {
-      localStorage.removeItem('ptTeacherMode');
-    } else {
-      const p = prompt('教員モードのパスワードを入力してください');
-      if (p === null) return;
-      if (p !== TEACHER_PASS) { alert('パスワードが違います'); return; }
-      localStorage.setItem('ptTeacherMode', '1');
-    }
-    _updateTeacherBtn();
-    if (currentModalIdx >= 0 && document.getElementById('modalOverlay').classList.contains('open')) renderModal(currentModalIdx);
-  }
-
+  // ══════════ 解説の修正・追記依頼（誰でも依頼でき、一覧から確認） ══════════
   function _findQ(qid) { return allData.find(q => q.id === qid); }
 
   function _qLabel(q) {
@@ -3761,9 +3731,6 @@
   // ── 管理画面（提案の確認） ──
   let _eaCache = {};
   async function openExplAdmin() {
-    const p = prompt('管理画面のパスワードを入力してください');
-    if (p === null) return;
-    if (p !== ADMIN_PASS) { alert('パスワードが違います'); return; }
     document.getElementById('explAdminOverlay').classList.add('open');
     document.getElementById('ea_body').innerHTML = '<div style="text-align:center;color:#64748b;padding:30px">読み込み中...</div>';
     const db = _initFb();
@@ -3848,9 +3815,6 @@
     delete _eaCache[k];
     _renderExplAdmin(_eaCache);
   }
-
-  if (document.readyState !== 'loading') _updateTeacherBtn();
-  else document.addEventListener('DOMContentLoaded', _updateTeacherBtn);
 
   // ── Word Export（JSZip + OOXML 2段組・コンパクト・画像付き）──
 
