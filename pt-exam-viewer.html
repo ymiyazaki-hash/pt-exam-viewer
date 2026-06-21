@@ -2556,6 +2556,7 @@
     <button class="draw-tool-btn" id="drawToolFadepen" onclick="setDrawTool('fadepen')" title="ジワっと消えるペン（数秒でフェード）">✨ フェード</button>
     <button class="draw-tool-btn" id="drawToolLaserpointer" onclick="setDrawTool('laserpointer')" title="レーザーポインター（描画なし・光点のみ）">🔴 ポインター</button>
     <button class="draw-tool-btn" id="drawToolEraser" onclick="setDrawTool('eraser')" title="消しゴム">◻ 消しゴム</button>
+    <button class="draw-tool-btn" id="drawToolSelect" onclick="setDrawTool('select')" title="範囲選択（四角で囲んで移動）">⬚ なげなわ</button>
     <div style="display:flex;gap:5px;align-items:center;padding:0 4px">
       <button class="color-swatch active" data-dc="#1a1a1a" style="background:#1a1a1a" onclick="setDrawColor('#1a1a1a',this)"></button>
       <button class="color-swatch" data-dc="#dc2626" style="background:#dc2626" onclick="setDrawColor('#dc2626',this)"></button>
@@ -4782,6 +4783,7 @@ ${tables}
   }
 
   function exitPractice() {
+    try { _selCommit(); } catch(_) {}
     savePracMemo();
     if (_pracTabsHidden) togglePracTabs(); // タブが隠れていたら元に戻す
     const tabBtn = document.getElementById('tabToggleBtn');
@@ -5332,12 +5334,14 @@ ${tables}
   }
 
   function pracNext() {
+    try { _selCommit(); } catch(_) {}
     savePracMemo();
     try { saveDrawingState(); } catch(_) {}
     if (practiceIdx < practiceData.length - 1) { practiceIdx++; renderPracQ(); }
   }
 
   function pracPrev() {
+    try { _selCommit(); } catch(_) {}
     savePracMemo();
     try { saveDrawingState(); } catch(_) {}
     if (practiceIdx > 0) { practiceIdx--; renderPracQ(); }
@@ -6923,8 +6927,9 @@ ${body}</body></html>`;
   })();
 
   function setDrawTool(tool) {
+    if (drawTool === 'select' && tool !== 'select') { try { _selCommit(); } catch (_) {} }
     drawTool = tool;
-    ['drawToolPointer', 'drawToolPen', 'drawToolMarker', 'drawToolFadepen', 'drawToolLaserpointer', 'drawToolEraser'].forEach(id => {
+    ['drawToolPointer', 'drawToolPen', 'drawToolMarker', 'drawToolFadepen', 'drawToolLaserpointer', 'drawToolEraser', 'drawToolSelect'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.classList.toggle('active', id === 'drawTool' + tool.charAt(0).toUpperCase() + tool.slice(1));
     });
@@ -7028,6 +7033,7 @@ ${body}</body></html>`;
     // ── 描画イベント（キャンバス自身に登録）
     function onDown(e) {
       e.preventDefault();
+      if (drawTool === 'select') { if (!e.isPrimary) return; isDrawPointerDown = true; _selDown(e); return; }
       if (drawTool === 'pointer' || drawTool === 'laserpointer') return;
       if (hasPen && e.pointerType === 'touch') return; // Apple Pencil使用中は指タッチ無視
       if (!e.isPrimary) { isDrawPointerDown = false; return; }
@@ -7173,6 +7179,7 @@ ${body}</body></html>`;
 
     function onMove(e) {
       if (!isDrawPointerDown || !e.isPrimary) return;
+      if (drawTool === 'select') { e.preventDefault(); _selMove(e); return; }
       if (hasPen && drawTool !== 'pointer' && e.pointerType === 'touch') return;
       e.preventDefault();
       const evts = (e.getCoalescedEvents ? e.getCoalescedEvents() : [e]);
@@ -7191,6 +7198,8 @@ ${body}</body></html>`;
     const onUp = () => {
       if (!isDrawPointerDown) return;
       isDrawPointerDown = false;
+
+      if (drawTool === 'select') { _selUp(); return; }
 
       if (drawTool === 'pen') {
         const c = cv(); const mc = document.getElementById('markerCanvas');
@@ -7259,6 +7268,115 @@ ${body}</body></html>`;
       }, { passive: false });
     }
   })();
+
+  // ── なげなわ（四角で囲んで選択 → ドラッグで移動） ───────────────────
+  let _selState = null;   // null | 'define' | 'selected' | 'move'
+  let _selSnap = null;    // 選択操作開始時の全体ImageData（undo・キャンセル用）
+  let _selBase = null;    // 選択範囲を切り抜いた残りの全体ImageData
+  let _selTmp = null;     // 切り抜いたピクセルのオフスクリーンcanvas
+  let _selRect = null;    // {x,y,w,h}（切り抜いた元の位置）
+  let _selDX = 0, _selDY = 0;       // 移動量
+  let _selStartX = 0, _selStartY = 0; // ドラッグ開始点
+  let _selLastX = 0, _selLastY = 0;   // 直近のポインタ位置
+  function _selCv() { return document.getElementById('drawCanvas'); }
+  function _selPt(e) {
+    const c = _selCv(), r = c.getBoundingClientRect();
+    return { x: (e.clientX - r.left) * c.width / r.width,
+             y: (e.clientY - r.top)  * c.height / r.height };
+  }
+  function _selMarquee(x0, y0, x1, y1) {
+    const c = _selCv(); if (!c || !_selSnap) return;
+    const ctx = c.getContext('2d');
+    ctx.putImageData(_selSnap, 0, 0);
+    const x = Math.min(x0, x1), y = Math.min(y0, y1), w = Math.abs(x1 - x0), h = Math.abs(y1 - y0);
+    ctx.save();
+    ctx.setLineDash([7, 5]); ctx.lineWidth = 2; ctx.strokeStyle = '#2563eb';
+    ctx.fillStyle = 'rgba(37,99,235,0.10)';
+    ctx.fillRect(x, y, w, h); ctx.strokeRect(x, y, w, h);
+    ctx.restore();
+  }
+  function _selShow() {
+    const c = _selCv(); if (!c || !_selBase) return;
+    const ctx = c.getContext('2d');
+    ctx.putImageData(_selBase, 0, 0);
+    const rx = _selRect.x + _selDX, ry = _selRect.y + _selDY;
+    if (_selTmp) ctx.drawImage(_selTmp, rx, ry);
+    ctx.save();
+    ctx.setLineDash([7, 5]); ctx.lineWidth = 2; ctx.strokeStyle = '#2563eb';
+    ctx.fillStyle = 'rgba(37,99,235,0.08)';
+    ctx.fillRect(rx, ry, _selRect.w, _selRect.h); ctx.strokeRect(rx, ry, _selRect.w, _selRect.h);
+    ctx.restore();
+  }
+  function _selDown(e) {
+    const c = _selCv(); if (!c) return;
+    try { c.setPointerCapture(e.pointerId); } catch (_) {}
+    const p = _selPt(e);
+    _selStartX = _selLastX = p.x; _selStartY = _selLastY = p.y;
+    if (_selState === 'selected' && _selRect) {
+      const rx = _selRect.x + _selDX, ry = _selRect.y + _selDY;
+      if (p.x >= rx && p.x <= rx + _selRect.w && p.y >= ry && p.y <= ry + _selRect.h) {
+        _selState = 'move'; return;           // 選択範囲内 → 移動開始
+      }
+      _selCommit();                            // 範囲外 → 確定して新規選択へ
+    }
+    _selSnap = c.getContext('2d').getImageData(0, 0, c.width, c.height);
+    _selState = 'define';
+  }
+  function _selMove(e) {
+    if (!_selState) return;
+    const p = _selPt(e);
+    if (_selState === 'define') {
+      _selLastX = p.x; _selLastY = p.y;
+      _selMarquee(_selStartX, _selStartY, p.x, p.y);
+    } else if (_selState === 'move') {
+      _selDX += (p.x - _selLastX); _selDY += (p.y - _selLastY);
+      _selLastX = p.x; _selLastY = p.y;
+      _selShow();
+    }
+  }
+  function _selUp() {
+    if (_selState === 'define') {
+      const c = _selCv(); const ctx = c.getContext('2d');
+      let x = Math.min(_selStartX, _selLastX), y = Math.min(_selStartY, _selLastY);
+      let w = Math.abs(_selLastX - _selStartX), h = Math.abs(_selLastY - _selStartY);
+      if (w < 8 || h < 8) { if (_selSnap) ctx.putImageData(_selSnap, 0, 0); _selReset(); return; }
+      x = Math.max(0, Math.floor(x)); y = Math.max(0, Math.floor(y));
+      w = Math.min(c.width - x, Math.ceil(w)); h = Math.min(c.height - y, Math.ceil(h));
+      _selTmp = document.createElement('canvas'); _selTmp.width = w; _selTmp.height = h;
+      _selTmp.getContext('2d').putImageData(ctx.getImageData(x, y, w, h), 0, 0);
+      ctx.putImageData(_selSnap, 0, 0);
+      ctx.clearRect(x, y, w, h);
+      _selBase = ctx.getImageData(0, 0, c.width, c.height);
+      _selRect = { x, y, w, h }; _selDX = 0; _selDY = 0;
+      _selState = 'selected';
+      _selShow();
+    } else if (_selState === 'move') {
+      _selState = 'selected';
+      _selShow();
+    }
+  }
+  function _selCommit() {
+    const c = _selCv();
+    if (_selState && c && _selBase) {
+      const ctx = c.getContext('2d');
+      ctx.putImageData(_selBase, 0, 0);
+      if (_selTmp) ctx.drawImage(_selTmp, _selRect.x + _selDX, _selRect.y + _selDY);
+      const q = (typeof practiceData !== 'undefined') ? practiceData[practiceIdx] : null;
+      if (q && _selSnap && (_selDX || _selDY)) {   // 実際に動いたときだけ undo に積む
+        if (!drawUndoStacks[q.id]) drawUndoStacks[q.id] = [];
+        drawUndoStacks[q.id].push(_selSnap);
+        if (drawUndoStacks[q.id].length > 20) drawUndoStacks[q.id].shift();
+        drawRedoStacks[q.id] = [];
+        updateUndoRedoBtn();
+      }
+      saveDrawingState();
+    }
+    _selReset();
+  }
+  function _selReset() {
+    _selState = null; _selSnap = null; _selBase = null; _selTmp = null;
+    _selRect = null; _selDX = 0; _selDY = 0;
+  }
 
   // ── Undo 事前キャプチャ ────────────────────────────────────────────
   let _preUndoCaptureRafId = null;
