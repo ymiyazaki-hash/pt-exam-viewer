@@ -5010,6 +5010,33 @@ ${tables}
     }
   }
 
+  // ── 左パネル（問題＋選択肢）を画面に収める自動フィット ──
+  // 画像なし等で⑤まで入りきらない場合、縦横比を保ったまま縮小して全選択肢を表示。
+  function _unfitPracLeft() {
+    const left = document.querySelector('.expln-left');
+    const inner = document.getElementById('leftZoomContent');
+    if (inner) { inner.style.transform = ''; inner.style.transformOrigin = ''; }
+    if (left)  left.style.overflowY = 'auto';
+  }
+  function _fitPracLeft() {
+    const left = document.querySelector('.expln-left');
+    const inner = document.getElementById('leftZoomContent');
+    if (!left || !inner) return;
+    // 縦向きスマホ（1カラム縦スクロール）は対象外
+    if (window.matchMedia('(pointer: coarse) and (orientation: portrait)').matches) { _unfitPracLeft(); return; }
+    inner.style.transform = ''; inner.style.transformOrigin = 'top center';
+    const cs = getComputedStyle(left);
+    const avail = left.clientHeight - parseFloat(cs.paddingTop || 0) - parseFloat(cs.paddingBottom || 0);
+    const need = inner.scrollHeight;
+    if (need > avail + 1 && avail > 40) {
+      const s = Math.max(0.5, Math.min(1, avail / need));
+      inner.style.transform = 'scale(' + s + ')';
+      left.style.overflowY = 'hidden';
+    } else {
+      left.style.overflowY = 'auto';
+    }
+  }
+
   function renderPracQ() {
     if (typeof _resetContentZoom === 'function') _resetContentZoom();
     const q = practiceData[practiceIdx];
@@ -5132,7 +5159,7 @@ ${tables}
     renderExpl();
 
     renderInsertedMedia();
-    requestAnimationFrame(() => initDrawCanvas());
+    requestAnimationFrame(() => { initDrawCanvas(); requestAnimationFrame(_fitPracLeft); });
     setTimeout(() => initDrawCanvas(), 160); // rAF未発火時のフォールバック（確実に採寸）
 
     // 描画前に背景をキャプチャ（PDF完全再現用）。描画後のキャプチャを避けるため
@@ -5184,6 +5211,7 @@ ${tables}
     btn.title = expanded ? '元の表示に戻す' : '左パネルを拡大';
     const rbtn = document.getElementById('rightExpandBtn');
     if (rbtn) { rbtn.textContent = '⛶'; rbtn.title = '右パネルを拡大'; }
+    requestAnimationFrame(_fitPracLeft);
   }
 
   function toggleRightExpand() {
@@ -5278,10 +5306,13 @@ ${tables}
     renderExpl();
     // 解説を開いた時に解説パネルまでスムーズスクロール
     if (_explOpen) {
+      _unfitPracLeft();   // 解説（長文）はフィット解除してスクロール可能に
       setTimeout(() => {
         const el = document.getElementById('pracExpl');
         if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       }, 60);
+    } else {
+      requestAnimationFrame(_fitPracLeft);  // 閉じたら再フィット
     }
   }
 
@@ -6408,6 +6439,11 @@ ${body}</body></html>`;
       window.visualViewport.addEventListener('resize', onResizeCanvas);
     }
     window.addEventListener('resize', onResizeCanvas);
+    // 画面サイズ・向きの変化で左パネルのフィットも再計算
+    let _fitTimer;
+    const _refit = () => { clearTimeout(_fitTimer); _fitTimer = setTimeout(() => { try { _fitPracLeft(); } catch(_) {} }, 160); };
+    window.addEventListener('resize', _refit);
+    window.addEventListener('orientationchange', _refit);
   })();
 
   // ── 手書きキャンバス ──────────────────────────────────────────────
