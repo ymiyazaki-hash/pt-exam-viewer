@@ -1467,6 +1467,11 @@
       pointer-events: none; z-index: 12;
       background: transparent;
     }
+    #selOverlay {
+      position: absolute; top: 0; left: 0;
+      pointer-events: none; z-index: 13;
+      background: transparent;
+    }
     #laserDot {
       display: none; position: fixed;
       width: 22px; height: 22px; border-radius: 50%;
@@ -2532,6 +2537,8 @@
     <canvas id="markerCanvas"></canvas>
     <!-- フェードペン用オーバーレイキャンバス -->
     <canvas id="fadeCanvas"></canvas>
+    <!-- なげなわ（範囲選択）用オーバーレイ：選択枠・浮遊プレビューのみ。描画には焼き付かない -->
+    <canvas id="selOverlay"></canvas>
   </div><!-- /bodyZoomContent -->
   <!-- レーザーポインタードット（practiceMode内で使用） -->
   <div id="laserDot"></div>
@@ -6430,8 +6437,8 @@ ${body}</body></html>`;
     canvas.style.width  = w + 'px';
     canvas.style.height = h + 'px';
 
-    // マーカー・フェード用サブキャンバスも同サイズに合わせる
-    ['markerCanvas', 'fadeCanvas'].forEach(id => {
+    // マーカー・フェード・選択オーバーレイ用サブキャンバスも同サイズに合わせる
+    ['markerCanvas', 'fadeCanvas', 'selOverlay'].forEach(id => {
       const c = document.getElementById(id);
       if (c) { c.width = w; c.height = h; c.style.width = w + 'px'; c.style.height = h + 'px'; }
     });
@@ -7270,42 +7277,44 @@ ${body}</body></html>`;
   })();
 
   // ── なげなわ（四角で囲んで選択 → ドラッグで移動） ───────────────────
+  // 選択枠・浮遊プレビューは selOverlay にのみ描画。drawCanvas（書き込み）には焼き付けない。
   let _selState = null;   // null | 'define' | 'selected' | 'move'
-  let _selSnap = null;    // 選択操作開始時の全体ImageData（undo・キャンセル用）
-  let _selBase = null;    // 選択範囲を切り抜いた残りの全体ImageData
+  let _selSnap = null;    // 選択開始時の drawCanvas 全体ImageData（undo用）
   let _selTmp = null;     // 切り抜いたピクセルのオフスクリーンcanvas
   let _selRect = null;    // {x,y,w,h}（切り抜いた元の位置）
   let _selDX = 0, _selDY = 0;       // 移動量
   let _selStartX = 0, _selStartY = 0; // ドラッグ開始点
   let _selLastX = 0, _selLastY = 0;   // 直近のポインタ位置
   function _selCv() { return document.getElementById('drawCanvas'); }
+  function _selOv() { return document.getElementById('selOverlay'); }
   function _selPt(e) {
     const c = _selCv(), r = c.getBoundingClientRect();
     return { x: (e.clientX - r.left) * c.width / r.width,
              y: (e.clientY - r.top)  * c.height / r.height };
   }
-  function _selMarquee(x0, y0, x1, y1) {
-    const c = _selCv(); if (!c || !_selSnap) return;
-    const ctx = c.getContext('2d');
-    ctx.putImageData(_selSnap, 0, 0);
-    const x = Math.min(x0, x1), y = Math.min(y0, y1), w = Math.abs(x1 - x0), h = Math.abs(y1 - y0);
+  function _selClearOv() {
+    const ov = _selOv(); if (ov) ov.getContext('2d').clearRect(0, 0, ov.width, ov.height);
+  }
+  function _selDash(ctx, x, y, w, h) {
     ctx.save();
     ctx.setLineDash([7, 5]); ctx.lineWidth = 2; ctx.strokeStyle = '#2563eb';
     ctx.fillStyle = 'rgba(37,99,235,0.10)';
     ctx.fillRect(x, y, w, h); ctx.strokeRect(x, y, w, h);
     ctx.restore();
   }
+  function _selMarquee(x0, y0, x1, y1) {
+    const ov = _selOv(); if (!ov) return;
+    const ctx = ov.getContext('2d');
+    ctx.clearRect(0, 0, ov.width, ov.height);
+    _selDash(ctx, Math.min(x0, x1), Math.min(y0, y1), Math.abs(x1 - x0), Math.abs(y1 - y0));
+  }
   function _selShow() {
-    const c = _selCv(); if (!c || !_selBase) return;
-    const ctx = c.getContext('2d');
-    ctx.putImageData(_selBase, 0, 0);
+    const ov = _selOv(); if (!ov || !_selRect) return;
+    const ctx = ov.getContext('2d');
+    ctx.clearRect(0, 0, ov.width, ov.height);
     const rx = _selRect.x + _selDX, ry = _selRect.y + _selDY;
     if (_selTmp) ctx.drawImage(_selTmp, rx, ry);
-    ctx.save();
-    ctx.setLineDash([7, 5]); ctx.lineWidth = 2; ctx.strokeStyle = '#2563eb';
-    ctx.fillStyle = 'rgba(37,99,235,0.08)';
-    ctx.fillRect(rx, ry, _selRect.w, _selRect.h); ctx.strokeRect(rx, ry, _selRect.w, _selRect.h);
-    ctx.restore();
+    _selDash(ctx, rx, ry, _selRect.w, _selRect.h);
   }
   function _selDown(e) {
     const c = _selCv(); if (!c) return;
@@ -7339,14 +7348,13 @@ ${body}</body></html>`;
       const c = _selCv(); const ctx = c.getContext('2d');
       let x = Math.min(_selStartX, _selLastX), y = Math.min(_selStartY, _selLastY);
       let w = Math.abs(_selLastX - _selStartX), h = Math.abs(_selLastY - _selStartY);
-      if (w < 8 || h < 8) { if (_selSnap) ctx.putImageData(_selSnap, 0, 0); _selReset(); return; }
+      if (w < 8 || h < 8) { _selClearOv(); _selReset(); return; }   // 小さすぎ→キャンセル
       x = Math.max(0, Math.floor(x)); y = Math.max(0, Math.floor(y));
       w = Math.min(c.width - x, Math.ceil(w)); h = Math.min(c.height - y, Math.ceil(h));
+      // drawCanvas から切り抜いて穴をあけ、浮遊分はオーバーレイで表示
       _selTmp = document.createElement('canvas'); _selTmp.width = w; _selTmp.height = h;
       _selTmp.getContext('2d').putImageData(ctx.getImageData(x, y, w, h), 0, 0);
-      ctx.putImageData(_selSnap, 0, 0);
       ctx.clearRect(x, y, w, h);
-      _selBase = ctx.getImageData(0, 0, c.width, c.height);
       _selRect = { x, y, w, h }; _selDX = 0; _selDY = 0;
       _selState = 'selected';
       _selShow();
@@ -7357,10 +7365,9 @@ ${body}</body></html>`;
   }
   function _selCommit() {
     const c = _selCv();
-    if (_selState && c && _selBase) {
+    if (_selState && c && _selTmp && _selRect) {
       const ctx = c.getContext('2d');
-      ctx.putImageData(_selBase, 0, 0);
-      if (_selTmp) ctx.drawImage(_selTmp, _selRect.x + _selDX, _selRect.y + _selDY);
+      ctx.drawImage(_selTmp, _selRect.x + _selDX, _selRect.y + _selDY); // 確定位置へ貼り付け
       const q = (typeof practiceData !== 'undefined') ? practiceData[practiceIdx] : null;
       if (q && _selSnap && (_selDX || _selDY)) {   // 実際に動いたときだけ undo に積む
         if (!drawUndoStacks[q.id]) drawUndoStacks[q.id] = [];
@@ -7371,10 +7378,11 @@ ${body}</body></html>`;
       }
       saveDrawingState();
     }
+    _selClearOv();
     _selReset();
   }
   function _selReset() {
-    _selState = null; _selSnap = null; _selBase = null; _selTmp = null;
+    _selState = null; _selSnap = null; _selTmp = null;
     _selRect = null; _selDX = 0; _selDY = 0;
   }
 
