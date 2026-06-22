@@ -923,7 +923,7 @@
 
     /* ── 解説モード（横向き2カラムレイアウト） ── */
     #practiceMode {
-      position: fixed; inset: 0; z-index: 500; background: #f0f4f8;
+      position: fixed; inset: 0; z-index: 500; background: white;
       display: none; flex-direction: column; overflow: hidden;
       touch-action: manipulation;
       -webkit-user-select: none; user-select: none;
@@ -966,6 +966,7 @@
     /* 2カラムボディ（キャンバスオーバーレイの基点） */
     .expln-body {
       flex: 1; overflow: hidden; position: relative;
+      background: white;
       overscroll-behavior: none;
       /* テキスト全選択・長押しメニューを抑止（GoodNotes/Loilonote 同様） */
       -webkit-user-select: none; user-select: none;
@@ -975,12 +976,13 @@
     #bodyZoomContent {
       position: absolute; inset: 0;
       display: flex;
+      background: white;
       transform-origin: 0 0;
       will-change: transform;
     }
     /* 左カラム：問題文・選択肢・解答 */
     .expln-left {
-      width: 50%; padding: 18px 20px; overflow-y: auto;
+      width: 50%; padding: 24px 40px; overflow-y: auto;
       display: flex; flex-direction: column;
       background: white; flex-shrink: 0;
       -webkit-overflow-scrolling: touch; position: relative;
@@ -1141,7 +1143,7 @@
     .expln-body.left-expanded .expln-right { display: none !important; }
     .expln-img-area {
       display: none; align-items: center; justify-content: center;
-      padding: 12px; overflow: hidden; background: white;
+      padding: 24px 40px; overflow: hidden; background: white;
     }
     .expln-img-area.has-img { display: flex; flex: 1; }
     .expln-img-area img {
@@ -2505,8 +2507,6 @@
         <div id="pracExpl" style="display:none"></div>
       </div>
     </div>
-    <!-- パネル分割リサイザー -->
-    <div class="expln-resizer" id="explnResizer"></div>
     <!-- 右：画像 -->
     <div class="expln-right" style="position:relative">
       <div class="expln-img-area" id="pracImg">
@@ -7236,9 +7236,14 @@ ${body}</body></html>`;
   (() => {
     function cv() { return document.getElementById('drawCanvas'); }
     function pt(e) {
-      const c = cv(), r = c.getBoundingClientRect();
-      return { x: (e.clientX - r.left) * c.width  / r.width,
-               y: (e.clientY - r.top)  * c.height / r.height };
+      // bodyZoomContent の transform: translate(_cpx,_cpy) scale(_cz) を逆算
+      // canvas は body 左上を原点に body.clientWidth × clientHeight のピクセルサイズ
+      const body = document.querySelector('.expln-body');
+      const br = body ? body.getBoundingClientRect() : {left:0, top:0};
+      return {
+        x: (e.clientX - br.left - _cpx) / _cz,
+        y: (e.clientY - br.top  - _cpy) / _cz
+      };
     }
 
     // Apple Pencil 検出 → hasPen フラグ（パームリジェクション用）
@@ -7410,13 +7415,12 @@ ${body}</body></html>`;
       e.preventDefault();
       const evts = (e.getCoalescedEvents ? e.getCoalescedEvents() : [e]);
       if (!evts.length) return;
-      // getBoundingClientRect を1回だけ呼ぶ（毎イベント呼ぶとレイアウト再計算が発生）
-      const c = cv(), r = c.getBoundingClientRect();
-      const sx = c.width / r.width, sy = c.height / r.height;
-      const ox = r.left, oy = r.top;
+      // pt() と同じ逆算式（getBoundingClientRect は入れ子 transform で不安定なため使わない）
+      const body = document.querySelector('.expln-body');
+      const br = body ? body.getBoundingClientRect() : {left:0, top:0};
       drawSegments(evts.map(ev => ({
-        x: (ev.clientX - ox) * sx,
-        y: (ev.clientY - oy) * sy,
+        x: (ev.clientX - br.left - _cpx) / _cz,
+        y: (ev.clientY - br.top  - _cpy) / _cz,
         pressure: ev.pressure, pointerType: ev.pointerType
       })));
     }
