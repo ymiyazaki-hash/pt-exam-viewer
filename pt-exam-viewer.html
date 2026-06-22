@@ -6825,17 +6825,29 @@ ${body}</body></html>`;
     }
 
     const portraitMQ = window.matchMedia('(pointer: coarse) and (orientation: portrait)');
+    const SLIDE_EXTRA = 0.8; // ズームなし時に左右へスライドできる幅（ボディ幅の倍率）
     function applyZoom() {
       const el = document.getElementById('bodyZoomContent');
       if (!el) return;
       if (portraitMQ.matches) { el.style.transform = ''; return; }
-      el.style.transform = _cz === 1 ? '' : `translate(${_cpx}px,${_cpy}px) scale(${_cz})`;
+      if (_cz === 1 && _cpx === 0 && _cpy === 0) {
+        el.style.transform = '';
+      } else {
+        el.style.transform = `translate(${_cpx}px,${_cpy}px) scale(${_cz})`;
+      }
     }
 
     function clampPan() {
-      if (_cz <= 1) { _cpx = 0; _cpy = 0; return; }
       const w = body.clientWidth, h = body.clientHeight;
-      _cpx = Math.max(w - w * _cz, Math.min(0, _cpx));
+      const extraX = w * SLIDE_EXTRA;
+      if (_cz <= 1) {
+        // ズームなし：横スライドのみ許可。縦は固定
+        _cpx = Math.max(-extraX, Math.min(extraX, _cpx));
+        _cpy = 0;
+        return;
+      }
+      // ズームあり：通常クランプ＋横方向に追加スライド余白
+      _cpx = Math.max(w - w * _cz - extraX, Math.min(extraX, _cpx));
       _cpy = Math.max(h - h * _cz, Math.min(0, _cpy));
     }
 
@@ -6854,7 +6866,7 @@ ${body}</body></html>`;
         pDist0 = Math.hypot(a[0].x-a[1].x, a[0].y-a[1].y);
         pMX = (a[0].x+a[1].x)/2; pMY = (a[0].y+a[1].y)/2;
         pZ0=_cz; pPX0=_cpx; pPY0=_cpy; panning=false;
-      } else if (pts.size === 1 && _cz > 1 && drawTool === 'pointer' && e.pointerType !== 'pen') {
+      } else if (pts.size === 1 && drawTool === 'pointer' && e.pointerType !== 'pen') {
         panning=true; panSX=e.clientX; panSY=e.clientY; panPX0=_cpx; panPY0=_cpy;
       }
     }, {capture:true, passive:true});
@@ -6873,8 +6885,9 @@ ${body}</body></html>`;
         const cX=(pMX-br.left-pPX0)/pZ0, cY=(pMY-br.top-pPY0)/pZ0;
         _cz=newZ; _cpx=(cx-br.left)-cX*newZ; _cpy=(cy-br.top)-cY*newZ;
         clampPan(); applyZoom();
-      } else if (panning && _cz > 1) {
-        _cpx=panPX0+(e.clientX-panSX); _cpy=panPY0+(e.clientY-panSY);
+      } else if (panning) {
+        _cpx = panPX0 + (e.clientX - panSX);
+        if (_cz > 1) _cpy = panPY0 + (e.clientY - panSY); // 縦パンはズーム時のみ
         clampPan(); applyZoom();
       }
     }, {capture:true, passive:true});
@@ -6909,13 +6922,14 @@ ${body}</body></html>`;
         _cpx=mx-cX*_cz; _cpy=my-cY*_cz;
         if (_cz===1){_cpx=0;_cpy=0;}
         clampPan(); applyZoom();
-      } else if (_cz > 1) {
-        // 2本指スクロールでパン（ズーム中のみ）
+      } else if (_cz > 1 || e.deltaX !== 0) {
+        // 2本指スクロールでパン（ズームあり or 横スクロール）
         e.preventDefault();
         let dx = e.deltaX, dy = e.deltaY;
         if (e.deltaMode === 1) { dx*=15; dy*=15; }
         if (e.deltaMode === 2) { dx*=200; dy*=200; }
-        _cpx -= dx; _cpy -= dy;
+        _cpx -= dx;
+        if (_cz > 1) _cpy -= dy; // 縦パンはズーム時のみ
         clampPan(); applyZoom();
       }
     }, {passive:false});
