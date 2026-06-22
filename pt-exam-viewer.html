@@ -1202,6 +1202,38 @@
       #insertedMediaLayer { display: none !important; }
     }
 
+    /* ── 横向きスマホ（高さが低い）：ヘッダー・ツールバーを圧縮し、
+         問題文・画像エリアを最大限広く・大きく表示する ── */
+    @media (pointer: coarse) and (orientation: landscape) and (max-height: 560px) {
+      .expln-header { padding: 4px 8px; gap: 6px; box-shadow: 0 1px 6px rgba(0,0,0,0.2); }
+      .expln-title, .expln-meta { display: none; }
+      .expln-back { font-size: 0 !important; padding: 5px 10px; flex-shrink: 0; }
+      .expln-back::before { content: '\2190'; font-size: 15px; }
+      #btnShowAnswer { font-size: 0 !important; padding: 5px 9px; flex-shrink: 0; }
+      #btnShowAnswer::before { content: '解答\25BC'; font-size: 10px; }
+      #btnShowAnswer.revealed::before { content: '\2713解答'; font-size: 10px; }
+      #btnShowExpl { font-size: 0 !important; padding: 5px 9px; flex-shrink: 0; }
+      #btnShowExpl::before { content: '\1F4D6'; font-size: 14px; }
+      #pracEditBtn { font-size: 0 !important; padding: 5px 9px; flex-shrink: 0; }
+      #pracEditBtn::before { content: '\270F'; font-size: 14px; }
+      .expln-nav-btn { width: 34px; height: 32px; font-size: 18px; }
+      .expln-nav-wrap { gap: 3px; margin-left: auto; }
+      .expln-pos { font-size: 11px; min-width: 46px; }
+
+      /* 描画ツールバー：1行に収まるよう小型化 */
+      .draw-toolbar { padding: 4px 8px; gap: 4px; }
+      .draw-tool-btn { padding: 4px 8px; font-size: 11px; }
+      .draw-action-btn { padding: 4px 7px; font-size: 11px; }
+      .color-swatch { width: 21px; height: 21px; }
+      .draw-size-row { font-size: 10px; }
+
+      /* 問題・画像エリア：左右余白を詰めて表示領域を拡大 */
+      .expln-left { padding: 12px 18px; }
+      .expln-img-area { padding: 10px 16px; }
+      .expln-qtext { font-size: 16px; line-height: 1.65; }
+      .expln-choice { font-size: 14px; padding: 9px 12px; }
+    }
+
     /* 🎉 イベント装飾パーティクル */
     @keyframes holidayFall {
       0%   { transform: translateY(-80px) rotate(0deg) scale(1);   opacity:0; }
