@@ -980,11 +980,12 @@
     }
     /* 左カラム：問題文・選択肢・解答 */
     .expln-left {
-      width: 47%; padding: 18px 20px; overflow-y: auto;
+      width: 50%; padding: 18px 20px; overflow-y: auto;
       display: flex; flex-direction: column;
       background: white; flex-shrink: 0;
       -webkit-overflow-scrolling: touch; position: relative;
       overscroll-behavior: none;
+      border-right: none;
     }
     /* パネル分割リサイザー */
     .expln-resizer {
@@ -1123,59 +1124,31 @@
       .expl-panel { padding: 14px; gap: 14px; }
     }
 
-    /* 右カラム：画像フルサイズ */
-    .expln-right { flex: 1; display: flex; overflow: hidden; background: #1a1a2e; min-width: 0; }
+    /* 右カラム：画像表示（白背景・仕切りなし） */
+    .expln-right { flex: 1; display: flex; overflow: hidden; background: white; min-width: 0; }
+    /* パネル分割リサイザー・拡大ボタンは非表示 */
+    .expln-resizer { display: none !important; }
+    .left-expand-btn { display: none !important; }
+    .right-expand-btn { display: none !important; }
     /* 左パネルズームコンテンツ */
     #leftZoomContent {
       display: flex; flex-direction: column; gap: 14px;
       min-height: 100%;
+      transform-origin: top left;
     }
-    /* 左パネル拡大ボタン */
-    .left-expand-btn {
-      position: absolute; top: 10px; right: 10px;
-      width: 30px; height: 30px; border-radius: 7px;
-      background: rgba(30,58,138,0.12); border: 1.5px solid #c7d2fe;
-      color: #3b82f6; font-size: 15px; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      transition: all 0.18s; z-index: 2;
-    }
-    .left-expand-btn:hover { background: #eff6ff; border-color: #3b82f6; }
-    /* 左パネル全画面モード */
-    .expln-body.left-expanded .expln-left  { width: 100% !important; border-right: none !important; padding: 28px 48px !important; }
+    /* 画像なし時は左パネル全幅 */
+    .expln-body.left-expanded .expln-left  { width: 100% !important; }
     .expln-body.left-expanded .expln-right { display: none !important; }
-    .expln-body.left-expanded .left-expand-btn { background: #dbeafe; border-color: #3b82f6; color: #1d4ed8; }
-    /* 右パネル拡大ボタン */
-    .right-expand-btn {
-      position: absolute; top: 10px; right: 10px; z-index: 10;
-      width: 30px; height: 30px; border-radius: 7px;
-      background: rgba(255,255,255,0.18); border: 1.5px solid rgba(255,255,255,0.45);
-      color: rgba(255,255,255,0.85); font-size: 15px; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      transition: all 0.18s;
-    }
-    .right-expand-btn:hover { background: rgba(255,255,255,0.32); }
-    .expln-body.right-expanded .right-expand-btn { background: rgba(255,255,255,0.3); border-color: white; color: white; }
-    /* 右パネル全画面モード */
-    .expln-body.right-expanded .expln-left  { display: none !important; }
-    .expln-body.right-expanded .expln-right { width: 100% !important; }
-    .expln-body.left-expanded .expln-qtext { font-size: 26px !important; line-height: 2 !important; }
-    .expln-body.left-expanded .expln-choice { font-size: 22px !important; padding: 18px 24px !important; }
-    .expln-body.left-expanded .expln-choice-num { font-size: 22px !important; min-width: 36px !important; }
-    .expln-body.left-expanded .expln-answer-value { font-size: 28px !important; }
-    .expln-body.left-expanded .expln-choices { gap: 13px !important; }
     .expln-img-area {
       display: none; align-items: center; justify-content: center;
-      padding: 8px; overflow: hidden;
+      padding: 12px; overflow: hidden; background: white;
     }
     .expln-img-area.has-img { display: flex; flex: 1; }
     .expln-img-area img {
       width: 100%; height: 100%; object-fit: contain;
-      border-radius: 8px;
+      border-radius: 4px;
     }
-    .expln-right-empty {
-      flex: 1; display: flex; align-items: center; justify-content: center;
-      color: rgba(255,255,255,0.2); font-size: 48px;
-    }
+    .expln-right-empty { display: none; }
 
     /* ── タッチ端末の【縦向き】のみ：解説モードを1スクロールに ──
        縦向きは「問題＋選択肢を全部表示 → その下に画像を全幅で全部表示 → 縦スライド」。
@@ -1219,6 +1192,12 @@
       .expln-resizer { display: none !important; }
       /* 縦モードインライン画像を表示 */
       .expln-img-portrait { display: block; }
+      /* 縦向きでは描画・書き込み・挿入画像をすべて非表示・無効化 */
+      .draw-toolbar { display: none !important; }
+      #drawToolbarSpacer { display: none !important; }
+      #drawCanvas, #markerCanvas, #fadeCanvas, #selOverlay { display: none !important; }
+      #imgInkCanvas { display: none !important; }
+      #insertedMediaLayer { display: none !important; }
     }
 
     /* 🎉 イベント装飾パーティクル */
@@ -1545,8 +1524,9 @@
         #0f1e78 52%, #171580 64%,
         #201272 76%, #270f60 86%,
         #1c0c48 93%, #130830 100%);
-      display: flex; align-items: center; justify-content: center;
-      overflow: hidden;
+      display: flex; align-items: flex-start; justify-content: center;
+      overflow-y: auto; overflow-x: hidden;
+      padding: 20px 0 40px;
     }
     /* 地平線の夜明けグロー（クリーム・白系、オレンジなし） */
     #passwordScreen::before {
@@ -2516,7 +2496,6 @@
   <div id="bodyZoomContent">
     <!-- 左：問題文・選択肢・解答 -->
     <div class="expln-left">
-      <button class="left-expand-btn" id="leftExpandBtn" onclick="toggleLeftExpand()" title="左パネルを拡大/縮小">⛶</button>
       <div id="leftZoomContent">
         <div class="expln-qtext" id="pracText"></div>
         <div id="pracImgPortrait" class="expln-img-portrait"></div>
@@ -2528,9 +2507,8 @@
     </div>
     <!-- パネル分割リサイザー -->
     <div class="expln-resizer" id="explnResizer"></div>
-    <!-- 右：画像（大きく表示） -->
+    <!-- 右：画像 -->
     <div class="expln-right" style="position:relative">
-      <button class="right-expand-btn" id="rightExpandBtn" onclick="toggleRightExpand()" title="右パネルを拡大/縮小">⛶</button>
       <div class="expln-img-area" id="pracImg">
         <div class="expln-right-empty">🖼</div>
       </div>
@@ -3073,26 +3051,25 @@
       _startLoadingQuiz();
 
       // 受信サイズを表示しながらダウンロード
-      const contentLength = resp.headers.get('Content-Length');
-      const total = contentLength ? parseInt(contentLength) : 0;
-      const totalMB = total ? (total / 1024 / 1024).toFixed(0) + 'MB' : '';
       const reader = resp.body.getReader();
       const chunks = [];
       let received = 0;
       const _bar  = document.getElementById('pwLoadBar');
       const _pct  = document.getElementById('pwLoadPct');
       const _size = document.getElementById('pwLoadSize');
+      // Content-Lengthはgzip圧縮サイズのため合計表示には使わず、受信量のみ表示
+      const APPROX_TOTAL = 55 * 1024 * 1024; // 約55MBの目安（進捗バー計算用）
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
         chunks.push(value);
         received += value.length;
         const recMB = (received / 1024 / 1024).toFixed(1);
-        const pct   = total ? Math.min(99, Math.round(received / total * 100)) : 0;
+        const pct   = Math.min(99, Math.round(received / APPROX_TOTAL * 100));
         if (_bar)  _bar.style.width  = pct + '%';
         if (_pct)  _pct.textContent  = pct + '%';
-        if (_size) _size.textContent = recMB + (totalMB ? '/' + totalMB : 'MB');
-        showLoading(true, `データを受信中… ${recMB}${totalMB ? '/' + totalMB : 'MB'}`);
+        if (_size) _size.textContent = recMB + 'MB';
+        showLoading(true, `データを受信中… ${recMB}MB`);
       }
       // 完了
       if (_bar)  _bar.style.width  = '100%';
@@ -5104,27 +5081,20 @@ ${tables}
     // 画像（右ペインに大きく表示・その場で拡大可能）
     const imgArea = document.getElementById('pracImg');
     const body    = document.querySelector('.expln-body');
-    const expandBtn = document.getElementById('leftExpandBtn');
     const imgPortrait = document.getElementById('pracImgPortrait');
     if (q.imageData) {
       imgArea.className = 'expln-img-area has-img';
-      imgArea.innerHTML = `<img src="${q.imageData}" alt="問題図" draggable="false"
-        title="ホイール/ピンチで拡大・ドラッグで移動・ダブルクリックで戻す">`;
+      imgArea.innerHTML = `<img src="${q.imageData}" alt="問題図" draggable="false">`;
       if (imgPortrait) imgPortrait.innerHTML = `<img src="${q.imageData}" alt="問題図" draggable="false">`;
-      // 画像あり：left-expandedのみ解除（right-expandedは維持）
       if (body) body.classList.remove('left-expanded');
-      if (expandBtn) { expandBtn.textContent = '⛶'; expandBtn.title = '左パネルを拡大'; }
       _imgInkRestore(q);   // 画像専用インクを復元＆画像に追従配置
     } else {
       imgArea.className = 'expln-img-area';
       imgArea.innerHTML = '';
       if (imgPortrait) imgPortrait.innerHTML = '';
       const _ink = _imgInkEl(); if (_ink) _ink.classList.remove('on');
-      // 画像なし：自動で左パネル全画面に・right-expandedも解除
+      // 画像なし：左パネル全幅
       if (body) { body.classList.add('left-expanded'); body.classList.remove('right-expanded'); }
-      if (expandBtn) { expandBtn.textContent = '⊠'; expandBtn.title = '元の表示に戻す'; }
-      const rbtn = document.getElementById('rightExpandBtn');
-      if (rbtn) { rbtn.textContent = '⛶'; rbtn.title = '右パネルを拡大'; }
     }
 
     document.getElementById('pracPrevBtn').disabled = practiceIdx === 0;
@@ -5144,6 +5114,12 @@ ${tables}
     renderInsertedMedia();
     requestAnimationFrame(() => initDrawCanvas());
     setTimeout(() => initDrawCanvas(), 160); // rAF未発火時のフォールバック（確実に採寸）
+
+    // 全選択肢が1画面に収まるよう自動フィット（解説が閉じている場合のみ）
+    if (!_explOpen) {
+      requestAnimationFrame(() => requestAnimationFrame(_fitPracLeft));
+      setTimeout(_fitPracLeft, 200); // レイアウト確定後の再計算
+    }
 
     // 描画前に背景をキャプチャ（PDF完全再現用）。描画後のキャプチャを避けるため
     // 問題表示から300ms後に実行（画像読み込み・レイアウト完了を待つ）
@@ -5286,15 +5262,58 @@ ${tables}
   // ── 解説パネル ───────────────────────────────────────────────────
   let _explOpen = false;
 
+  // ── 左パネル自動フィット（問題＋全選択肢を1画面に収める） ──
+  function _unfitPracLeft() {
+    const inner = document.getElementById('leftZoomContent');
+    const left  = document.querySelector('.expln-left');
+    if (inner) { inner.style.transform = ''; inner.style.width = ''; }
+    if (left)  left.style.overflowY = 'auto';
+  }
+  function _fitPracLeft() {
+    const inner = document.getElementById('leftZoomContent');
+    const left  = document.querySelector('.expln-left');
+    if (!inner || !left) return;
+    // 縦向きスマホ（1カラム縦スクロール）は対象外
+    if (window.matchMedia('(pointer: coarse) and (orientation: portrait)').matches) {
+      _unfitPracLeft(); return;
+    }
+    // いったんリセットして実寸を計測
+    inner.style.transform = '';
+    inner.style.width = '';
+    left.style.overflowY = 'hidden';
+    const cs    = getComputedStyle(left);
+    const avail = left.clientHeight - parseFloat(cs.paddingTop || 0) - parseFloat(cs.paddingBottom || 0);
+    const need  = inner.scrollHeight;
+    if (need > avail + 2 && avail > 40) {
+      const s = Math.max(0.45, Math.min(1, avail / need));
+      inner.style.transform = 'scale(' + s + ')';
+      // transform後のレイアウト幅を補正（はみ出し防止）
+      inner.style.width = (100 / s).toFixed(3) + '%';
+    } else {
+      left.style.overflowY = 'auto';
+    }
+  }
+  let _fitTimer = null;
+  function _schedFit() {
+    clearTimeout(_fitTimer);
+    _fitTimer = setTimeout(() => { try { _fitPracLeft(); } catch(_) {} }, 180);
+  }
+  window.addEventListener('resize', _schedFit);
+  window.addEventListener('orientationchange', _schedFit);
+
   function toggleExpl() {
     _explOpen = !_explOpen;
     renderExpl();
-    // 解説を開いた時に解説パネルまでスムーズスクロール
     if (_explOpen) {
+      // 解説は長文なのでフィット解除してスクロール可能に
+      _unfitPracLeft();
       setTimeout(() => {
         const el = document.getElementById('pracExpl');
         if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       }, 60);
+    } else {
+      // 解説を閉じたら再フィット
+      requestAnimationFrame(_fitPracLeft);
     }
   }
 
