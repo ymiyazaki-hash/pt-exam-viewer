@@ -6512,9 +6512,9 @@ ${body}</body></html>`;
                        w: ir.width, h: ir.height };
       }
       const img = new Image();
+      _drawCanvasRestoring = true; // 復元中フラグ：この間 saveDrawingState を抑止
       img.onload = () => {
         if (curImgRect && meta?.imgRect) {
-          // 画像の位置・サイズ変化に合わせて描画を変換
           const old = meta.imgRect;
           const scaleX = curImgRect.w / old.w;
           const scaleY = curImgRect.h / old.h;
@@ -6527,7 +6527,9 @@ ${body}</body></html>`;
         } else {
           ctx.drawImage(img, 0, 0, w, h);
         }
+        _drawCanvasRestoring = false;
       };
+      img.onerror = () => { _drawCanvasRestoring = false; };
       img.src = practiceState[q.id].drawing;
     } else {
       // 既存描画なし（空キャンバス）→ 初期状態を事前撮影
@@ -6537,15 +6539,17 @@ ${body}</body></html>`;
     _layoutImgInk();  // 画像インクを現在の画像表示位置に追従
   }
 
+  let _drawCanvasRestoring = false; // initDrawCanvas の非同期復元中フラグ
+
   function saveDrawingState() {
     const q = practiceData[practiceIdx];
     if (!q) return;
     const canvas = document.getElementById('drawCanvas');
     if (!canvas || !canvas.width) return;
+    // 復元中に saveDrawingState が呼ばれると空キャンバスで上書きされるのを防ぐ
+    if (_drawCanvasRestoring && practiceState[q.id]?.drawing) return;
     if (!practiceState[q.id]) practiceState[q.id] = {};
     _captureDrawMeta(q); // PDF再現用にボディ寸法・画像位置を記録
-    // 同期保存：setTimeoutにすると initDrawCanvas がキャンバスをクリアした後に
-    // 保存が走り、描画が消えるレースコンディションが起きる
     try { practiceState[q.id].drawing = canvas.toDataURL(); } catch(_) {}
   }
 
