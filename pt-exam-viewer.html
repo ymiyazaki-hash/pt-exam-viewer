@@ -5842,7 +5842,7 @@ ${tables}
       imgRect = { x: ir.left - br.left, y: ir.top - br.top, w: ir.width, h: ir.height };
     }
     if (!practiceState[q.id]) practiceState[q.id] = {};
-    practiceState[q.id].drawMeta = { bodyW: br.width, bodyH: br.height, imgRect };
+    practiceState[q.id].drawMeta = { bodyW: br.width, bodyH: br.height, imgRect, canvasOffsetX: _canvasOffsetX };
   }
 
   // ── 書き込みの一時保存（IndexedDB・手動ボタン） ────────────────────
@@ -6106,12 +6106,17 @@ ${tables}
       bgImg.src = st._bgCapture;
       await new Promise(r => { bgImg.onload = r; bgImg.onerror = r; });
       ctx.drawImage(bgImg, 0, 0, W, H);
-      // 手書きレイヤー（同じ座標系なのでそのまま重ねる）
+      // 手書きレイヤー（拡張canvasの中央部分＝コンテンツ範囲を切り取って重ねる）
       if (st.drawing) {
         const drawImg = new Image();
         drawImg.src = st.drawing;
         await new Promise(r => { drawImg.onload = r; drawImg.onerror = r; });
-        ctx.drawImage(drawImg, 0, 0, W, H);
+        const oxPx = st.drawMeta?.canvasOffsetX || 0;
+        if (oxPx > 0 && drawImg.naturalWidth > W) {
+          ctx.drawImage(drawImg, oxPx, 0, W, H, 0, 0, W, H);
+        } else {
+          ctx.drawImage(drawImg, 0, 0, W, H);
+        }
       }
       return cv.toDataURL('image/jpeg', 0.92);
     }
@@ -6429,7 +6434,8 @@ ${body}</body></html>`;
       const canvas = document.getElementById('drawCanvas');
       // 実際の描画エリアサイズが変わっていない場合はスキップ
       const targetH = Math.max(body.clientHeight, body.scrollHeight);
-      if (canvas && canvas.width === body.clientWidth && canvas.height === targetH) return;
+      const expectedCW = body.clientWidth + 2 * Math.round(body.clientWidth * _SLIDE_EXTRA);
+      if (canvas && canvas.width === expectedCW && canvas.height === targetH) return;
       saveDrawingState(); // 現在の描画を保存してから
       clearTimeout(_resizeTimer);
       _resizeTimer = setTimeout(() => {
@@ -6445,6 +6451,8 @@ ${body}</body></html>`;
   // ── 手書きキャンバス ──────────────────────────────────────────────
   let currentWriteTab = 'text';
   let _cz = 1, _cpx = 0, _cpy = 0; // コンテンツエリアのズーム・パン
+  const _SLIDE_EXTRA = 1.5; // スライドで書き込める余白の幅（ボディ幅の倍率）
+  let _canvasOffsetX = 0;   // canvas の left オフセット px（SLIDE_EXTRA * body幅）
   let drawTool  = 'pointer';
   let drawColor = '#1a1a1a';
   let drawSize  = 2;
@@ -6485,47 +6493,59 @@ ${body}</body></html>`;
     const w = body.clientWidth;
     // 縦スクロールするレイアウト（スマホ縦）でも内容全体を覆うよう scrollHeight を使う
     const h = Math.max(body.clientHeight, body.scrollHeight);
-    canvas.width  = w;
+    // 両側にスライド余白分を追加してcanvasを拡張（白余白への書き込みを可能にする）
+    _canvasOffsetX = Math.round(w * _SLIDE_EXTRA);
+    const cw = w + 2 * _canvasOffsetX;
+    canvas.width  = cw;
     canvas.height = h;
-    canvas.style.width  = w + 'px';
+    canvas.style.width  = cw + 'px';
     canvas.style.height = h + 'px';
+    canvas.style.left   = -_canvasOffsetX + 'px';
+    canvas.style.top    = '0';
 
     // マーカー・フェード・選択オーバーレイ用サブキャンバスも同サイズに合わせる
     ['markerCanvas', 'fadeCanvas', 'selOverlay'].forEach(id => {
       const c = document.getElementById(id);
-      if (c) { c.width = w; c.height = h; c.style.width = w + 'px'; c.style.height = h + 'px'; }
+      if (c) {
+        c.width = cw; c.height = h;
+        c.style.width = cw + 'px'; c.style.height = h + 'px';
+        c.style.left = -_canvasOffsetX + 'px';
+      }
     });
 
     const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, w, h);
+    ctx.clearRect(0, 0, cw, h);
 
     const q = practiceData[practiceIdx];
     if (q && practiceState[q.id]?.drawing) {
       const meta = practiceState[q.id].drawMeta;
-      // 現在の画像位置を取得（canvas=bodyと同位置）
+      // 現在の画像位置を取得（body基準座標）
       const imgEl = document.querySelector('.expln-img-area img');
       let curImgRect = null;
       if (imgEl && meta?.imgRect) {
-        const canvasRect = canvas.getBoundingClientRect();
+        const bodyRect = body.getBoundingClientRect();
         const ir = imgEl.getBoundingClientRect();
-        curImgRect = { x: ir.left - canvasRect.left, y: ir.top - canvasRect.top,
+        curImgRect = { x: ir.left - bodyRect.left, y: ir.top - bodyRect.top,
                        w: ir.width, h: ir.height };
       }
       const img = new Image();
       _drawCanvasRestoring = true; // 復元中フラグ：この間 saveDrawingState を抑止
       img.onload = () => {
+        const savedOX = meta?.canvasOffsetX ?? 0; // 保存時のオフセット
+        const savedCW = (meta?.bodyW || w) + 2 * savedOX; // 保存時のcanvas幅
         if (curImgRect && meta?.imgRect) {
-          const old = meta.imgRect;
+          const old = meta.imgRect; // body基準座標
           const scaleX = curImgRect.w / old.w;
           const scaleY = curImgRect.h / old.h;
           ctx.save();
+          // body基準 → canvas基準へ変換（+_canvasOffsetX）し、画像移動分のスケール・平行移動を適用
           ctx.setTransform(scaleX, 0, 0, scaleY,
-            curImgRect.x - old.x * scaleX,
+            (curImgRect.x + _canvasOffsetX) - (old.x + savedOX) * scaleX,
             curImgRect.y - old.y * scaleY);
-          ctx.drawImage(img, 0, 0, meta.bodyW || w, meta.bodyH || h);
+          ctx.drawImage(img, 0, 0, savedCW, meta.bodyH || h);
           ctx.restore();
         } else {
-          ctx.drawImage(img, 0, 0, w, h);
+          ctx.drawImage(img, 0, 0, savedCW, meta?.bodyH || h);
         }
         _drawCanvasRestoring = false;
       };
@@ -6829,7 +6849,7 @@ ${body}</body></html>`;
     }
 
     const portraitMQ = window.matchMedia('(pointer: coarse) and (orientation: portrait)');
-    const SLIDE_EXTRA = 0.8; // ズームなし時に左右へスライドできる幅（ボディ幅の倍率）
+    const SLIDE_EXTRA = _SLIDE_EXTRA; // ズームなし時に左右へスライドできる幅（ボディ幅の倍率）
     function applyZoom() {
       const el = document.getElementById('bodyZoomContent');
       if (!el) return;
@@ -7254,12 +7274,11 @@ ${body}</body></html>`;
   (() => {
     function cv() { return document.getElementById('drawCanvas'); }
     function pt(e) {
-      // bodyZoomContent の transform: translate(_cpx,_cpy) scale(_cz) を逆算
-      // canvas は body 左上を原点に body.clientWidth × clientHeight のピクセルサイズ
+      // bodyZoomContent の transform: translate(_cpx,_cpy) scale(_cz) を逆算し、canvas左オフセット分を加算
       const body = document.querySelector('.expln-body');
       const br = body ? body.getBoundingClientRect() : {left:0, top:0};
       return {
-        x: (e.clientX - br.left - _cpx) / _cz,
+        x: (e.clientX - br.left - _cpx) / _cz + _canvasOffsetX,
         y: (e.clientY - br.top  - _cpy) / _cz
       };
     }
@@ -7437,7 +7456,7 @@ ${body}</body></html>`;
       const body = document.querySelector('.expln-body');
       const br = body ? body.getBoundingClientRect() : {left:0, top:0};
       drawSegments(evts.map(ev => ({
-        x: (ev.clientX - br.left - _cpx) / _cz,
+        x: (ev.clientX - br.left - _cpx) / _cz + _canvasOffsetX,
         y: (ev.clientY - br.top  - _cpy) / _cz,
         pressure: ev.pressure, pointerType: ev.pointerType
       })));
