@@ -7328,13 +7328,7 @@ ${body}</body></html>`;
       if (drawTool === 'pointer' || drawTool === 'laserpointer') return;
       if (hasPen && e.pointerType === 'touch') return; // Apple Pencil使用中は指タッチ無視
       if (!e.isPrimary) { isDrawPointerDown = false; return; }
-      // ペン・マーカー・消しゴムを画像上で始めたら、画像専用インクに描く（画像に追従）
-      if ((drawTool === 'pen' || drawTool === 'marker' || drawTool === 'eraser') && _overImage(e)) {
-        isDrawPointerDown = true; _imgMode = true;
-        try { cv().setPointerCapture(e.pointerId); } catch(_) {}
-        _imgStrokeBegin(e);
-        return;
-      }
+      // 全ストロークをメインcanvasに統一（画像側→問題側をまたぐ書き込みを可能に）
       isDrawPointerDown = true;
       // setPointerCapture を最優先で実行（pushUndoState より前）
       // → これより後の処理が重くてもイベントが途切れない
@@ -7479,7 +7473,6 @@ ${body}</body></html>`;
     function onMove(e) {
       if (!isDrawPointerDown || !e.isPrimary) return;
       if (drawTool === 'select') { e.preventDefault(); _selMove(e); return; }
-      if (_imgMode) { e.preventDefault(); _imgStrokeMove(e.getCoalescedEvents ? e.getCoalescedEvents() : [e]); return; }
       if (hasPen && drawTool !== 'pointer' && e.pointerType === 'touch') return;
       e.preventDefault();
       const evts = (e.getCoalescedEvents ? e.getCoalescedEvents() : [e]);
@@ -7498,7 +7491,6 @@ ${body}</body></html>`;
       if (!isDrawPointerDown) return;
       isDrawPointerDown = false;
 
-      if (_imgMode) { _imgMode = false; _imgInkSave(); return; }
       if (drawTool === 'select') { _selUp(); return; }
 
       if (drawTool === 'pen') {
