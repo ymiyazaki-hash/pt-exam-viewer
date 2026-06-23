@@ -7696,26 +7696,56 @@ ${body}</body></html>`;
   }
 
   // ── マーカー スムーズ描画 & スナップ ─────────────────────────────
-  function _drawSmoothPenPath(ctx, points) {
+  // 入力点のジッター（手ブレ・サンプリングのばらつき）を二項[1 2 1]/4で平滑化。
+  // 始点・終点はペン先追従のため動かさない。
+  function _smoothStrokePts(pts) {
+    if (!pts || pts.length < 3) return pts;
+    const out = [pts[0]];
+    for (let i = 1; i < pts.length - 1; i++) {
+      out.push({
+        x: (pts[i - 1].x + pts[i].x * 2 + pts[i + 1].x) / 4,
+        y: (pts[i - 1].y + pts[i].y * 2 + pts[i + 1].y) / 4
+      });
+    }
+    out.push(pts[pts.length - 1]);
+    return out;
+  }
+
+  function _drawSmoothPenPath(ctx, rawPoints) {
     const c = ctx.canvas;
     ctx.clearRect(0, 0, c.width, c.height);
-    if (!points || points.length === 0) return;
+    if (!rawPoints || rawPoints.length === 0) return;
     ctx.strokeStyle = drawColor;
     ctx.lineWidth = drawSize;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
-    if (points.length === 1) {
-      ctx.beginPath(); ctx.arc(points[0].x, points[0].y, drawSize / 2, 0, Math.PI * 2);
+    if (rawPoints.length === 1) {
+      ctx.beginPath(); ctx.arc(rawPoints[0].x, rawPoints[0].y, drawSize / 2, 0, Math.PI * 2);
       ctx.fillStyle = drawColor; ctx.fill(); return;
     }
+    // 平滑化（2回かけてさらになめらかに）
+    let points = _smoothStrokePts(_smoothStrokePts(rawPoints));
+    if (points.length === 2) {
+      ctx.beginPath();
+      ctx.moveTo(points[0].x, points[0].y);
+      ctx.lineTo(points[1].x, points[1].y);
+      ctx.stroke();
+      return;
+    }
+    // Catmull-Rom スプライン → 3次ベジェ変換で全点を滑らかに通す
     ctx.beginPath();
     ctx.moveTo(points[0].x, points[0].y);
-    for (let i = 1; i < points.length - 1; i++) {
-      const mx = (points[i].x + points[i + 1].x) / 2;
-      const my = (points[i].y + points[i + 1].y) / 2;
-      ctx.quadraticCurveTo(points[i].x, points[i].y, mx, my);
+    for (let i = 0; i < points.length - 1; i++) {
+      const p0 = points[i - 1] || points[i];
+      const p1 = points[i];
+      const p2 = points[i + 1];
+      const p3 = points[i + 2] || p2;
+      const cp1x = p1.x + (p2.x - p0.x) / 6;
+      const cp1y = p1.y + (p2.y - p0.y) / 6;
+      const cp2x = p2.x - (p3.x - p1.x) / 6;
+      const cp2y = p2.y - (p3.y - p1.y) / 6;
+      ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2.x, p2.y);
     }
-    ctx.lineTo(points[points.length - 1].x, points[points.length - 1].y);
     ctx.stroke();
   }
 
