@@ -50,7 +50,13 @@ def main():
                 print(f"  警告: {q_id} が data.json に見つかりません")
                 continue
             idx = q_dict[q_id]
-            data[idx]["explanation"] = new_exp
+            if isinstance(new_exp, list):
+                # 新形式: choiceExplanations配列 → explanationはクリア
+                data[idx]["choiceExplanations"] = new_exp
+                data[idx]["explanation"] = ""
+            else:
+                # 旧形式: explanationテキスト
+                data[idx]["explanation"] = new_exp
             data[idx]["explanationCreatedAt"] = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
             updated += 1
 
