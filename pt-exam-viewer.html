@@ -1329,14 +1329,15 @@
     .prac-tab-btn.active { background: linear-gradient(135deg, #1e3a8a, #2563eb); color: white; }
 
     .draw-toolbar {
-      /* position:fixed でズーム時も画面内に常駐。bottom は JS で Visual Viewport に合わせて更新 */
-      position: fixed; bottom: 0; left: 0; right: 0; z-index: 502;
+      /* practiceMode自体が position:fixed でビューポートを覆うため、ツールバーは
+         通常フロー（flex子）に置く。iOS Safari の fixed浮き上がりバグを回避。 */
+      position: relative; flex-shrink: 0; z-index: 502;
       display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
       padding: 8px 14px; background: #f8fafc;
       border-top: 1.5px solid #e2e8f0;
     }
-    /* fixed のツールバーが隠す領域を flex レイアウトで補完するスペーサー */
-    #drawToolbarSpacer { flex-shrink: 0; }
+    /* spacerは不要（ツールバーが通常フローなのでスペースは自動確保） */
+    #drawToolbarSpacer { display: none !important; }
     .draw-tool-btn {
       padding: 7px 11px; border: 1.5px solid #e2e8f0; border-radius: 7px;
       font-size: 12px; font-weight: 700; cursor: pointer;
@@ -6415,26 +6416,7 @@ ${body}</body></html>`;
         }
       }
 
-      // ② 解説モードツールバー（常に画面下端）
-      const tb1 = document.querySelector('#practiceMode .draw-toolbar');
-      const sp  = document.getElementById('drawToolbarSpacer');
-      if (tb1) {
-        if (vv) {
-          // 縦：layout viewport 下端からはみ出た分を bottom で相殺
-          const bottom = Math.max(0, window.innerHeight - vv.offsetTop - vv.height);
-          tb1.style.bottom = bottom + 'px';
-          // 横：Visual Viewport の左端・幅に合わせる（水平スクロール補正）
-          tb1.style.left  = vv.offsetLeft + 'px';
-          tb1.style.right = 'auto';
-          tb1.style.width = vv.width + 'px';
-        } else {
-          tb1.style.bottom = '0px';
-          tb1.style.left   = '0px';
-          tb1.style.right  = '0px';
-          tb1.style.width  = '';
-        }
-        if (sp) sp.style.height = (tb1.offsetHeight || 52) + 'px';
-      }
+      // ② 解説モードツールバーは position:relative（flex子）なので JS 位置調整不要
 
       // ③ 全画面画像ツールバー（translateY で追従）
       const tb2 = document.getElementById('imgFsToolbar');
