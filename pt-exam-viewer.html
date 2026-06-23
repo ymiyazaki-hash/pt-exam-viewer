@@ -3665,10 +3665,10 @@
         ${q.excludedHandling ? `<div class="modal-excluded-note">【採点上の取扱い】${esc(q.excludedHandling)}${q.excludedReason ? '<br>【理由】' + esc(q.excludedReason) : ''}</div>` : ''}
       </div>
       <div class="expl-panel" style="margin-top:16px">
-        <div>
+        ${ce.length === 0 ? `<div>
           <div class="expl-section-label">✏️ 解説</div>
           ${mainExpl}
-        </div>
+        </div>` : ''}
         <div>
           <div class="expl-section-label">🔢 選択肢別解説</div>
           <div class="expl-choices-list">${ceHtml}</div>
