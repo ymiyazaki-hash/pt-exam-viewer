@@ -1,0 +1,3522 @@
+[
+  {
+    "id": "57P-81",
+    "new_fields": [
+      "⑧精神医学・臨床心理"
+    ],
+    "new_sub_fields": [
+      "防衛機制・障害受容"
+    ],
+    "field_confidence": "high",
+    "field_reason": "障害受容の5段階過程が主題"
+  },
+  {
+    "id": "57P-82",
+    "new_fields": [
+      "⑩リハ概論・統計学"
+    ],
+    "new_sub_fields": [
+      "医療倫理・チーム医療"
+    ],
+    "field_confidence": "medium",
+    "field_reason": "リハ室での緊急対応手順が主題"
+  },
+  {
+    "id": "57P-83",
+    "new_fields": [
+      "①運動器障害"
+    ],
+    "new_sub_fields": [
+      "脊髄損傷"
+    ],
+    "field_confidence": "high",
+    "field_reason": "脊髄損傷の自律神経過反射の症状が主題"
+  },
+  {
+    "id": "57P-84",
+    "new_fields": [
+      "②中枢神経障害"
+    ],
+    "new_sub_fields": [
+      "多発性筋炎・重症筋無力症"
+    ],
+    "field_confidence": "high",
+    "field_reason": "多発性筋炎の臨床所見（CK上昇）が主題"
+  },
+  {
+    "id": "57P-85",
+    "new_fields": [
+      "⑪小児・人間発達"
+    ],
+    "new_sub_fields": [
+      "小児疾患の評価"
+    ],
+    "field_confidence": "high",
+    "field_reason": "発達評価スケール（DDST II）の選択が主題"
+  },
+  {
+    "id": "57P-86",
+    "new_fields": [
+      "①運動器障害"
+    ],
+    "new_sub_fields": [
+      "骨折・脱臼"
+    ],
+    "field_confidence": "high",
+    "field_reason": "高齢者大腿骨近位部骨折の特徴が主題"
+  },
+  {
+    "id": "57P-87",
+    "new_fields": [
+      "①運動器障害"
+    ],
+    "new_sub_fields": [
+      "腰痛・頸部疾患"
+    ],
+    "field_confidence": "high",
+    "field_reason": "腰部脊柱管狭窄症の特徴（間欠性跛行）が主題"
+  },
+  {
+    "id": "57P-88",
+    "new_fields": [
+      "⑪小児・人間発達"
+    ],
+    "new_sub_fields": [
+      "筋ジストロフィー・小児神経疾患"
+    ],
+    "field_confidence": "high",
+    "field_reason": "二分脊椎（先天性脊椎奇形）の特徴が主題"
+  },
+  {
+    "id": "57P-89",
+    "new_fields": [
+      "②中枢神経障害"
+    ],
+    "new_sub_fields": [
+      "神経基礎・機能解剖"
+    ],
+    "field_confidence": "medium",
+    "field_reason": "灼熱感を呈する痛み（視床痛）の病態が主題"
+  },
+  {
+    "id": "57P-90",
+    "new_fields": [
+      "②中枢神経障害"
+    ],
+    "new_sub_fields": [
+      "頭部外傷・脳腫瘍"
+    ],
+    "field_confidence": "high",
+    "field_reason": "脳腫瘍の悪性・良性分類（膠芽腫）が主題"
+  },
+  {
+    "id": "57P-91",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "呼吸器疾患"
+    ],
+    "field_confidence": "high",
+    "field_reason": "原発性自然気胸の特徴が主題"
+  },
+  {
+    "id": "57P-92",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "腎・泌尿器"
+    ],
+    "field_confidence": "high",
+    "field_reason": "糖尿病性腎症の病態・疫学が主題"
+  },
+  {
+    "id": "57P-93",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "血液・免疫"
+    ],
+    "field_confidence": "high",
+    "field_reason": "多発性骨髄腫の臨床所見（病的骨折）が主題"
+  },
+  {
+    "id": "57P-94",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "代謝・内分泌"
+    ],
+    "field_confidence": "high",
+    "field_reason": "内分泌疾患と症候の対応（テタニー等）が主題"
+  },
+  {
+    "id": "57P-95",
+    "new_fields": [
+      "⑩リハ概論・統計学"
+    ],
+    "new_sub_fields": [
+      "ICF・リハの概念・法律"
+    ],
+    "field_confidence": "high",
+    "field_reason": "介護保険法の特定疾病の選択が主題"
+  },
+  {
+    "id": "57P-96",
+    "new_fields": [
+      "⑧精神医学・臨床心理"
+    ],
+    "new_sub_fields": [
+      "防衛機制・障害受容"
+    ],
+    "field_confidence": "high",
+    "field_reason": "アルコール依存症における共依存・イネイブラーが主題"
+  },
+  {
+    "id": "57P-97",
+    "new_fields": [
+      "⑧精神医学・臨床心理"
+    ],
+    "new_sub_fields": [
+      "神経症"
+    ],
+    "field_confidence": "high",
+    "field_reason": "適応障害の治療・特徴（薬物療法は中心ではない）が主題"
+  },
+  {
+    "id": "57P-98",
+    "new_fields": [
+      "⑧精神医学・臨床心理"
+    ],
+    "new_sub_fields": [
+      "統合失調症・気分障害"
+    ],
+    "field_confidence": "high",
+    "field_reason": "統合失調症の疫学・予後（高EE・再発）が主題"
+  },
+  {
+    "id": "57P-99",
+    "new_fields": [
+      "⑧精神医学・臨床心理"
+    ],
+    "new_sub_fields": [
+      "統合失調症・気分障害"
+    ],
+    "field_confidence": "medium",
+    "field_reason": "ステロイド薬による薬物性精神障害の特徴が主題"
+  },
+  {
+    "id": "57P-100",
+    "new_fields": [
+      "⑪小児・人間発達"
+    ],
+    "new_sub_fields": [
+      "染色体異常・遺伝性疾患"
+    ],
+    "field_confidence": "high",
+    "field_reason": "知的障害の原因となる染色体異常（Down症候群等）が主題"
+  },
+  {
+    "id": "58A-1",
+    "new_fields": [
+      "③理学療法評価学"
+    ],
+    "new_sub_fields": [
+      "筋力検査（MMT）"
+    ],
+    "field_confidence": "high",
+    "field_reason": "MMT股関節外転測定時の代償筋特定が主題"
+  },
+  {
+    "id": "58A-2",
+    "new_fields": [
+      "⑨運動学・臨床運動学"
+    ],
+    "new_sub_fields": [
+      "生体力学"
+    ],
+    "field_confidence": "high",
+    "field_reason": "立位静止姿勢の床反力ベクトルの方向が主題"
+  },
+  {
+    "id": "58A-3",
+    "new_fields": [
+      "②中枢神経障害"
+    ],
+    "new_sub_fields": [
+      "脳血管障害"
+    ],
+    "field_confidence": "high",
+    "field_reason": "頭部MRI FLAIR像の読影（多発性脳梗塞）が主題"
+  },
+  {
+    "id": "58A-4",
+    "new_fields": [
+      "⑪小児・人間発達"
+    ],
+    "new_sub_fields": [
+      "小児疾患のADL"
+    ],
+    "field_confidence": "high",
+    "field_reason": "NICU低出生体重児のポジショニング適切な肢位が主題"
+  },
+  {
+    "id": "58A-5",
+    "new_fields": [
+      "⑤義肢装具学"
+    ],
+    "new_sub_fields": [
+      "義足"
+    ],
+    "field_confidence": "high",
+    "field_reason": "下腿義足ソケットの種類（TSB式）が主題"
+  },
+  {
+    "id": "58A-6",
+    "new_fields": [
+      "⑥物理療法"
+    ],
+    "new_sub_fields": [
+      "超音波・マイクロ"
+    ],
+    "field_confidence": "high",
+    "field_reason": "極超短波の照射強度の計算が主題"
+  },
+  {
+    "id": "58A-7",
+    "new_fields": [
+      "②中枢神経障害"
+    ],
+    "new_sub_fields": [
+      "脳神経・自律神経"
+    ],
+    "field_confidence": "high",
+    "field_reason": "顔面神経障害（兎眼）と同じ神経の症状が主題"
+  },
+  {
+    "id": "58A-8",
+    "new_fields": [
+      "①運動器障害"
+    ],
+    "new_sub_fields": [
+      "術後リハ"
+    ],
+    "field_confidence": "high",
+    "field_reason": "鎖骨骨折観血的固定術後の理学療法が主題"
+  },
+  {
+    "id": "58A-9",
+    "new_fields": [
+      "①運動器障害"
+    ],
+    "new_sub_fields": [
+      "術後リハ"
+    ],
+    "field_confidence": "high",
+    "field_reason": "変形性膝関節症骨切り術後の理学療法が主題"
+  },
+  {
+    "id": "58A-10",
+    "new_fields": [
+      "①運動器障害"
+    ],
+    "new_sub_fields": [
+      "関節疾患"
+    ],
+    "field_confidence": "high",
+    "field_reason": "指の変形分類（スワンネック変形）が主題"
+  },
+  {
+    "id": "58A-11",
+    "new_fields": [
+      "①運動器障害"
+    ],
+    "new_sub_fields": [
+      "脊髄損傷"
+    ],
+    "field_confidence": "high",
+    "field_reason": "頸髄損傷のZancolli分類と起き上がり動作が主題"
+  },
+  {
+    "id": "58A-12",
+    "new_fields": [
+      "⑪小児・人間発達"
+    ],
+    "new_sub_fields": [
+      "脳性麻痺"
+    ],
+    "field_confidence": "high",
+    "field_reason": "脳性麻痺のGMFCSレベル判定が主題"
+  },
+  {
+    "id": "58A-13",
+    "new_fields": [
+      "⑦ADL・地域リハ"
+    ],
+    "new_sub_fields": [
+      "福祉用具"
+    ],
+    "field_confidence": "high",
+    "field_reason": "車椅子の方向転換に必要な最小廊下幅の計算が主題"
+  },
+  {
+    "id": "58A-14",
+    "new_fields": [
+      "①運動器障害"
+    ],
+    "new_sub_fields": [
+      "末梢神経損傷"
+    ],
+    "field_confidence": "high",
+    "field_reason": "CIDPの筋電図所見（伝導速度低下）が主題"
+  },
+  {
+    "id": "58A-15",
+    "new_fields": [
+      "②中枢神経障害"
+    ],
+    "new_sub_fields": [
+      "パーキンソン病"
+    ],
+    "field_confidence": "high",
+    "field_reason": "パーキンソン病のすくみ足・小刻み歩行への対応が主題"
+  },
+  {
+    "id": "58A-16",
+    "new_fields": [
+      "⑦ADL・地域リハ"
+    ],
+    "new_sub_fields": [
+      "ADL評価（BI・FIM）"
+    ],
+    "field_confidence": "high",
+    "field_reason": "FIM移乗動作の採点（中等度介助）が主題"
+  },
+  {
+    "id": "58A-17",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "代謝・内分泌"
+    ],
+    "field_confidence": "high",
+    "field_reason": "糖尿病・腎症・透析患者への運動療法の注意点が主題"
+  },
+  {
+    "id": "58A-18",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "呼吸器疾患"
+    ],
+    "field_confidence": "high",
+    "field_reason": "COPD在宅酸素療法患者への生活・呼吸指導が主題"
+  },
+  {
+    "id": "58A-19",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "内部障害の評価"
+    ],
+    "field_confidence": "high",
+    "field_reason": "心疾患術後の退院時運動機能評価（6分間歩行テスト）が主題"
+  },
+  {
+    "id": "58A-20",
+    "new_fields": [
+      "①運動器障害"
+    ],
+    "new_sub_fields": [
+      "術後リハ"
+    ],
+    "field_confidence": "high",
+    "field_reason": "人工膝関節置換術後CPM装置の使用方法が主題"
+  },
+  {
+    "id": "58A-21",
+    "new_fields": [
+      "⑩リハ概論・統計学"
+    ],
+    "new_sub_fields": [
+      "ICF・リハの概念・法律"
+    ],
+    "field_confidence": "high",
+    "field_reason": "ICFの評価点の意味（活動と参加の第一・第二評価点）が主題"
+  },
+  {
+    "id": "58A-22",
+    "new_fields": [
+      "⑩リハ概論・統計学"
+    ],
+    "new_sub_fields": [
+      "医療倫理・チーム医療"
+    ],
+    "field_confidence": "high",
+    "field_reason": "理学療法でのインフォームドコンセントの適切な実施が主題"
+  },
+  {
+    "id": "58A-23",
+    "new_fields": [
+      "⑩リハ概論・統計学"
+    ],
+    "new_sub_fields": [
+      "研究デザイン・統計"
+    ],
+    "field_confidence": "high",
+    "field_reason": "観察的研究デザイン（コホート研究・ケースコントロール研究）の選択が主題"
+  },
+  {
+    "id": "58A-24",
+    "new_fields": [
+      "⑦ADL・地域リハ"
+    ],
+    "new_sub_fields": [
+      "ADL評価（BI・FIM）"
+    ],
+    "field_confidence": "high",
+    "field_reason": "IADLに含まれる活動（食事の準備）の判断が主題"
+  },
+  {
+    "id": "58A-25",
+    "new_fields": [
+      "⑩リハ概論・統計学"
+    ],
+    "new_sub_fields": [
+      "ICF・リハの概念・法律"
+    ],
+    "field_confidence": "medium",
+    "field_reason": "厚労省身体活動基準2013の4METs以上の運動例が主題"
+  },
+  {
+    "id": "58A-26",
+    "new_fields": [
+      "⑨運動学・臨床運動学"
+    ],
+    "new_sub_fields": [
+      "筋生理学・筋収縮"
+    ],
+    "field_confidence": "high",
+    "field_reason": "筋収縮の分子機序（H帯の変化・アクチン・ミオシン）が主題"
+  },
+  {
+    "id": "58A-27",
+    "new_fields": [
+      "②中枢神経障害"
+    ],
+    "new_sub_fields": [
+      "脳神経・自律神経"
+    ],
+    "field_confidence": "high",
+    "field_reason": "感覚神経のみからなる脳神経の選択（第II・VIII）が主題"
+  },
+  {
+    "id": "58A-28",
+    "new_fields": [
+      "③理学療法評価学"
+    ],
+    "new_sub_fields": [
+      "ROM測定"
+    ],
+    "field_confidence": "high",
+    "field_reason": "ROM測定における運動方向と移動軸の正しい組合せが主題"
+  },
+  {
+    "id": "58A-29",
+    "new_fields": [
+      "②中枢神経障害"
+    ],
+    "new_sub_fields": [
+      "神経基礎・機能解剖"
+    ],
+    "field_confidence": "high",
+    "field_reason": "錐体路障害の徴候（腹壁反射消失）の選択が主題"
+  },
+  {
+    "id": "58A-30",
+    "new_fields": [
+      "①運動器障害"
+    ],
+    "new_sub_fields": [
+      "スポーツ障害"
+    ],
+    "field_confidence": "high",
+    "field_reason": "足関節内反捻挫の再発予防に有効な筋（長腓骨筋）が主題"
+  },
+  {
+    "id": "58A-31",
+    "new_fields": [
+      "③理学療法評価学"
+    ],
+    "new_sub_fields": [
+      "ROM測定"
+    ],
+    "field_confidence": "high",
+    "field_reason": "足部の参考可動域30°の運動方向（外がえし）が主題"
+  },
+  {
+    "id": "58A-32",
+    "new_fields": [
+      "②中枢神経障害"
+    ],
+    "new_sub_fields": [
+      "中枢神経障害の評価"
+    ],
+    "field_confidence": "high",
+    "field_reason": "脊髄小脳変性症の運動失調評価スケール（SARA）の選択が主題"
+  },
+  {
+    "id": "58A-33",
+    "new_fields": [
+      "①運動器障害"
+    ],
+    "new_sub_fields": [
+      "運動器疾患の評価"
+    ],
+    "field_confidence": "high",
+    "field_reason": "腱板損傷の整形外科的テスト（Drop arm test）が主題"
+  },
+  {
+    "id": "58A-34",
+    "new_fields": [
+      "⑤義肢装具学"
+    ],
+    "new_sub_fields": [
+      "義肢装具の適合評価"
+    ],
+    "field_confidence": "high",
+    "field_reason": "下腿義足の足部外側浮き上がりの適合不良原因が主題"
+  },
+  {
+    "id": "58A-35",
+    "new_fields": [
+      "①運動器障害"
+    ],
+    "new_sub_fields": [
+      "脊髄損傷"
+    ],
+    "field_confidence": "high",
+    "field_reason": "脊髄損傷の合併症・異所性化骨の好発部位（股関節）が主題"
+  },
+  {
+    "id": "58A-36",
+    "new_fields": [
+      "①運動器障害"
+    ],
+    "new_sub_fields": [
+      "運動器疾患の評価"
+    ],
+    "field_confidence": "high",
+    "field_reason": "2010年RA分類基準の項目（朝のこわばりは含まない）が主題"
+  },
+  {
+    "id": "58A-37",
+    "new_fields": [
+      "①運動器障害"
+    ],
+    "new_sub_fields": [
+      "運動器疾患の評価"
+    ],
+    "field_confidence": "high",
+    "field_reason": "胸郭出口症候群の誘発テスト（Roosテスト）が主題"
+  },
+  {
+    "id": "58A-38",
+    "new_fields": [
+      "⑨運動学・臨床運動学"
+    ],
+    "new_sub_fields": [
+      "筋生理学・筋収縮"
+    ],
+    "field_confidence": "high",
+    "field_reason": "筋力増強運動の種類（CKC・OKC・等尺性・等張性）の特徴が主題"
+  },
+  {
+    "id": "58A-39",
+    "new_fields": [
+      "⑨運動学・臨床運動学"
+    ],
+    "new_sub_fields": [
+      "筋生理学・筋収縮"
+    ],
+    "field_confidence": "high",
+    "field_reason": "中等度運動負荷時の循環応答（末梢血管抵抗の低下）が主題"
+  },
+  {
+    "id": "58A-40",
+    "new_fields": [
+      "①運動器障害"
+    ],
+    "new_sub_fields": [
+      "熱傷"
+    ],
+    "field_confidence": "high",
+    "field_reason": "手背の熱傷後瘢痕拘縮への理学療法（圧迫療法・ROM練習）が主題"
+  },
+  {
+    "id": "58A-41",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "腎・泌尿器"
+    ],
+    "field_confidence": "high",
+    "field_reason": "腹圧性尿失禁の特徴と治療（骨盤底筋体操）が主題"
+  },
+  {
+    "id": "58A-42",
+    "new_fields": [
+      "②中枢神経障害"
+    ],
+    "new_sub_fields": [
+      "中枢神経障害のADL"
+    ],
+    "field_confidence": "medium",
+    "field_reason": "摂食嚥下障害の病態別リハビリ手技の組合せが主題"
+  },
+  {
+    "id": "58A-43",
+    "new_fields": [
+      "①運動器障害"
+    ],
+    "new_sub_fields": [
+      "スポーツ障害"
+    ],
+    "field_confidence": "high",
+    "field_reason": "アキレス腱周囲炎の特徴と治療（足底板）が主題"
+  },
+  {
+    "id": "58A-44",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "呼吸器疾患"
+    ],
+    "field_confidence": "high",
+    "field_reason": "血液ガスデータから呼吸性アシドーシスを判断する問題"
+  },
+  {
+    "id": "58A-45",
+    "new_fields": [
+      "②中枢神経障害"
+    ],
+    "new_sub_fields": [
+      "ALS・SCD・GBS・MS"
+    ],
+    "field_confidence": "high",
+    "field_reason": "GBS急性期の理学療法（人工呼吸中の胸郭ストレッチ）が主題"
+  },
+  {
+    "id": "58A-46",
+    "new_fields": [
+      "⑦ADL・地域リハ"
+    ],
+    "new_sub_fields": [
+      "地域リハ・介護保険・災害"
+    ],
+    "field_confidence": "high",
+    "field_reason": "CBRマトリクスの5主要領域（ユニバーサルデザインは含まない）が主題"
+  },
+  {
+    "id": "58A-47",
+    "new_fields": [
+      "⑦ADL・地域リハ"
+    ],
+    "new_sub_fields": [
+      "福祉用具"
+    ],
+    "field_confidence": "high",
+    "field_reason": "電動車椅子の装置の特徴（手を離すとブレーキがかかる）が主題"
+  },
+  {
+    "id": "58A-48",
+    "new_fields": [
+      "⑦ADL・地域リハ"
+    ],
+    "new_sub_fields": [
+      "地域リハ・介護保険・災害"
+    ],
+    "field_confidence": "high",
+    "field_reason": "介護保険の福祉用具貸与品目（特殊寝台）の選択が主題"
+  },
+  {
+    "id": "58A-49",
+    "new_fields": [
+      "⑩リハ概論・統計学"
+    ],
+    "new_sub_fields": [
+      "医療倫理・チーム医療"
+    ],
+    "field_confidence": "high",
+    "field_reason": "医療安全のHeinrichの法則（1:29:300の法則）が主題"
+  },
+  {
+    "id": "58A-50",
+    "new_fields": [
+      "⑩リハ概論・統計学"
+    ],
+    "new_sub_fields": [
+      "医療倫理・チーム医療"
+    ],
+    "field_confidence": "high",
+    "field_reason": "SOAP形式の問題指向型診療記録の正しい記載方法が主題"
+  },
+  {
+    "id": "58A-51",
+    "new_fields": [
+      "⑨運動学・臨床運動学"
+    ],
+    "new_sub_fields": [
+      "骨・関節の構造と力学"
+    ],
+    "field_confidence": "high",
+    "field_reason": "手の外来筋（短母指伸筋）の解剖学的分類が主題"
+  },
+  {
+    "id": "58A-52",
+    "new_fields": [
+      "②中枢神経障害"
+    ],
+    "new_sub_fields": [
+      "神経基礎・機能解剖"
+    ],
+    "field_confidence": "high",
+    "field_reason": "下行神経路（外側皮質脊髄路）の選択が主題"
+  },
+  {
+    "id": "58A-53",
+    "new_fields": [
+      "⑨運動学・臨床運動学"
+    ],
+    "new_sub_fields": [
+      "骨・関節の構造と力学"
+    ],
+    "field_confidence": "high",
+    "field_reason": "閉鎖神経の支配筋（薄筋）の解剖が主題"
+  },
+  {
+    "id": "58A-54",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "循環器疾患"
+    ],
+    "field_confidence": "medium",
+    "field_reason": "大動脈弓から直接分枝する血管（腕頭動脈・左鎖骨下動脈）の解剖が主題"
+  },
+  {
+    "id": "58A-55",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "消化器・肝膵胆"
+    ],
+    "field_confidence": "high",
+    "field_reason": "小網でつながる臓器（肝臓・胃）の解剖が主題"
+  },
+  {
+    "id": "58A-56",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "呼吸器疾患"
+    ],
+    "field_confidence": "high",
+    "field_reason": "肺の構造（細気管支の軟骨欠如）が主題"
+  },
+  {
+    "id": "58A-57",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "腎・泌尿器"
+    ],
+    "field_confidence": "high",
+    "field_reason": "腎臓から分泌されるホルモン（レニン・エリスロポエチン）が主題"
+  },
+  {
+    "id": "58A-58",
+    "new_fields": [
+      "⑨運動学・臨床運動学"
+    ],
+    "new_sub_fields": [
+      "骨・関節の構造と力学"
+    ],
+    "field_confidence": "low",
+    "field_reason": "眼球の構造（毛様体の機能）に関する解剖学的知識が主題"
+  },
+  {
+    "id": "58A-59",
+    "new_fields": [
+      "⑨運動学・臨床運動学"
+    ],
+    "new_sub_fields": [
+      "骨・関節の構造と力学"
+    ],
+    "field_confidence": "high",
+    "field_reason": "皮下組織直下に触知できる筋の表面解剖が主題"
+  },
+  {
+    "id": "58A-60",
+    "new_fields": [
+      "⑨運動学・臨床運動学"
+    ],
+    "new_sub_fields": [
+      "骨・関節の構造と力学"
+    ],
+    "field_confidence": "high",
+    "field_reason": "腸骨稜に付着する筋（広背筋）の解剖が主題"
+  },
+  {
+    "id": "58A-61",
+    "new_fields": [
+      "⑨運動学・臨床運動学"
+    ],
+    "new_sub_fields": [
+      "骨・関節の構造と力学"
+    ],
+    "field_confidence": "low",
+    "field_reason": "細胞内小器官の機能（粗面小胞体での蛋白質合成）に関する基礎生物学が主題"
+  },
+  {
+    "id": "58A-62",
+    "new_fields": [
+      "②中枢神経障害"
+    ],
+    "new_sub_fields": [
+      "神経基礎・機能解剖"
+    ],
+    "field_confidence": "high",
+    "field_reason": "深部腱反射の神経回路（γ運動ニューロンの役割）が主題"
+  },
+  {
+    "id": "58A-63",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "消化器・肝膵胆"
+    ],
+    "field_confidence": "high",
+    "field_reason": "消化酵素の基質と分解産物（αアミラーゼ・トリプシン）が主題"
+  },
+  {
+    "id": "58A-64",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "循環器疾患"
+    ],
+    "field_confidence": "high",
+    "field_reason": "心臓刺激伝導系の機能と特徴が主題"
+  },
+  {
+    "id": "58A-65",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "血液・免疫"
+    ],
+    "field_confidence": "high",
+    "field_reason": "I型アレルギー（即時型）に関与するIgEの選択が主題"
+  },
+  {
+    "id": "58A-66",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "腎・泌尿器"
+    ],
+    "field_confidence": "high",
+    "field_reason": "排尿に関与する神経（陰部神経・下腹神経）が主題"
+  },
+  {
+    "id": "58A-67",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "代謝・内分泌"
+    ],
+    "field_confidence": "high",
+    "field_reason": "血糖上昇作用を持つホルモン（アドレナリン・グルカゴン）が主題"
+  },
+  {
+    "id": "58A-68",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "代謝・内分泌"
+    ],
+    "field_confidence": "medium",
+    "field_reason": "女性生殖器の構造と機能（排卵の仕組み）が主題"
+  },
+  {
+    "id": "58A-69",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "呼吸器疾患"
+    ],
+    "field_confidence": "high",
+    "field_reason": "肺活量の算出に必要な肺気量分画の組合せが主題"
+  },
+  {
+    "id": "58A-70",
+    "new_fields": [
+      "⑨運動学・臨床運動学"
+    ],
+    "new_sub_fields": [
+      "骨・関節の構造と力学"
+    ],
+    "field_confidence": "high",
+    "field_reason": "足部内側縦アーチの維持に最も関与する筋（後脛骨筋）が主題"
+  },
+  {
+    "id": "58A-71",
+    "new_fields": [
+      "⑨運動学・臨Sacred運動学"
+    ],
+    "new_sub_fields": [
+      "骨・関節の構造と力学"
+    ],
+    "field_confidence": "high",
+    "field_reason": "特定肢位で最も伸張される下肢筋の判断が主題"
+  },
+  {
+    "id": "58A-72",
+    "new_fields": [
+      "⑨運動学・臨床運動学"
+    ],
+    "new_sub_fields": [
+      "骨・関節の構造と力学"
+    ],
+    "field_confidence": "high",
+    "field_reason": "手指の筋（虫様筋・骨間筋等）と関節作用の正しい組合せが主題"
+  },
+  {
+    "id": "58A-73",
+    "new_fields": [
+      "⑨運動学・臨床運動学"
+    ],
+    "new_sub_fields": [
+      "筋生理学・筋収縮"
+    ],
+    "field_confidence": "high",
+    "field_reason": "懸垂からの下降動作（広背筋の遠心性収縮）が主題"
+  },
+  {
+    "id": "58A-74",
+    "new_fields": [
+      "⑨運動学・臨床運動学"
+    ],
+    "new_sub_fields": [
+      "正常歩行分析"
+    ],
+    "field_confidence": "high",
+    "field_reason": "正常歩行の各相における筋収縮様式（遠心性）が主題"
+  },
+  {
+    "id": "58A-75",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "内部障害の評価"
+    ],
+    "field_confidence": "low",
+    "field_reason": "退行性病変の定義（萎縮）に関する病理学的知識が主題"
+  },
+  {
+    "id": "58A-76",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "消化器・肝膵胆"
+    ],
+    "field_confidence": "high",
+    "field_reason": "胃全摘後のビタミンB12欠乏による巨赤芽球性貧血が主題"
+  },
+  {
+    "id": "58A-77",
+    "new_fields": [
+      "②中枢神経障害"
+    ],
+    "new_sub_fields": [
+      "ALS・SCD・GBS・MS"
+    ],
+    "field_confidence": "high",
+    "field_reason": "末梢神経の脱髄がみられる疾患（GBS）の選択が主題"
+  },
+  {
+    "id": "58A-78",
+    "new_fields": [
+      "⑧精神医学・臨床心理"
+    ],
+    "new_sub_fields": [
+      "防衛機制・障害受容"
+    ],
+    "field_confidence": "high",
+    "field_reason": "防衛機制（知性化）の定義の選択が主題"
+  },
+  {
+    "id": "58A-79",
+    "new_fields": [
+      "⑧精神医学・臨床心理"
+    ],
+    "new_sub_fields": [
+      "心理検査・心理療法"
+    ],
+    "field_confidence": "high",
+    "field_reason": "Freudの発達論における肛門期（1〜3歳）が主題"
+  },
+  {
+    "id": "58A-80",
+    "new_fields": [
+      "⑧精神医学・臨床心理"
+    ],
+    "new_sub_fields": [
+      "防衛機制・障害受容"
+    ],
+    "field_confidence": "high",
+    "field_reason": "障害受容の5段階過程（2番目＝否認期）が主題"
+  },
+  {
+    "id": "58A-81",
+    "new_fields": [
+      "⑧精神医学・臨床心理"
+    ],
+    "new_sub_fields": [
+      "心理検査・心理療法"
+    ],
+    "field_confidence": "high",
+    "field_reason": "思考記録表を用いた認知再構成法（CBT技法）が主題"
+  },
+  {
+    "id": "58A-82",
+    "new_fields": [
+      "②中枢神経障害"
+    ],
+    "new_sub_fields": [
+      "中枢神経障害の評価"
+    ],
+    "field_confidence": "high",
+    "field_reason": "脳卒中評価法と評価項目の正しい組合せ（SIAS→体幹機能）が主題"
+  },
+  {
+    "id": "58A-83",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "内部障害の評価"
+    ],
+    "field_confidence": "high",
+    "field_reason": "全身持久力トレーニング開始可否の判断基準（SpO2 94%は可能）が主題"
+  },
+  {
+    "id": "58A-84",
+    "new_fields": [
+      "①運動器障害"
+    ],
+    "new_sub_fields": [
+      "脊髄損傷"
+    ],
+    "field_confidence": "high",
+    "field_reason": "ASIA（脊髄損傷評価）の評価対象（肛門感覚）が主題"
+  },
+  {
+    "id": "58A-85",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "血液・免疫"
+    ],
+    "field_confidence": "high",
+    "field_reason": "ワルファリン（抗凝固薬）の作用を減弱させるビタミンKが主題"
+  },
+  {
+    "id": "58A-86",
+    "new_fields": [
+      "⑪小児・人間発達"
+    ],
+    "new_sub_fields": [
+      "正常発達過程"
+    ],
+    "field_confidence": "high",
+    "field_reason": "原始反射の種類と誘発される運動の正しい組合せが主題"
+  },
+  {
+    "id": "58A-87",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "がん・緩和ケア"
+    ],
+    "field_confidence": "high",
+    "field_reason": "リンパ浮腫の特徴（感染を繰り返しやすい）が主題"
+  },
+  {
+    "id": "58A-88",
+    "new_fields": [
+      "⑪小児・人間発達"
+    ],
+    "new_sub_fields": [
+      "筋ジストロフィー・小児神経疾患"
+    ],
+    "field_confidence": "high",
+    "field_reason": "小児の大腿骨頭壊死（Perthes病）の特徴が主題"
+  },
+  {
+    "id": "58A-89",
+    "new_fields": [
+      "①運動器障害"
+    ],
+    "new_sub_fields": [
+      "骨折・脱臼"
+    ],
+    "field_confidence": "high",
+    "field_reason": "Colles骨折の特徴と合併症（正中神経損傷）が主題"
+  },
+  {
+    "id": "58A-90",
+    "new_fields": [
+      "②中枢神経障害"
+    ],
+    "new_sub_fields": [
+      "脳血管障害"
+    ],
+    "field_confidence": "high",
+    "field_reason": "発症2時間の超急性期脳梗塞の画像所見（DWI高信号）が主題"
+  },
+  {
+    "id": "58A-91",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "代謝・内分泌"
+    ],
+    "field_confidence": "high",
+    "field_reason": "糖尿病性神経障害の特徴的所見（靴下型感覚障害）が主題"
+  },
+  {
+    "id": "58A-92",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "消化器・肝膵胆"
+    ],
+    "field_confidence": "high",
+    "field_reason": "肝不全でみられる症状（腹水貯留）が主題"
+  },
+  {
+    "id": "58A-93",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "代謝・内分泌"
+    ],
+    "field_confidence": "high",
+    "field_reason": "ビタミンと欠乏症状の組合せ（ビタミンD→骨粗鬆症）が主題"
+  },
+  {
+    "id": "58A-94",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "呼吸器疾患"
+    ],
+    "field_confidence": "high",
+    "field_reason": "肺塞栓症の特徴（下肢術後に多い・I型呼吸不全）が主題"
+  },
+  {
+    "id": "58A-95",
+    "new_fields": [
+      "⑩リハ概論・統計学"
+    ],
+    "new_sub_fields": [
+      "ICF・リハの概念・法律"
+    ],
+    "field_confidence": "high",
+    "field_reason": "介護保険制度の仕組み（介護認定審査会での判定）が主題"
+  },
+  {
+    "id": "58A-96",
+    "new_fields": [
+      "⑧精神医学・臨床心理"
+    ],
+    "new_sub_fields": [
+      "てんかん・摂食障害"
+    ],
+    "field_confidence": "medium",
+    "field_reason": "アルコール依存症の特徴と離脱期症状が主題"
+  },
+  {
+    "id": "58A-97",
+    "new_fields": [
+      "⑧精神医学・臨床心理"
+    ],
+    "new_sub_fields": [
+      "統合失調症・気分障害"
+    ],
+    "field_confidence": "high",
+    "field_reason": "統合失調症の病型（緊張型：興奮・昏迷）が主題"
+  },
+  {
+    "id": "58A-98",
+    "new_fields": [
+      "⑧精神医学・臨床心理"
+    ],
+    "new_sub_fields": [
+      "てんかん・摂食障害"
+    ],
+    "field_confidence": "high",
+    "field_reason": "欠神発作の特徴（過呼吸で誘発される）が主題"
+  },
+  {
+    "id": "58A-99",
+    "new_fields": [
+      "⑧精神医学・臨床心理"
+    ],
+    "new_sub_fields": [
+      "心理検査・心理療法"
+    ],
+    "field_confidence": "high",
+    "field_reason": "統合失調症患者の健康関連QOL測定（SF-36）が主題"
+  },
+  {
+    "id": "58A-100",
+    "new_fields": [
+      "⑧精神医学・臨床心理"
+    ],
+    "new_sub_fields": [
+      "神経症"
+    ],
+    "field_confidence": "high",
+    "field_reason": "強迫性障害の特徴と治療（曝露反応妨害法）が主題"
+  },
+  {
+    "id": "58P-1",
+    "new_fields": [
+      "③理学療法評価学"
+    ],
+    "new_sub_fields": [
+      "筋力検査（MMT）"
+    ],
+    "field_confidence": "high",
+    "field_reason": "肩甲下筋のMMTテスト方法（図から判断）が主題"
+  },
+  {
+    "id": "58P-2",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "循環器疾患"
+    ],
+    "field_confidence": "high",
+    "field_reason": "心電図波形の読み方（房室ブロック等の判断）が主題"
+  },
+  {
+    "id": "58P-3",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "呼吸器疾患"
+    ],
+    "field_confidence": "high",
+    "field_reason": "胸部CTから肺疾患を推定し低下する肺機能（1秒率）を選ぶ問題"
+  },
+  {
+    "id": "58P-4",
+    "new_fields": [
+      "⑪小児・人間発達"
+    ],
+    "new_sub_fields": [
+      "染色体異常・遺伝性疾患"
+    ],
+    "field_confidence": "high",
+    "field_reason": "Down症候群に特徴的な姿勢の選択が主題"
+  },
+  {
+    "id": "58P-5",
+    "new_fields": [
+      "⑤義肢装具学"
+    ],
+    "new_sub_fields": [
+      "義肢装具の適合評価"
+    ],
+    "field_confidence": "high",
+    "field_reason": "大腿義足歩行の観察所見（Trendelenburg様）の原因が主題"
+  },
+  {
+    "id": "58P-6",
+    "new_fields": [
+      "②中枢神経障害"
+    ],
+    "new_sub_fields": [
+      "ALS・SCD・GBS・MS"
+    ],
+    "field_confidence": "high",
+    "field_reason": "ビタミンB12低下による亜急性連合性脊髄変性症の診断が主題"
+  },
+  {
+    "id": "58P-7",
+    "new_fields": [
+      "⑤義肢装具学"
+    ],
+    "new_sub_fields": [
+      "下肢装具"
+    ],
+    "field_confidence": "medium",
+    "field_reason": "バランス障害患者に対する踵補正（足底板の種類）が主題"
+  },
+  {
+    "id": "58P-8",
+    "new_fields": [
+      "①運動器障害"
+    ],
+    "new_sub_fields": [
+      "術後リハ"
+    ],
+    "field_confidence": "high",
+    "field_reason": "小児骨折術後の理学療法プログラム（手指運動等）が主題"
+  },
+  {
+    "id": "58P-9",
+    "new_fields": [
+      "①運動器障害"
+    ],
+    "new_sub_fields": [
+      "運動器疾患の評価"
+    ],
+    "field_confidence": "medium",
+    "field_reason": "図の所見から整形外科的疾患（靭帯損傷等）を推定する問題"
+  },
+  {
+    "id": "58P-10",
+    "new_fields": [
+      "②中枢神経障害"
+    ],
+    "new_sub_fields": [
+      "ALS・SCD・GBS・MS"
+    ],
+    "field_confidence": "high",
+    "field_reason": "脊髄後索性運動失調に対するFrenkel体操の適用が主題"
+  },
+  {
+    "id": "58P-11",
+    "new_fields": [
+      "②中枢神経障害"
+    ],
+    "new_sub_fields": [
+      "中枢神経障害のADL"
+    ],
+    "field_confidence": "high",
+    "field_reason": "右片麻痺患者（BRS下肢Ⅲ）へのADL指導が主題"
+  },
+  {
+    "id": "58P-12",
+    "new_fields": [
+      "⑦ADL・地域リハ"
+    ],
+    "new_sub_fields": [
+      "福祉用具"
+    ],
+    "field_confidence": "high",
+    "field_reason": "松葉杖の正しい調整方法（図から判断）が主題"
+  },
+  {
+    "id": "58P-13",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "内部障害の評価"
+    ],
+    "field_confidence": "high",
+    "field_reason": "METs・時間・体重から歩行の消費カロリーを計算する問題"
+  },
+  {
+    "id": "58P-14",
+    "new_fields": [
+      "②中枢神経障害"
+    ],
+    "new_sub_fields": [
+      "パーキンソン病"
+    ],
+    "field_confidence": "high",
+    "field_reason": "臨床症状からパーキンソン病のHoehn & Yahrステージを判定する問題"
+  },
+  {
+    "id": "58P-15",
+    "new_fields": [
+      "③理学療法評価学"
+    ],
+    "new_sub_fields": [
+      "感覚・痛み検査"
+    ],
+    "field_confidence": "high",
+    "field_reason": "片麻痺患者への位置覚検査の正しい実施方法が主題"
+  },
+  {
+    "id": "58P-16",
+    "new_fields": [
+      "③理学療法評価学"
+    ],
+    "new_sub_fields": [
+      "ROM測定"
+    ],
+    "field_confidence": "high",
+    "field_reason": "上肢ROM測定における運動と測定肢位の正しい組合せが主題"
+  },
+  {
+    "id": "58P-17",
+    "new_fields": [
+      "②中枢神経障害"
+    ],
+    "new_sub_fields": [
+      "多発性筋炎・重症筋無力症"
+    ],
+    "field_confidence": "high",
+    "field_reason": "重症筋無力症の理学療法（体温上昇で増悪するため環境温管理）が主題"
+  },
+  {
+    "id": "58P-18",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "呼吸器疾患"
+    ],
+    "field_confidence": "high",
+    "field_reason": "肺がん手術の術前・術後呼吸理学療法（咳嗽練習等）が主題"
+  },
+  {
+    "id": "58P-19",
+    "new_fields": [
+      "①運動器障害"
+    ],
+    "new_sub_fields": [
+      "スポーツ障害"
+    ],
+    "field_confidence": "high",
+    "field_reason": "足関節外側靭帯損傷急性期の対応（RICE・固定）が主題"
+  },
+  {
+    "id": "58P-20",
+    "new_fields": [
+      "⑩リハ概論・統計学"
+    ],
+    "new_sub_fields": [
+      "医療倫理・チーム医療"
+    ],
+    "field_confidence": "high",
+    "field_reason": "難聴・認知症患者への情報収集の適切な方法が主題"
+  },
+  {
+    "id": "58P-21",
+    "new_fields": [
+      "⑩リハ概論・統計学"
+    ],
+    "new_sub_fields": [
+      "ICF・リハの概念・法律"
+    ],
+    "field_confidence": "high",
+    "field_reason": "介護保険第2号被保険者のサービス利用が可能な特定疾病（末期癌）が主題"
+  },
+  {
+    "id": "58P-22",
+    "new_fields": [
+      "⑩リハ概論・統計学"
+    ],
+    "new_sub_fields": [
+      "医療倫理・チーム医療"
+    ],
+    "field_confidence": "high",
+    "field_reason": "個人情報保護法における個人情報の定義（血液型単独は該当しない）が主題"
+  },
+  {
+    "id": "58P-23",
+    "new_fields": [
+      "⑨運動学・臨床運動学"
+    ],
+    "new_sub_fields": [
+      "正常歩行分析"
+    ],
+    "field_confidence": "high",
+    "field_reason": "歩行周期における単脚支持期（立脚中期・立脚終期）の選択が主題"
+  },
+  {
+    "id": "58P-24",
+    "new_fields": [
+      "②中枢神経障害"
+    ],
+    "new_sub_fields": [
+      "神経基礎・機能解剖"
+    ],
+    "field_confidence": "high",
+    "field_reason": "頭痛を感じる痛覚受容器が存在しない部位（大脳皮質）が主題"
+  },
+  {
+    "id": "58P-25",
+    "new_fields": [
+      "⑩リハ概論・統計学"
+    ],
+    "new_sub_fields": [
+      "ICF・リハの概念・法律"
+    ],
+    "field_confidence": "high",
+    "field_reason": "一次予防の定義と例（健康者への転倒予防講演）が主題"
+  },
+  {
+    "id": "58P-26",
+    "new_fields": [
+      "⑩リハ概論・統計学"
+    ],
+    "new_sub_fields": [
+      "医療倫理・チーム医療"
+    ],
+    "field_confidence": "high",
+    "field_reason": "救急措置の正しい手順（胸骨圧迫100〜120回/分）が主題"
+  },
+  {
+    "id": "58P-27",
+    "new_fields": [
+      "③理学療法評価学"
+    ],
+    "new_sub_fields": [
+      "筋力検査（MMT）"
+    ],
+    "field_confidence": "high",
+    "field_reason": "MMTで膝伸展と屈曲の検査肢位が同じになる段階（段階2）が主題"
+  },
+  {
+    "id": "58P-28",
+    "new_fields": [
+      "②中枢神経障害"
+    ],
+    "new_sub_fields": [
+      "中枢神経障害の評価"
+    ],
+    "field_confidence": "high",
+    "field_reason": "GCS（Glasgow Coma Scale）の各項目の正しい評定が主題"
+  },
+  {
+    "id": "58P-29",
+    "new_fields": [
+      "①運動器障害"
+    ],
+    "new_sub_fields": [
+      "脊髄損傷"
+    ],
+    "field_confidence": "high",
+    "field_reason": "完全脊髄損傷で短下肢装具・杖での屋外歩行が可能な最上位レベルが主題"
+  },
+  {
+    "id": "58P-30",
+    "new_fields": [
+      "③理学療法評価学"
+    ],
+    "new_sub_fields": [
+      "身体計測"
+    ],
+    "field_confidence": "high",
+    "field_reason": "血圧測定の知識（平均血圧の計算・ABI基準値）が主題"
+  },
+  {
+    "id": "58P-31",
+    "new_fields": [
+      "⑤義肢装具学"
+    ],
+    "new_sub_fields": [
+      "義足"
+    ],
+    "field_confidence": "high",
+    "field_reason": "PTB式下腿義足の免荷・荷重部位の知識が主題"
+  },
+  {
+    "id": "58P-32",
+    "new_fields": [
+      "①運動器障害"
+    ],
+    "new_sub_fields": [
+      "骨折・脱臼"
+    ],
+    "field_confidence": "high",
+    "field_reason": "骨壊死を合併しやすい骨折（大腿骨頸部骨折）の選択が主題"
+  },
+  {
+    "id": "58P-33",
+    "new_fields": [
+      "②中枢神経障害"
+    ],
+    "new_sub_fields": [
+      "中枢神経障害の評価"
+    ],
+    "field_confidence": "high",
+    "field_reason": "Brunnstrom法ステージとテスト動作の正しい組合せが主題"
+  },
+  {
+    "id": "58P-34",
+    "new_fields": [
+      "⑪小児・人間発達"
+    ],
+    "new_sub_fields": [
+      "筋ジストロフィー・小児神経疾患"
+    ],
+    "field_confidence": "high",
+    "field_reason": "Duchenne型筋ジストロフィーの特徴（Gowers徴候）が主題"
+  },
+  {
+    "id": "58P-35",
+    "new_fields": [
+      "①運動器障害"
+    ],
+    "new_sub_fields": [
+      "熱傷"
+    ],
+    "field_confidence": "high",
+    "field_reason": "広範囲熱傷の急性期（12時間以内）に生じやすい症状（浮腫）が主題"
+  },
+  {
+    "id": "58P-36",
+    "new_fields": [
+      "②中枢神経障害"
+    ],
+    "new_sub_fields": [
+      "高次脳機能障害・認知症"
+    ],
+    "field_confidence": "high",
+    "field_reason": "高次脳機能障害の種類と症候の組合せ（肢節運動失行）が主題"
+  },
+  {
+    "id": "58P-37",
+    "new_fields": [
+      "⑩リハ概論・統計学"
+    ],
+    "new_sub_fields": [
+      "ICF・リハの概念・法律"
+    ],
+    "field_confidence": "high",
+    "field_reason": "がん検診の実施が規定される法律（健康増進法）が主題"
+  },
+  {
+    "id": "58P-38",
+    "new_fields": [
+      "⑤義肢装具学"
+    ],
+    "new_sub_fields": [
+      "下肢装具"
+    ],
+    "field_confidence": "high",
+    "field_reason": "装具と適応疾患の組合せ（RGO→二分脊椎Th12）が主題"
+  },
+  {
+    "id": "58P-39",
+    "new_fields": [
+      "⑥物理療法"
+    ],
+    "new_sub_fields": [
+      "温熱・寒冷療法"
+    ],
+    "field_confidence": "high",
+    "field_reason": "温熱の局所反応（神経伝導速度・代謝率の変化）が主題"
+  },
+  {
+    "id": "58P-40",
+    "new_fields": [
+      "⑨運動学・臨床運動学"
+    ],
+    "new_sub_fields": [
+      "筋生理学・筋収縮"
+    ],
+    "field_confidence": "high",
+    "field_reason": "持久力に必要なエネルギー供給系（解糖系は無酸素性）の特徴が主題"
+  },
+  {
+    "id": "58P-41",
+    "new_fields": [
+      "⑦ADL・地域リハ"
+    ],
+    "new_sub_fields": [
+      "ADL評価（BI・FIM）"
+    ],
+    "field_confidence": "high",
+    "field_reason": "Barthel Indexで自立の場合に5点となる項目（整容・入浴）の選択が主題"
+  },
+  {
+    "id": "58P-42",
+    "new_fields": [
+      "①運動器障害"
+    ],
+    "new_sub_fields": [
+      "腰痛・頸部疾患"
+    ],
+    "field_confidence": "high",
+    "field_reason": "腰椎椎間板ヘルニアの治療方針（進行性筋力低下→手術考慮）が主題"
+  },
+  {
+    "id": "58P-43",
+    "new_fields": [
+      "①運動器障害"
+    ],
+    "new_sub_fields": [
+      "関節疾患"
+    ],
+    "field_confidence": "high",
+    "field_reason": "変形性膝関節症のPTガイドライン推奨療法（筋力増強・装具療法）が主題"
+  },
+  {
+    "id": "58P-44",
+    "new_fields": [
+      "②中枢神経障害"
+    ],
+    "new_sub_fields": [
+      "ALS・SCD・GBS・MS"
+    ],
+    "field_confidence": "high",
+    "field_reason": "脊髄小脳変性症の四つ這いバランス練習の難易度順序が主題"
+  },
+  {
+    "id": "58P-45",
+    "new_fields": [
+      "⑩リハ概論・統計学"
+    ],
+    "new_sub_fields": [
+      "研究デザイン・統計"
+    ],
+    "field_confidence": "medium",
+    "field_reason": "SF-36（健康関連QOL尺度）の下位尺度（体の痛み等）が主題"
+  },
+  {
+    "id": "58P-46",
+    "new_fields": [
+      "⑩リハ概論・統計学"
+    ],
+    "new_sub_fields": [
+      "ICF・リハの概念・法律"
+    ],
+    "field_confidence": "high",
+    "field_reason": "1950年代北欧の知的障害者人権改善運動（ノーマライゼーション）が主題"
+  },
+  {
+    "id": "58P-47",
+    "new_fields": [
+      "⑩リハ概論・統計学"
+    ],
+    "new_sub_fields": [
+      "医療倫理・チーム医療"
+    ],
+    "field_confidence": "high",
+    "field_reason": "臨床実習中の守秘義務の適切な実施（シュレッダー処理・ウイルス対策）が主題"
+  },
+  {
+    "id": "58P-48",
+    "new_fields": [
+      "⑦ADL・地域リハ"
+    ],
+    "new_sub_fields": [
+      "地域リハ・介護保険・災害"
+    ],
+    "field_confidence": "high",
+    "field_reason": "介護予防事業の基本チェックリストに含まれない質問項目の選択が主題"
+  },
+  {
+    "id": "58P-49",
+    "new_fields": [
+      "⑩リハ概論・統計学"
+    ],
+    "new_sub_fields": [
+      "医療倫理・チーム医療"
+    ],
+    "field_confidence": "high",
+    "field_reason": "院内感染対策における理学療法士の役割（病室配置管理は管轄外）が主題"
+  },
+  {
+    "id": "58P-50",
+    "new_fields": [
+      "③理学療法評価学"
+    ],
+    "new_sub_fields": [
+      "感覚・痛み検査"
+    ],
+    "field_confidence": "high",
+    "field_reason": "各検査と評価対象の正しい組合せ（NRS→疼痛）が主題"
+  },
+  {
+    "id": "58P-51",
+    "new_fields": [
+      "⑨運動学・臨床運動学"
+    ],
+    "new_sub_fields": [
+      "骨・関節の構造と力学"
+    ],
+    "field_confidence": "high",
+    "field_reason": "骨の構造の正しい知識（皮質骨表面は骨膜で覆われる）が主題"
+  },
+  {
+    "id": "58P-52",
+    "new_fields": [
+      "⑨運動学・臨床運動学"
+    ],
+    "new_sub_fields": [
+      "骨・関節の構造と力学"
+    ],
+    "field_confidence": "high",
+    "field_reason": "前骨間神経（正中神経の枝）に支配される筋（長母指屈筋）が主題"
+  },
+  {
+    "id": "58P-53",
+    "new_fields": [
+      "②中枢神経障害"
+    ],
+    "new_sub_fields": [
+      "脳神経・自律神経"
+    ],
+    "field_confidence": "high",
+    "field_reason": "眼球運動に関わる脳神経（外転神経・滑車神経）の選択が主題"
+  },
+  {
+    "id": "58P-54",
+    "new_fields": [
+      "②中枢神経障害"
+    ],
+    "new_sub_fields": [
+      "神経基礎・機能解剖"
+    ],
+    "field_confidence": "high",
+    "field_reason": "脊髄の構造（後根の脊髄神経節・交感神経の起始）が主題"
+  },
+  {
+    "id": "58P-55",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "循環器疾患"
+    ],
+    "field_confidence": "high",
+    "field_reason": "心臓の構造（卵円窩の位置・弁の尖数等）が主題"
+  },
+  {
+    "id": "58P-56",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "呼吸器疾患"
+    ],
+    "field_confidence": "high",
+    "field_reason": "左肺の内側面に接する構造物（大動脈弓）が主題"
+  },
+  {
+    "id": "58P-57",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "腎・泌尿器"
+    ],
+    "field_confidence": "high",
+    "field_reason": "腎臓の構造（ネフロン=糸球体+尿細管）が主題"
+  },
+  {
+    "id": "58P-58",
+    "new_fields": [
+      "⑨運動学・臨床運動学"
+    ],
+    "new_sub_fields": [
+      "骨・関節の構造と力学"
+    ],
+    "field_confidence": "low",
+    "field_reason": "平衡聴覚器の構造（耳管の連結・半規管の機能）に関する解剖が主題"
+  },
+  {
+    "id": "58P-59",
+    "new_fields": [
+      "③理学療法評価学"
+    ],
+    "new_sub_fields": [
+      "身体計測"
+    ],
+    "field_confidence": "high",
+    "field_reason": "末梢動脈の触知部位の正しい知識（橈骨動脈等）が主題"
+  },
+  {
+    "id": "58P-60",
+    "new_fields": [
+      "⑨運動学・臨床運動学"
+    ],
+    "new_sub_fields": [
+      "骨・関節の構造と力学"
+    ],
+    "field_confidence": "high",
+    "field_reason": "距骨と関節を構成する骨（踵骨・舟状骨）の解剖が主題"
+  },
+  {
+    "id": "58P-61",
+    "new_fields": [
+      "⑨運動学・臨床運動学"
+    ],
+    "new_sub_fields": [
+      "筋生理学・筋収縮"
+    ],
+    "field_confidence": "high",
+    "field_reason": "骨格筋の特性（赤筋・白筋の違い・神経筋接合部の伝達）が主題"
+  },
+  {
+    "id": "58P-62",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "代謝・内分泌"
+    ],
+    "field_confidence": "high",
+    "field_reason": "下垂体前葉から分泌されるホルモン（プロラクチン等）が主題"
+  },
+  {
+    "id": "58P-63",
+    "new_fields": [
+      "⑨運動学・臨床運動学"
+    ],
+    "new_sub_fields": [
+      "骨・関節の構造と力学"
+    ],
+    "field_confidence": "low",
+    "field_reason": "視覚の特性（視神経乳頭に受容器なし・明順応の時間）に関する基礎生理が主題"
+  },
+  {
+    "id": "58P-64",
+    "new_fields": [
+      "⑨運動学・臨床運動学"
+    ],
+    "new_sub_fields": [
+      "筋生理学・筋収縮"
+    ],
+    "field_confidence": "high",
+    "field_reason": "長期有酸素運動トレーニングによる心肺機能の適応（心拍出量増加・毛細血管発達）が主題"
+  },
+  {
+    "id": "58P-65",
+    "new_fields": [
+      "②中枢神経障害"
+    ],
+    "new_sub_fields": [
+      "脳神経・自律神経"
+    ],
+    "field_confidence": "high",
+    "field_reason": "副交感神経の作用で抑制される機能（房室伝導速度）が主題"
+  },
+  {
+    "id": "58P-66",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "血液・免疫"
+    ],
+    "field_confidence": "high",
+    "field_reason": "血球の種類と機能の正しい組合せ（赤血球・リンパ球）が主題"
+  },
+  {
+    "id": "58P-67",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "消化器・肝膵胆"
+    ],
+    "field_confidence": "high",
+    "field_reason": "胃の分泌物（内因子のVB12吸収・迷走神経による胃酸促進）が主題"
+  },
+  {
+    "id": "58P-68",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "消化器・肝膵胆"
+    ],
+    "field_confidence": "high",
+    "field_reason": "排便機構の特徴（直腸収縮のアセチルコリン促進等）が主題"
+  },
+  {
+    "id": "58P-69",
+    "new_fields": [
+      "⑨運動学・臨床運動学"
+    ],
+    "new_sub_fields": [
+      "骨・関節の構造と力学"
+    ],
+    "field_confidence": "high",
+    "field_reason": "下肢の筋と作用の正しい組合せ（薄筋→膝屈曲等）が主題"
+  },
+  {
+    "id": "58P-70",
+    "new_fields": [
+      "⑨運動学・臨床運動学"
+    ],
+    "new_sub_fields": [
+      "骨・関節の構造と力学"
+    ],
+    "field_confidence": "high",
+    "field_reason": "肩甲骨外転・上方回旋を伴う肩屈曲位保持に作用する筋（前鋸筋）が主題"
+  },
+  {
+    "id": "58P-71",
+    "new_fields": [
+      "⑨運動学・臨床運動学"
+    ],
+    "new_sub_fields": [
+      "骨・関節の構造と力学"
+    ],
+    "field_confidence": "high",
+    "field_reason": "肘関節屈曲のみに作用する筋（上腕筋：他の関節をまたがない）が主題"
+  },
+  {
+    "id": "58P-72",
+    "new_fields": [
+      "⑨運動学・臨床運動学"
+    ],
+    "new_sub_fields": [
+      "骨・関節の構造と力学"
+    ],
+    "field_confidence": "high",
+    "field_reason": "安静呼吸の吸気時の胸郭変化（上部胸郭の前上方拡張）が主題"
+  },
+  {
+    "id": "58P-73",
+    "new_fields": [
+      "⑨運動学・臨床運動学"
+    ],
+    "new_sub_fields": [
+      "姿勢制御・運動制御"
+    ],
+    "field_confidence": "high",
+    "field_reason": "矢状面での立位重心線の通過点（外果前方等）が主題"
+  },
+  {
+    "id": "58P-74",
+    "new_fields": [
+      "⑨運動学・臨床運動学"
+    ],
+    "new_sub_fields": [
+      "運動学習"
+    ],
+    "field_confidence": "high",
+    "field_reason": "運動学習の効率化（基準課題との類似性・多様練習の時期）が主題"
+  },
+  {
+    "id": "58P-75",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "内部障害の評価"
+    ],
+    "field_confidence": "low",
+    "field_reason": "病因の分類（喫煙は化学的要因）に関する基礎病理が主題"
+  },
+  {
+    "id": "58P-76",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "内部障害の評価"
+    ],
+    "field_confidence": "medium",
+    "field_reason": "疾患と病因の正しい組合せ（CJD→プリオン感染）が主題"
+  },
+  {
+    "id": "58P-77",
+    "new_fields": [
+      "②中枢神経障害"
+    ],
+    "new_sub_fields": [
+      "脳血管障害"
+    ],
+    "field_confidence": "high",
+    "field_reason": "頭部CT低吸収域として描出される病態（脳梗塞慢性期）が主題"
+  },
+  {
+    "id": "58P-78",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "がん・緩和ケア"
+    ],
+    "field_confidence": "high",
+    "field_reason": "良性腫瘍と比較した悪性腫瘍の特徴（浸潤性発育）が主題"
+  },
+  {
+    "id": "58P-79",
+    "new_fields": [
+      "②中枢神経障害"
+    ],
+    "new_sub_fields": [
+      "高次脳機能障害・認知症"
+    ],
+    "field_confidence": "high",
+    "field_reason": "即時記憶の評価方法（数字の順唱）が主題"
+  },
+  {
+    "id": "58P-80",
+    "new_fields": [
+      "⑩リハ概論・統計学"
+    ],
+    "new_sub_fields": [
+      "研究デザイン・統計"
+    ],
+    "field_confidence": "medium",
+    "field_reason": "日本の自殺死亡率の年齢階級別分布に関する疫学統計が主題"
+  },
+  {
+    "id": "58P-81",
+    "new_fields": [
+      "⑧精神医学・臨床心理"
+    ],
+    "new_sub_fields": [
+      "心理検査・心理療法"
+    ],
+    "field_confidence": "high",
+    "field_reason": "Eriksonの心理社会的発達段階における成人前期の課題（親密性）が主題"
+  },
+  {
+    "id": "58P-82",
+    "new_fields": [
+      "②中枢神経障害"
+    ],
+    "new_sub_fields": [
+      "中枢神経障害のADL"
+    ],
+    "field_confidence": "high",
+    "field_reason": "脳卒中患者の歩行自立に関連が最も少ない因子（失語症）が主題"
+  },
+  {
+    "id": "58P-83",
+    "new_fields": [
+      "①運動器障害"
+    ],
+    "new_sub_fields": [
+      "脊髄損傷"
+    ],
+    "field_confidence": "high",
+    "field_reason": "C6頸髄損傷完全麻痺での残存上肢機能（手関節背屈・肘屈曲）が主題"
+  },
+  {
+    "id": "58P-84",
+    "new_fields": [
+      "②中枢神経障害"
+    ],
+    "new_sub_fields": [
+      "ALS・SCD・GBS・MS"
+    ],
+    "field_confidence": "high",
+    "field_reason": "痙縮が出現し得る疾患（多発性硬化症：上位運動ニューロン障害）が主題"
+  },
+  {
+    "id": "58P-85",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "呼吸器疾患"
+    ],
+    "field_confidence": "high",
+    "field_reason": "Ⅰ型とⅡ型呼吸不全の違い（肺胞気-動脈血酸素分圧較差がⅠ型で増加）が主題"
+  },
+  {
+    "id": "58P-86",
+    "new_fields": [
+      "⑪小児・人間発達"
+    ],
+    "new_sub_fields": [
+      "正常発達過程"
+    ],
+    "field_confidence": "high",
+    "field_reason": "遠城寺式発達検査での生後12か月以前に観察される発達項目が主題"
+  },
+  {
+    "id": "58P-87",
+    "new_fields": [
+      "⑩リハ概論・統計学"
+    ],
+    "new_sub_fields": [
+      "ICF・リハの概念・法律"
+    ],
+    "field_confidence": "high",
+    "field_reason": "ICFの「参加」の評価に最も関連する情報（職業適性）が主題"
+  },
+  {
+    "id": "58P-88",
+    "new_fields": [
+      "①運動器障害"
+    ],
+    "new_sub_fields": [
+      "炎症性・代謝性骨関節疾患"
+    ],
+    "field_confidence": "high",
+    "field_reason": "関節リウマチで起こりにくい変形（フォーク状変形はColles骨折後）が主題"
+  },
+  {
+    "id": "58P-89",
+    "new_fields": [
+      "①運動器障害"
+    ],
+    "new_sub_fields": [
+      "末梢神経損傷"
+    ],
+    "field_confidence": "high",
+    "field_reason": "CRPS type I（反射性交感神経性ジストロフィー）に分類される疾患が主題"
+  },
+  {
+    "id": "58P-90",
+    "new_fields": [
+      "②中枢神経障害"
+    ],
+    "new_sub_fields": [
+      "脳血管障害"
+    ],
+    "field_confidence": "high",
+    "field_reason": "脳梗塞の特徴（心房細動が脳塞栓の原因となる）が主題"
+  },
+  {
+    "id": "58P-91",
+    "new_fields": [
+      "①運動器障害"
+    ],
+    "new_sub_fields": [
+      "末梢神経損傷"
+    ],
+    "field_confidence": "high",
+    "field_reason": "手根管症候群（正中神経障害）の典型的所見（猿手変形）が主題"
+  },
+  {
+    "id": "58P-92",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "循環器疾患"
+    ],
+    "field_confidence": "high",
+    "field_reason": "血管疾患と関連因子の誤った組合せ（結節性多発動脈炎と糖尿病）が主題"
+  },
+  {
+    "id": "58P-93",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "腎・泌尿器"
+    ],
+    "field_confidence": "high",
+    "field_reason": "腎疾患と原因の正しい組合せ（慢性腎不全→糖尿病）が主題"
+  },
+  {
+    "id": "58P-94",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "呼吸器疾患"
+    ],
+    "field_confidence": "high",
+    "field_reason": "気管支喘息の治療薬（ステロイド）の選択が主題"
+  },
+  {
+    "id": "58P-95",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "循環器疾患"
+    ],
+    "field_confidence": "high",
+    "field_reason": "大動脈解離の続発症の誤り（三尖弁閉鎖不全→大動脈弁が正しい）が主題"
+  },
+  {
+    "id": "58P-96",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "血液・免疫"
+    ],
+    "field_confidence": "high",
+    "field_reason": "全身性エリテマトーデス（SLE）にみられにくい症状（音声チック）が主題"
+  },
+  {
+    "id": "58P-97",
+    "new_fields": [
+      "⑪小児・人間発達"
+    ],
+    "new_sub_fields": [
+      "染色体異常・遺伝性疾患"
+    ],
+    "field_confidence": "high",
+    "field_reason": "精神遅滞（知的障害）の原因とならない疾患（Wallenberg症候群）が主題"
+  },
+  {
+    "id": "58P-98",
+    "new_fields": [
+      "⑧精神医学・臨床心理"
+    ],
+    "new_sub_fields": [
+      "統合失調症・気分障害"
+    ],
+    "field_confidence": "high",
+    "field_reason": "奇異な考え方・親密な関係困難を特徴とするパーソナリティ障害（統合失調型）が主題"
+  },
+  {
+    "id": "58P-99",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "血液・免疫"
+    ],
+    "field_confidence": "high",
+    "field_reason": "鉄欠乏性貧血に合併しやすい睡眠障害（むずむず脚症候群）が主題"
+  },
+  {
+    "id": "58P-100",
+    "new_fields": [
+      "⑧精神医学・臨床心理"
+    ],
+    "new_sub_fields": [
+      "てんかん・摂食障害"
+    ],
+    "field_confidence": "high",
+    "field_reason": "神経性無食欲症で生じやすい身体合併症（高コレステロール血症）が主題"
+  },
+  {
+    "id": "59A-1",
+    "new_fields": [
+      "①運動器障害"
+    ],
+    "new_sub_fields": [
+      "スポーツ障害"
+    ],
+    "field_confidence": "high",
+    "field_reason": "バドミントン選手への膝前十字靱帯損傷予防指導（着地時の膝内反防止）が主題"
+  },
+  {
+    "id": "59A-2",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "ICU・急性期"
+    ],
+    "field_confidence": "high",
+    "field_reason": "骨折術後の下腿腫脹・DVT疑いへの緊急検査（Dダイマー）が主題"
+  },
+  {
+    "id": "59A-3",
+    "new_fields": [
+      "②中枢神経障害"
+    ],
+    "new_sub_fields": [
+      "脳血管障害"
+    ],
+    "field_confidence": "high",
+    "field_reason": "突然の片麻痺・CT高吸収域から脳出血の診断が主題"
+  },
+  {
+    "id": "59A-4",
+    "new_fields": [
+      "①運動器障害"
+    ],
+    "new_sub_fields": [
+      "運動器疾患の評価"
+    ],
+    "field_confidence": "high",
+    "field_reason": "半月板損傷疑い（McMurrayテスト陽性）に対する確定診断のための検査（MRI）が主題"
+  },
+  {
+    "id": "59A-5",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "内部障害の評価"
+    ],
+    "field_confidence": "high",
+    "field_reason": "心肺運動負荷試験（CPX）でのATから適切な運動強度（約4METs）を求める問題"
+  },
+  {
+    "id": "59A-6",
+    "new_fields": [
+      "②中枢神経障害"
+    ],
+    "new_sub_fields": [
+      "神経基礎・機能解剖"
+    ],
+    "field_confidence": "high",
+    "field_reason": "脛骨内縁をこすりおろす検査（Oppenheim反射）の特定が主題"
+  },
+  {
+    "id": "59A-7",
+    "new_fields": [
+      "③理学療法評価学"
+    ],
+    "new_sub_fields": [
+      "ROM測定"
+    ],
+    "field_confidence": "high",
+    "field_reason": "肩関節の正しいROM測定方法（図示の検査の特定）が主題"
+  },
+  {
+    "id": "59A-8",
+    "new_fields": [
+      "③理学療法評価学"
+    ],
+    "new_sub_fields": [
+      "筋力検査（MMT）"
+    ],
+    "field_confidence": "high",
+    "field_reason": "図示されたMMTテスト方法の正しい記述の選択が主題"
+  },
+  {
+    "id": "59A-9",
+    "new_fields": [
+      "②中枢神経障害"
+    ],
+    "new_sub_fields": [
+      "高次脳機能障害・認知症"
+    ],
+    "field_confidence": "high",
+    "field_reason": "脳挫傷後の前頭葉症状（脱抑制・自己中心的）への評価（FAB）が主題"
+  },
+  {
+    "id": "59A-10",
+    "new_fields": [
+      "⑦ADL・地域リハ"
+    ],
+    "new_sub_fields": [
+      "ADL評価（BI・FIM）"
+    ],
+    "field_confidence": "high",
+    "field_reason": "変形性膝関節症患者のFIM合計点の計算（T字杖使用2項目=6点×2、他は7点）が主題"
+  },
+  {
+    "id": "59A-11",
+    "new_fields": [
+      "⑤義肢装具学"
+    ],
+    "new_sub_fields": [
+      "義肢装具の適合評価"
+    ],
+    "field_confidence": "high",
+    "field_reason": "下腿切断義足歩行での踵接地後の急激な膝屈曲の原因が主題"
+  },
+  {
+    "id": "59A-12",
+    "new_fields": [
+      "⑦ADL・地域リハ"
+    ],
+    "new_sub_fields": [
+      "基本動作・移乗動作"
+    ],
+    "field_confidence": "medium",
+    "field_reason": "労働災害予防を目的とした正しい作業姿勢（腰部への負担が少ない）が主題"
+  },
+  {
+    "id": "59A-13",
+    "new_fields": [
+      "①運動器障害"
+    ],
+    "new_sub_fields": [
+      "末梢神経損傷"
+    ],
+    "field_confidence": "high",
+    "field_reason": "前腕打撲後の手指伸展困難（後骨間神経損傷）の特定が主題"
+  },
+  {
+    "id": "59A-14",
+    "new_fields": [
+      "⑪小児・人間発達"
+    ],
+    "new_sub_fields": [
+      "小児疾患の評価"
+    ],
+    "field_confidence": "high",
+    "field_reason": "二分脊椎児の歩行様式からSharrard分類の上限を推定する問題"
+  },
+  {
+    "id": "59A-15",
+    "new_fields": [
+      "①運動器障害"
+    ],
+    "new_sub_fields": [
+      "術後リハ"
+    ],
+    "field_confidence": "high",
+    "field_reason": "変形性膝関節症骨切り術後の骨癒合促進療法（超音波療法）が主題"
+  },
+  {
+    "id": "59A-16",
+    "new_fields": [
+      "⑪小児・人間発達"
+    ],
+    "new_sub_fields": [
+      "脳性麻痺"
+    ],
+    "field_confidence": "high",
+    "field_reason": "アテトーゼ型脳性麻痺2歳児への最も必要な補装具（座位保持装置）が主題"
+  },
+  {
+    "id": "59A-17",
+    "new_fields": [
+      "①運動器障害"
+    ],
+    "new_sub_fields": [
+      "術後リハ"
+    ],
+    "field_confidence": "high",
+    "field_reason": "足関節手術後の理学療法（外固定除去後に足指ROM練習開始）が主題"
+  },
+  {
+    "id": "59A-18",
+    "new_fields": [
+      "②中枢神経障害"
+    ],
+    "new_sub_fields": [
+      "中枢神経障害のADL"
+    ],
+    "field_confidence": "high",
+    "field_reason": "左片麻痺の平行棒立位での重心偏位改善（前方の鏡による視覚フィードバック）が主題"
+  },
+  {
+    "id": "59A-19",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "呼吸器疾患"
+    ],
+    "field_confidence": "high",
+    "field_reason": "胸部エックス線写真の読影（肺葉切除術後の画像所見）が主題"
+  },
+  {
+    "id": "59A-20",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "がん・緩和ケア"
+    ],
+    "field_confidence": "high",
+    "field_reason": "乳がん周術期の活動能力評価（KPS：Karnofsky Performance Status）が主題"
+  },
+  {
+    "id": "59A-21",
+    "new_fields": [
+      "⑩リハ概論・統計学"
+    ],
+    "new_sub_fields": [
+      "研究デザイン・統計"
+    ],
+    "field_confidence": "high",
+    "field_reason": "対応あり・非正規分布の2群比較に適した検定（Wilcoxon符号付順位検定）が主題"
+  },
+  {
+    "id": "59A-22",
+    "new_fields": [
+      "⑩リハ概論・統計学"
+    ],
+    "new_sub_fields": [
+      "ICF・リハの概念・法律"
+    ],
+    "field_confidence": "high",
+    "field_reason": "二次予防の定義と正しい例（生活期の脳血管疾患患者への運動指導）が主題"
+  },
+  {
+    "id": "59A-23",
+    "new_fields": [
+      "⑨運動学・臨床運動学"
+    ],
+    "new_sub_fields": [
+      "筋生理学・筋収縮"
+    ],
+    "field_confidence": "high",
+    "field_reason": "筋収縮の機序（神経支配比は各筋で異なる）が主題"
+  },
+  {
+    "id": "59A-24",
+    "new_fields": [
+      "②中枢神経障害"
+    ],
+    "new_sub_fields": [
+      "高次脳機能障害・認知症"
+    ],
+    "field_confidence": "high",
+    "field_reason": "記憶の種類と課題の正しい組合せ（暗算→ワーキングメモリー）が主題"
+  },
+  {
+    "id": "59A-25",
+    "new_fields": [
+      "⑩リハ概論・統計学"
+    ],
+    "new_sub_fields": [
+      "医療倫理・チーム医療"
+    ],
+    "field_confidence": "high",
+    "field_reason": "インフォームドコンセントの正しい概念（患者の自己決定権の保障）が主題"
+  },
+  {
+    "id": "59A-26",
+    "new_fields": [
+      "⑩リハ概論・統計学"
+    ],
+    "new_sub_fields": [
+      "医療倫理・チーム医療"
+    ],
+    "field_confidence": "high",
+    "field_reason": "標準予防策の正しい実施（患者周囲の物品接触後の手指衛生）が主題"
+  },
+  {
+    "id": "59A-27",
+    "new_fields": [
+      "③理学療法評価学"
+    ],
+    "new_sub_fields": [
+      "ROM測定"
+    ],
+    "field_confidence": "high",
+    "field_reason": "下肢ROM測定の原則（外反・内反は変形を意味するため使用しない）が主題"
+  },
+  {
+    "id": "59A-28",
+    "new_fields": [
+      "②中枢神経障害"
+    ],
+    "new_sub_fields": [
+      "高次脳機能障害・認知症"
+    ],
+    "field_confidence": "high",
+    "field_reason": "認知症の中核症状とBPSD（周辺症状）の区別（夜間徘徊=周辺症状）が主題"
+  },
+  {
+    "id": "59A-29",
+    "new_fields": [
+      "⑩リハ概論・統計学"
+    ],
+    "new_sub_fields": [
+      "ICF・リハの概念・法律"
+    ],
+    "field_confidence": "high",
+    "field_reason": "ICFの特徴（倫理的ガイドラインの存在・分類対象は全人間）が主題"
+  },
+  {
+    "id": "59A-30",
+    "new_fields": [
+      "⑤義肢装具学"
+    ],
+    "new_sub_fields": [
+      "下肢装具"
+    ],
+    "field_confidence": "high",
+    "field_reason": "関節リウマチの槌指による中足骨頭部疼痛に対する装具（メタタルザルパッド）が主題"
+  },
+  {
+    "id": "59A-31",
+    "new_fields": [
+      "①運動器障害"
+    ],
+    "new_sub_fields": [
+      "関節疾患"
+    ],
+    "field_confidence": "high",
+    "field_reason": "変形性股関節症でみられる特徴的徴候（Trendelenburg徴候）が主題"
+  },
+  {
+    "id": "59A-32",
+    "new_fields": [
+      "①運動器障害"
+    ],
+    "new_sub_fields": [
+      "運動器疾患の評価"
+    ],
+    "field_confidence": "high",
+    "field_reason": "股関節屈曲拘縮を評価する整形外科的テスト（Thomasテスト）が主題"
+  },
+  {
+    "id": "59A-33",
+    "new_fields": [
+      "②中枢神経障害"
+    ],
+    "new_sub_fields": [
+      "中枢神経障害の評価"
+    ],
+    "field_confidence": "high",
+    "field_reason": "SIAS（脳卒中機能評価法）に含まれる評価項目（視空間認知）が主題"
+  },
+  {
+    "id": "59A-34",
+    "new_fields": [
+      "②中枢神経障害"
+    ],
+    "new_sub_fields": [
+      "パーキンソン病"
+    ],
+    "field_confidence": "high",
+    "field_reason": "パーキンソン病の特徴的症状（安静時振戦）が主題"
+  },
+  {
+    "id": "59A-35",
+    "new_fields": [
+      "②中枢神経障害"
+    ],
+    "new_sub_fields": [
+      "ALS・SCD・GBS・MS"
+    ],
+    "field_confidence": "high",
+    "field_reason": "筋萎縮性側索硬化症（ALS）の特徴（四肢遠位の筋萎縮）が主題"
+  },
+  {
+    "id": "59A-36",
+    "new_fields": [
+      "①運動器障害"
+    ],
+    "new_sub_fields": [
+      "熱傷"
+    ],
+    "field_confidence": "high",
+    "field_reason": "熱傷後の皮膚と植皮（感染を伴うと生着が阻害される）が主題"
+  },
+  {
+    "id": "59A-37",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "ICU・急性期"
+    ],
+    "field_confidence": "high",
+    "field_reason": "気管切開患者への痰吸引の正しい方法（無菌操作・適切な深さ）が主題"
+  },
+  {
+    "id": "59A-38",
+    "new_fields": [
+      "⑤義肢装具学"
+    ],
+    "new_sub_fields": [
+      "切断術後管理"
+    ],
+    "field_confidence": "high",
+    "field_reason": "大腿切断後の股関節屈曲拘縮予防に適した肢位（腹臥位）が主題"
+  },
+  {
+    "id": "59A-39",
+    "new_fields": [
+      "⑤義肢装具学"
+    ],
+    "new_sub_fields": [
+      "下肢装具"
+    ],
+    "field_confidence": "high",
+    "field_reason": "下肢の異常と金属支柱付き短下肢装具の足継手設定の正しい組合せが主題"
+  },
+  {
+    "id": "59A-40",
+    "new_fields": [
+      "⑩リハ概論・統計学"
+    ],
+    "new_sub_fields": [
+      "医療倫理・チーム医療"
+    ],
+    "field_confidence": "high",
+    "field_reason": "成人の心肺停止に対する適切な胸骨圧迫回数（100〜120回/分）が主題"
+  },
+  {
+    "id": "59A-41",
+    "new_fields": [
+      "⑦ADL・地域リハ"
+    ],
+    "new_sub_fields": [
+      "地域リハ・介護保険・災害"
+    ],
+    "field_confidence": "high",
+    "field_reason": "介護保険の特定福祉用具販売品目（スライディングボード）の選択が主題"
+  },
+  {
+    "id": "59A-42",
+    "new_fields": [
+      "①運動器障害"
+    ],
+    "new_sub_fields": [
+      "スポーツ障害"
+    ],
+    "field_confidence": "high",
+    "field_reason": "アキレス腱周囲炎の特徴と治療（踵補高の足底板）が主題"
+  },
+  {
+    "id": "59A-43",
+    "new_fields": [
+      "②中枢神経障害"
+    ],
+    "new_sub_fields": [
+      "パーキンソン病"
+    ],
+    "field_confidence": "high",
+    "field_reason": "パーキンソン病の治療で適切でないもの（ボツリヌス毒素は痙縮に使用、PD適応外）が主題"
+  },
+  {
+    "id": "59A-44",
+    "new_fields": [
+      "②中枢神経障害"
+    ],
+    "new_sub_fields": [
+      "多発性筋炎・重症筋無力症"
+    ],
+    "field_confidence": "high",
+    "field_reason": "重症筋無力症のQMGスコアに含まれる評価項目（嚥下機能・眼球運動）が主題"
+  },
+  {
+    "id": "59A-45",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "老年期・フレイル"
+    ],
+    "field_confidence": "high",
+    "field_reason": "フレイルの判定要件（歩行距離でなく歩行速度が正しい）が主題"
+  },
+  {
+    "id": "59A-46",
+    "new_fields": [
+      "⑩リハ概論・統計学"
+    ],
+    "new_sub_fields": [
+      "ICF・リハの概念・法律"
+    ],
+    "field_confidence": "high",
+    "field_reason": "IL（Independent Living）運動の特徴（障害者の自己決定促進）が主題"
+  },
+  {
+    "id": "59A-47",
+    "new_fields": [
+      "⑩リハ概論・統計学"
+    ],
+    "new_sub_fields": [
+      "研究デザイン・統計"
+    ],
+    "field_confidence": "high",
+    "field_reason": "QOL評価尺度（SF-36）の選択が主題"
+  },
+  {
+    "id": "59A-48",
+    "new_fields": [
+      "②中枢神経障害"
+    ],
+    "new_sub_fields": [
+      "ALS・SCD・GBS・MS"
+    ],
+    "field_confidence": "high",
+    "field_reason": "脊髄小脳変性症の特徴（Frenkel体操の有効性・評価スケールSARA）が主題"
+  },
+  {
+    "id": "59A-49",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "呼吸器疾患"
+    ],
+    "field_confidence": "high",
+    "field_reason": "間質性肺疾患患者への理学療法（吸気筋トレーニングが最も適切）が主題"
+  },
+  {
+    "id": "59A-50",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "内部障害の評価"
+    ],
+    "field_confidence": "high",
+    "field_reason": "NSAIDsの主な副作用（胃潰瘍）が主題"
+  },
+  {
+    "id": "59A-51",
+    "new_fields": [
+      "⑨運動学・臨床運動学"
+    ],
+    "new_sub_fields": [
+      "骨・関節の構造と力学"
+    ],
+    "field_confidence": "low",
+    "field_reason": "外胚葉から発生する器官（松果体）に関する基礎発生学が主題"
+  },
+  {
+    "id": "59A-52",
+    "new_fields": [
+      "⑨運動学・臨床運動学"
+    ],
+    "new_sub_fields": [
+      "筋生理学・筋収縮"
+    ],
+    "field_confidence": "high",
+    "field_reason": "筋節においてミオシンフィラメントが存在する帯（A帯・筋節全体）が主題"
+  },
+  {
+    "id": "59A-53",
+    "new_fields": [
+      "⑨運動学・臨床運動学"
+    ],
+    "new_sub_fields": [
+      "骨・関節の構造と力学"
+    ],
+    "field_confidence": "high",
+    "field_reason": "肩甲背神経に支配される筋（肩甲挙筋・菱形筋）の解剖が主題"
+  },
+  {
+    "id": "59A-54",
+    "new_fields": [
+      "②中枢神経障害"
+    ],
+    "new_sub_fields": [
+      "脳神経・自律神経"
+    ],
+    "field_confidence": "high",
+    "field_reason": "脳神経と支配筋の正しい組合せ（三叉神経→咬筋・顔面神経→広頸筋）が主題"
+  },
+  {
+    "id": "59A-55",
+    "new_fields": [
+      "②中枢神経障害"
+    ],
+    "new_sub_fields": [
+      "神経基礎・機能解剖"
+    ],
+    "field_confidence": "high",
+    "field_reason": "ドーパミンが主な神経伝達物質として働く部位（黒質）が主題"
+  },
+  {
+    "id": "59A-56",
+    "new_fields": [
+      "②中枢神経障害"
+    ],
+    "new_sub_fields": [
+      "脳神経・自律神経"
+    ],
+    "field_confidence": "high",
+    "field_reason": "反回神経（迷走神経の枝）の特徴（左側は右側より走行が長い）が主題"
+  },
+  {
+    "id": "59A-57",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "循環器疾患"
+    ],
+    "field_confidence": "high",
+    "field_reason": "左右一対ある脳血管（総頸動脈・椎骨動脈）の解剖が主題"
+  },
+  {
+    "id": "59A-58",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "呼吸器疾患"
+    ],
+    "field_confidence": "high",
+    "field_reason": "呼吸器の構造（気管支は下気道に含まれる）が主題"
+  },
+  {
+    "id": "59A-59",
+    "new_fields": [
+      "⑨運動学・臨床運動学"
+    ],
+    "new_sub_fields": [
+      "骨・関節の構造と力学"
+    ],
+    "field_confidence": "low",
+    "field_reason": "視覚器の構造（毛様体小体・水晶体の調節機構）に関する解剖が主題"
+  },
+  {
+    "id": "59A-60",
+    "new_fields": [
+      "⑨運動学・臨床運動学"
+    ],
+    "new_sub_fields": [
+      "骨・関節の構造と力学"
+    ],
+    "field_confidence": "high",
+    "field_reason": "前腕の筋の走行（腕橈骨筋のすぐ尺側=長橈側手根伸筋）の解剖が主題"
+  },
+  {
+    "id": "59A-61",
+    "new_fields": [
+      "②中枢神経障害"
+    ],
+    "new_sub_fields": [
+      "神経基礎・機能解剖"
+    ],
+    "field_confidence": "high",
+    "field_reason": "伸張反射の機序（求心性線維はIa群線維、単シナプス反射）が主題"
+  },
+  {
+    "id": "59A-62",
+    "new_fields": [
+      "⑨運動学・臨床運動学"
+    ],
+    "new_sub_fields": [
+      "筋生理学・筋収縮"
+    ],
+    "field_confidence": "high",
+    "field_reason": "運動単位の特性（動員の概念・1運動ニューロンで全支配筋線維が同時収縮）が主題"
+  },
+  {
+    "id": "59A-63",
+    "new_fields": [
+      "②中枢神経障害"
+    ],
+    "new_sub_fields": [
+      "脳神経・自律神経"
+    ],
+    "field_confidence": "high",
+    "field_reason": "副交感神経線維を含む神経（骨盤神経）の選択が主題"
+  },
+  {
+    "id": "59A-64",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "呼吸器疾患"
+    ],
+    "field_confidence": "high",
+    "field_reason": "肺拡散能に影響する因子（ヘモグロビン量・肺胞表面積）が主題"
+  },
+  {
+    "id": "59A-65",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "血液・免疫"
+    ],
+    "field_confidence": "high",
+    "field_reason": "線維素溶解系（線溶系）で働く因子（プラスミノゲン）が主題"
+  },
+  {
+    "id": "59A-66",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "血液・免疫"
+    ],
+    "field_confidence": "high",
+    "field_reason": "免疫グロブリンの特性（IgGは胎盤透過する）が主題"
+  },
+  {
+    "id": "59A-67",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "消化器・肝膵胆"
+    ],
+    "field_confidence": "high",
+    "field_reason": "肝臓の機能（尿素生成・薬物代謝）の正しい組合せが主題"
+  },
+  {
+    "id": "59A-68",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "代謝・内分泌"
+    ],
+    "field_confidence": "high",
+    "field_reason": "同一臓器から分泌されるホルモンの組合せ（バソプレシン・オキシトシン→下垂体後葉）が主題"
+  },
+  {
+    "id": "59A-69",
+    "new_fields": [
+      "⑨運動学・臨床運動学"
+    ],
+    "new_sub_fields": [
+      "筋生理学・筋収縮"
+    ],
+    "field_confidence": "high",
+    "field_reason": "エネルギー代謝の指標（RMRは安静時代謝量を基準とする）が主題"
+  },
+  {
+    "id": "59A-70",
+    "new_fields": [
+      "⑨運動学・臨床運動学"
+    ],
+    "new_sub_fields": [
+      "骨・関節の構造と力学"
+    ],
+    "field_confidence": "high",
+    "field_reason": "咀嚼筋と下顎の運動の正しい組合せ（外側翼突筋→前突）が主題"
+  },
+  {
+    "id": "59A-71",
+    "new_fields": [
+      "⑨運動学・臨床運動学"
+    ],
+    "new_sub_fields": [
+      "骨・関節の構造と力学"
+    ],
+    "field_confidence": "high",
+    "field_reason": "手の関節の運動学（橈骨手根関節の運動軸は2つ）が主題"
+  },
+  {
+    "id": "59A-72",
+    "new_fields": [
+      "⑨運動学・臨床運動学"
+    ],
+    "new_sub_fields": [
+      "骨・関節の構造と力学"
+    ],
+    "field_confidence": "high",
+    "field_reason": "足関節の機能解剖（ヒラメ筋は内がえし・足根中足関節の主な運動は滑り）が主題"
+  },
+  {
+    "id": "59A-73",
+    "new_fields": [
+      "⑨運動学・臨床運動学"
+    ],
+    "new_sub_fields": [
+      "骨・関節の構造と力学"
+    ],
+    "field_confidence": "high",
+    "field_reason": "片側の筋収縮による体幹運動（外腹斜筋→対側への回旋）が主題"
+  },
+  {
+    "id": "59A-74",
+    "new_fields": [
+      "⑨運動学・臨床運動学"
+    ],
+    "new_sub_fields": [
+      "正常歩行分析"
+    ],
+    "field_confidence": "high",
+    "field_reason": "健常成人の歩行で重心が最も高くなる時期（立脚中期）が主題"
+  },
+  {
+    "id": "59A-75",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "内部障害の評価"
+    ],
+    "field_confidence": "low",
+    "field_reason": "病因の分類（アスベスト=化学的要因）に関する基礎病理が主題"
+  },
+  {
+    "id": "59A-76",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "ICU・急性期"
+    ],
+    "field_confidence": "high",
+    "field_reason": "末梢血管抵抗が低下するショック（アナフィラキシー・敗血症=distributive shock）が主題"
+  },
+  {
+    "id": "59A-77",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "腎・泌尿器"
+    ],
+    "field_confidence": "high",
+    "field_reason": "咳（腹圧上昇）で生じる尿失禁の種類（腹圧性尿失禁）が主題"
+  },
+  {
+    "id": "59A-78",
+    "new_fields": [
+      "⑧精神医学・臨床心理"
+    ],
+    "new_sub_fields": [
+      "心理検査・心理療法"
+    ],
+    "field_confidence": "high",
+    "field_reason": "左右対称のインクのシミを使用した投影法検査（Rorschachテスト）が主題"
+  },
+  {
+    "id": "59A-79",
+    "new_fields": [
+      "⑧精神医学・臨床心理"
+    ],
+    "new_sub_fields": [
+      "心理検査・心理療法"
+    ],
+    "field_confidence": "high",
+    "field_reason": "転移の種類（陽性転移=患者が医療者に好意を寄せる）が主題"
+  },
+  {
+    "id": "59A-80",
+    "new_fields": [
+      "⑧精神医学・臨床心理"
+    ],
+    "new_sub_fields": [
+      "心理検査・心理療法"
+    ],
+    "field_confidence": "high",
+    "field_reason": "モデリング法（他者の模範行動を観察して自らの行動変容をきたす技法）が主題"
+  },
+  {
+    "id": "59A-81",
+    "new_fields": [
+      "⑧精神医学・臨床心理"
+    ],
+    "new_sub_fields": [
+      "心理検査・心理療法"
+    ],
+    "field_confidence": "high",
+    "field_reason": "技法としてホームワーク（宿題）を用いる精神療法（認知行動療法）が主題"
+  },
+  {
+    "id": "59A-82",
+    "new_fields": [
+      "⑦ADL・地域リハ"
+    ],
+    "new_sub_fields": [
+      "ADL評価（BI・FIM）"
+    ],
+    "field_confidence": "high",
+    "field_reason": "ADL（日常生活活動）の概念（環境要因によって影響を受ける）が主題"
+  },
+  {
+    "id": "59A-83",
+    "new_fields": [
+      "⑪小児・人間発達"
+    ],
+    "new_sub_fields": [
+      "正常発達過程"
+    ],
+    "field_confidence": "high",
+    "field_reason": "JDDST-Rでの母指と示指によるつまみ動作の75%通過時期が主題"
+  },
+  {
+    "id": "59A-84",
+    "new_fields": [
+      "②中枢神経障害"
+    ],
+    "new_sub_fields": [
+      "中枢神経障害のADL"
+    ],
+    "field_confidence": "high",
+    "field_reason": "脳卒中回復期の嚥下障害に対する栄養管理（経鼻胃管の長期管理への不適）が主題"
+  },
+  {
+    "id": "59A-85",
+    "new_fields": [
+      "⑪小児・人間発達"
+    ],
+    "new_sub_fields": [
+      "正常発達過程"
+    ],
+    "field_confidence": "high",
+    "field_reason": "出生時に出現していない反射（対称性緊張性頸反射）の選択が主題"
+  },
+  {
+    "id": "59A-86",
+    "new_fields": [
+      "②中枢神経障害"
+    ],
+    "new_sub_fields": [
+      "脳血管障害"
+    ],
+    "field_confidence": "high",
+    "field_reason": "頭部MRI（拡散強調画像が急性期脳梗塞診断に有用）が主題"
+  },
+  {
+    "id": "59A-87",
+    "new_fields": [
+      "⑩リハ概論・統計学"
+    ],
+    "new_sub_fields": [
+      "医療倫理・チーム医療"
+    ],
+    "field_confidence": "high",
+    "field_reason": "AEDの正しい使用方法（ペースメーカー植込み患者も使用可）が主題"
+  },
+  {
+    "id": "59A-88",
+    "new_fields": [
+      "⑦ADL・地域リハ"
+    ],
+    "new_sub_fields": [
+      "基本動作・移乗動作"
+    ],
+    "field_confidence": "high",
+    "field_reason": "背臥位での褥瘡好発部位（踵部・仙骨部）が主題"
+  },
+  {
+    "id": "59A-89",
+    "new_fields": [
+      "①運動器障害"
+    ],
+    "new_sub_fields": [
+      "脊髄損傷"
+    ],
+    "field_confidence": "high",
+    "field_reason": "外傷性脊髄損傷の疫学（交通事故が最多原因）が主題"
+  },
+  {
+    "id": "59A-90",
+    "new_fields": [
+      "①運動器障害"
+    ],
+    "new_sub_fields": [
+      "炎症性・代謝性骨関節疾患"
+    ],
+    "field_confidence": "high",
+    "field_reason": "骨粗鬆症の特徴（続発性より原発性が多い）が主題"
+  },
+  {
+    "id": "59A-91",
+    "new_fields": [
+      "②中枢神経障害"
+    ],
+    "new_sub_fields": [
+      "中枢神経障害の評価"
+    ],
+    "field_confidence": "high",
+    "field_reason": "脳卒中患者の身体機能評価に用いる評価尺度（NIHSS・SIAS）が主題"
+  },
+  {
+    "id": "59A-92",
+    "new_fields": [
+      "①運動器障害"
+    ],
+    "new_sub_fields": [
+      "末梢神経損傷"
+    ],
+    "field_confidence": "high",
+    "field_reason": "手根管症候群（正中神経障害）の症候（母指球筋の萎縮・猿手）が主題"
+  },
+  {
+    "id": "59A-93",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "代謝・内分泌"
+    ],
+    "field_confidence": "high",
+    "field_reason": "ケトアシドーシスでのKussmaul呼吸の機序（CO2排出によるpH補正）が主題"
+  },
+  {
+    "id": "59A-94",
+    "new_fields": [
+      "④内部障害"
+    ],
+    "new_sub_fields": [
+      "循環器疾患"
+    ],
+    "field_confidence": "high",
+    "field_reason": "急性心筋梗塞の診断検査の優先度（心筋シンチは最も優先度低）が主題"
+  },
+  {
+    "id": "59A-95",
+    "new_fields": [
+      "②中枢神経障害"
+    ],
+    "new_sub_fields": [
+      "高次脳機能障害・認知症"
+    ],
+    "field_confidence": "high",
+    "field_reason": "Lewy小体型認知症の早期症状（幻視）が主題"
+  },
+  {
+    "id": "59A-96",
+    "new_fields": [
+      "⑧精神医学・臨床心理"
+    ],
+    "new_sub_fields": [
+      "統合失調症・気分障害"
+    ],
+    "field_confidence": "high",
+    "field_reason": "統合失調症の予後に関わる因子（若年発症は予後が悪い）が主題"
+  },
+  {
+    "id": "59A-97",
+    "new_fields": [
+      "⑧精神医学・臨床心理"
+    ],
+    "new_sub_fields": [
+      "神経症"
+    ],
+    "field_confidence": "high",
+    "field_reason": "全般性不安障害の特徴（女性に多い・慢性化しやすい）が主題"
+  },
+  {
+    "id": "59A-98",
+    "new_fields": [
+      "⑧精神医学・臨床心理"
+    ],
+    "new_sub_fields": [
+      "てんかん・摂食障害"
+    ],
+    "field_confidence": "high",
+    "field_reason": "ミオクロニー発作の特徴（光刺激で誘発・意識消失は少ない）が主題"
+  },
+  {
+    "id": "59A-99",
+    "new_fields": [
+      "⑧精神医学・臨床心理"
+    ],
+    "new_sub_fields": [
+      "統合失調症・気分障害"
+    ],
+    "field_confidence": "low",
+    "field_reason": "ノンレム睡眠の特徴（成人の睡眠の大半を占める・夢は見ない）が主題"
+  },
+  {
+    "id": "59A-100",
+    "new_fields": [
+      "⑧精神医学・臨床心理"
+    ],
+    "new_sub_fields": [
+      "統合失調症・気分障害"
+    ],
+    "field_confidence": "high",
+    "field_reason": "うつ病患者への睡眠衛生指導（一定時刻に起床・規則的な睡眠習慣）が主題"
+  }
+]
