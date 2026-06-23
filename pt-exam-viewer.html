@@ -2403,6 +2403,10 @@
 
       <div class="filter-section">
         <h3>試験回</h3>
+        <div style="display:flex;gap:4px;margin-bottom:4px;">
+          <button class="qcheck-btn" onclick="_sessSelectAll()">全選択</button>
+          <button class="qcheck-btn" onclick="_sessDeselectAll()">全解除</button>
+        </div>
         <div class="checkbox-list" id="sessionList"></div>
       </div>
 
@@ -2834,6 +2838,14 @@
   }
   function _qSelectAll()   { _uncheckedIds.clear(); renderPage(); _updateCheckBar(); }
   function _qDeselectAll() { filteredData.forEach(q => _uncheckedIds.add(q.id)); renderPage(); _updateCheckBar(); }
+  function _sessSelectAll()   {
+    document.querySelectorAll('#sessionList input[type="checkbox"]').forEach(cb => { cb.checked = true; });
+    applyFilters();
+  }
+  function _sessDeselectAll() {
+    document.querySelectorAll('#sessionList input[type="checkbox"]').forEach(cb => { cb.checked = false; });
+    applyFilters();
+  }
 
   // ── IndexedDB キャッシュ ──────────────────────────────────────────
   const IDB_NAME  = 'pt-exam-viewer';
@@ -4836,6 +4848,10 @@ ${tables}
     if (tabBtn) tabBtn.style.display = 'none';
     document.getElementById('practiceMode').style.display = 'none';
     document.body.style.overflow = '';
+    // 現在の filteredData（セッション読込時は28問など）を一覧に反映
+    currentPage = 1;
+    renderPage();
+    _updateCheckBar();
   }
 
   function _maybeShowMoon() {
@@ -6033,9 +6049,8 @@ ${tables}
         if (restored.length > 0) {
           // filteredData に合わせて enterPractice が上書きしても正しい問題セットになるようにする
           filteredData = restored;
-          const idx = Math.min(rec.practiceIdx || 0, restored.length - 1);
           closeSessionModal();
-          enterPractice(idx);
+          enterPractice(0);
           _toast('📂 「' + name + '」を呼び出しました');
           return;
         }
