@@ -482,9 +482,14 @@
     .btn-pin-mode:hover { border-color:#2563eb; color:#2563eb; }
     .btn-pin-mode.active { background:linear-gradient(135deg,#1e3a8a,#3b82f6); color:white; border-color:transparent; }
     .pin-list-wrap { max-height:120px; overflow-y:auto; margin-top:4px; }
-    .pin-item { display:flex; align-items:center; justify-content:space-between; padding:2px 4px; border-radius:4px; font-size:12px; font-weight:600; color:#1e40af; background:#eff6ff; margin-bottom:3px; }
+    .pin-item { display:flex; align-items:center; gap:3px; padding:2px 4px; border-radius:4px; font-size:12px; font-weight:600; color:#1e40af; background:#eff6ff; margin-bottom:3px; }
+    .pin-item .pin-id { flex:1; }
     .pin-item .pin-remove { background:none; border:none; color:#94a3b8; cursor:pointer; font-size:14px; padding:0 2px; line-height:1; }
     .pin-item .pin-remove:hover { color:#ef4444; }
+    .pin-move-btns { display:flex; flex-direction:column; gap:1px; }
+    .pin-move { background:none; border:none; color:#94a3b8; cursor:pointer; font-size:9px; padding:0 2px; line-height:1.2; }
+    .pin-move:hover:not(:disabled) { color:#2563eb; }
+    .pin-move:disabled { opacity:.3; cursor:default; }
     .pin-clear-btn { font-size:11px; color:#94a3b8; background:none; border:none; cursor:pointer; text-decoration:underline; margin-top:2px; }
     .pin-clear-btn:hover { color:#ef4444; }
     .pin-status-msg { font-size:11px; padding:2px 0; min-height:16px; }
@@ -2864,7 +2869,7 @@
   let selectedIds = new Set();
   const PAGE_SIZE = 20;
   let _uncheckedIds = new Set(); // チェックを外した問題ID（デフォルト全チェック）
-  let pinnedIds     = new Set(); // 📌 ピン留めした問題ID
+  let pinnedList    = [];         // 📌 ピン留めした問題ID（順序付き配列）
   let pinModeActive = false;     // ピン留めモード中かどうか
 
   function _getCheckedQuestions() { return filteredData.filter(q => !_uncheckedIds.has(q.id)); }
@@ -2900,11 +2905,11 @@
     const statusEl = document.getElementById('pinStatusMsg');
     const found = allData.find(q => q.id === qid);
     if (found) {
-      if (pinnedIds.has(qid)) {
+      if (pinnedList.includes(qid)) {
         statusEl.className = 'pin-status-msg err';
         statusEl.textContent = `${qid} はすでに追加済みです`;
       } else {
-        pinnedIds.add(qid);
+        pinnedList.push(qid);
         statusEl.className = 'pin-status-msg ok';
         statusEl.textContent = `✓ ${qid} を追加しました`;
       }
@@ -2918,19 +2923,35 @@
   }
 
   function togglePin(qid) {
-    if (pinnedIds.has(qid)) pinnedIds.delete(qid); else pinnedIds.add(qid);
+    const idx = pinnedList.indexOf(qid);
+    if (idx >= 0) pinnedList.splice(idx, 1); else pinnedList.push(qid);
     _updatePinUI();
     if (pinModeActive) applyFilters(); else renderPage();
   }
 
   function removePin(qid) {
-    pinnedIds.delete(qid);
+    const idx = pinnedList.indexOf(qid);
+    if (idx >= 0) pinnedList.splice(idx, 1);
     _updatePinUI();
     if (pinModeActive) applyFilters(); else renderPage();
   }
 
+  function movePinUp(idx) {
+    if (idx <= 0) return;
+    [pinnedList[idx-1], pinnedList[idx]] = [pinnedList[idx], pinnedList[idx-1]];
+    _updatePinUI();
+    if (pinModeActive) applyFilters();
+  }
+
+  function movePinDown(idx) {
+    if (idx >= pinnedList.length - 1) return;
+    [pinnedList[idx], pinnedList[idx+1]] = [pinnedList[idx+1], pinnedList[idx]];
+    _updatePinUI();
+    if (pinModeActive) applyFilters();
+  }
+
   function clearAllPins() {
-    pinnedIds.clear();
+    pinnedList = [];
     if (pinModeActive) { pinModeActive = false; }
     _updatePinUI();
     applyFilters();
@@ -2943,7 +2964,7 @@
   }
 
   function _updatePinUI() {
-    const count = pinnedIds.size;
+    const count = pinnedList.length;
     const btn = document.getElementById('pinModeBtn');
     if (btn) btn.textContent = `📌 ピン留め問題のみ表示 (${count}件)`;
     if (pinModeActive) btn && btn.classList.add('active');
@@ -2952,10 +2973,16 @@
     if (count === 0) {
       wrap.innerHTML = '<div style="font-size:11px;color:#94a3b8;padding:2px 0;">まだ追加されていません</div>';
     } else {
-      const ids = [...pinnedIds];
-      wrap.innerHTML = ids.map(id => {
+      wrap.innerHTML = pinnedList.map((id, i) => {
         const safe = id.replace(/'/g, "\\'");
-        return `<div class="pin-item"><span>${id}</span><button class="pin-remove" onclick="removePin('${safe}')">✕</button></div>`;
+        return `<div class="pin-item">
+          <div class="pin-move-btns">
+            <button class="pin-move" onclick="movePinUp(${i})" ${i===0?'disabled':''}>▲</button>
+            <button class="pin-move" onclick="movePinDown(${i})" ${i===count-1?'disabled':''}>▼</button>
+          </div>
+          <span class="pin-id">${id}</span>
+          <button class="pin-remove" onclick="removePin('${safe}')">✕</button>
+        </div>`;
       }).join('');
     }
   }
@@ -3438,7 +3465,7 @@
     const includeExcluded = document.getElementById('includeExcluded').checked;
 
     filteredData = allData.filter(q => {
-      if (pinModeActive && !pinnedIds.has(q.id)) return false;
+      if (pinModeActive && !pinnedList.includes(q.id)) return false;
       if (!includeExcluded && q.excludedHandling) return false;
       if (checkedSessions.length   && !checkedSessions.includes(q.examSession))   return false;
       if (checkedFields.length || checkedSubFields.length) {
@@ -3635,7 +3662,7 @@
       ? `<div class="card-excluded-note">【採点上の取扱い】${esc(q.excludedHandling)}${q.excludedReason ? '<br>【理由】' + esc(q.excludedReason) : ''}</div>`
       : '';
     const qidSafe = q.id.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-    const isPinned = pinnedIds.has(q.id);
+    const isPinned = pinnedList.includes(q.id);
     return `
       <div class="question-card qcard-flex" style="animation-delay:${delay}s">
         <label class="qc-check-wrap" onclick="event.stopPropagation()">
