@@ -472,6 +472,28 @@
     .search-wrap input:focus { outline: none; border-color: #2563eb; background: white; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
     .search-wrap::before { content: '🔍'; position: absolute; left: 10px; top: 8px; font-size: 13px; }
 
+    /* ── Pin section ──────────────────────────────────── */
+    .pin-input-row { display:flex; gap:6px; margin-bottom:6px; }
+    .pin-input-row input { flex:1; padding:6px 10px; border:1px solid #e2e8f0; border-radius:6px; font-size:13px; background:#f8fafc; }
+    .pin-input-row input:focus { outline:none; border-color:#2563eb; background:white; box-shadow:0 0 0 3px rgba(37,99,235,.1); }
+    .btn-pin-add { padding:6px 12px; background:#059669; color:white; border:none; border-radius:6px; font-size:13px; font-weight:600; cursor:pointer; white-space:nowrap; }
+    .btn-pin-add:hover { background:#047857; }
+    .btn-pin-mode { width:100%; margin-top:6px; padding:7px; border:2px solid #94a3b8; border-radius:8px; background:white; color:#475569; font-size:13px; font-weight:600; cursor:pointer; transition:.2s; }
+    .btn-pin-mode:hover { border-color:#2563eb; color:#2563eb; }
+    .btn-pin-mode.active { background:linear-gradient(135deg,#1e3a8a,#3b82f6); color:white; border-color:transparent; }
+    .pin-list-wrap { max-height:120px; overflow-y:auto; margin-top:4px; }
+    .pin-item { display:flex; align-items:center; justify-content:space-between; padding:2px 4px; border-radius:4px; font-size:12px; font-weight:600; color:#1e40af; background:#eff6ff; margin-bottom:3px; }
+    .pin-item .pin-remove { background:none; border:none; color:#94a3b8; cursor:pointer; font-size:14px; padding:0 2px; line-height:1; }
+    .pin-item .pin-remove:hover { color:#ef4444; }
+    .pin-clear-btn { font-size:11px; color:#94a3b8; background:none; border:none; cursor:pointer; text-decoration:underline; margin-top:2px; }
+    .pin-clear-btn:hover { color:#ef4444; }
+    .pin-status-msg { font-size:11px; padding:2px 0; min-height:16px; }
+    .pin-status-msg.ok { color:#059669; }
+    .pin-status-msg.err { color:#ef4444; }
+    /* pin button on each card */
+    .qc-pin-btn { background:none; border:none; cursor:pointer; font-size:16px; padding:4px 6px; opacity:.35; transition:.15s; border-radius:6px; flex-shrink:0; }
+    .qc-pin-btn:hover, .qc-pin-btn.pinned { opacity:1; }
+
     .checkbox-list { display: flex; flex-direction: column; gap: 3px; max-height: 156px; overflow-y: auto; }
     #fieldTree.checkbox-list { max-height: 312px; }
     .checkbox-list label {
@@ -2356,6 +2378,20 @@
       </div>
 
       <div class="filter-section">
+        <h3>📌 問題番号で追加</h3>
+        <div class="pin-input-row">
+          <input type="text" id="pinInput" placeholder="例: 58A-3　58P21" onkeydown="if(event.key==='Enter')addPinnedQuestion()">
+          <button class="btn-pin-add" onclick="addPinnedQuestion()">追加</button>
+        </div>
+        <div class="pin-status-msg" id="pinStatusMsg"></div>
+        <div class="pin-list-wrap" id="pinListWrap"></div>
+        <div style="display:flex;justify-content:flex-end;">
+          <button class="pin-clear-btn" onclick="clearAllPins()">すべて削除</button>
+        </div>
+        <button class="btn-pin-mode" id="pinModeBtn" onclick="togglePinMode()">📌 ピン留め問題のみ表示 (0件)</button>
+      </div>
+
+      <div class="filter-section">
         <h3>並び替え</h3>
         <select class="sort-select" id="sortSelect" onchange="applyFilters()">
           <option value="id-asc">試験順（51回→61回）</option>
@@ -2823,6 +2859,8 @@
   let selectedIds = new Set();
   const PAGE_SIZE = 20;
   let _uncheckedIds = new Set(); // チェックを外した問題ID（デフォルト全チェック）
+  let pinnedIds     = new Set(); // 📌 ピン留めした問題ID
+  let pinModeActive = false;     // ピン留めモード中かどうか
 
   function _getCheckedQuestions() { return filteredData.filter(q => !_uncheckedIds.has(q.id)); }
   function _updateCheckBar() {
@@ -2838,6 +2876,89 @@
   }
   function _qSelectAll()   { _uncheckedIds.clear(); renderPage(); _updateCheckBar(); }
   function _qDeselectAll() { filteredData.forEach(q => _uncheckedIds.add(q.id)); renderPage(); _updateCheckBar(); }
+
+  // ── Pin functions ─────────────────────────────────────────────────
+  function _parseQuestionIdInput(raw) {
+    // 入力例: "58A-3", "58A3", "58AM3", "58AM-3", "58回AM3番", "第58回午前3問", "58P21"
+    let s = raw.trim()
+      .replace(/第|回|番|問/g, '')
+      .replace(/午前|ＡＭ/g, 'A').replace(/am/gi, 'A')
+      .replace(/午後|ＰＭ/g, 'P').replace(/pm/gi, 'P')
+      .replace(/[ーー－]/g, '-')
+      .toUpperCase();
+    // "58A-3" or "58A3" or "58AM-3" → "58A-3"
+    const m = s.match(/^(\d+)\s*([AP])M?\s*-?\s*(\d+)$/);
+    if (m) return `${parseInt(m[1])}${m[2]}-${parseInt(m[3])}`;
+    return null;
+  }
+
+  function addPinnedQuestion() {
+    const input = document.getElementById('pinInput');
+    const statusEl = document.getElementById('pinStatusMsg');
+    const parts = input.value.split(/[,、\s　]+/).filter(Boolean);
+    let added = 0, notFound = [];
+    for (const part of parts) {
+      const qid = _parseQuestionIdInput(part);
+      if (!qid) { notFound.push(part); continue; }
+      const found = allData.find(q => q.id === qid);
+      if (found) { pinnedIds.add(qid); added++; }
+      else notFound.push(qid);
+    }
+    input.value = '';
+    if (added > 0) {
+      statusEl.className = 'pin-status-msg ok';
+      statusEl.textContent = `✓ ${added}件追加${notFound.length ? '　見つからず: '+notFound.join(', ') : ''}`;
+    } else {
+      statusEl.className = 'pin-status-msg err';
+      statusEl.textContent = notFound.length ? `見つからず: ${notFound.join(', ')}` : '入力してください';
+    }
+    setTimeout(() => { statusEl.textContent = ''; }, 3000);
+    _updatePinUI();
+    if (pinModeActive) applyFilters(); else renderPage();
+  }
+
+  function togglePin(qid) {
+    if (pinnedIds.has(qid)) pinnedIds.delete(qid); else pinnedIds.add(qid);
+    _updatePinUI();
+    if (pinModeActive) applyFilters(); else renderPage();
+  }
+
+  function removePin(qid) {
+    pinnedIds.delete(qid);
+    _updatePinUI();
+    if (pinModeActive) applyFilters(); else renderPage();
+  }
+
+  function clearAllPins() {
+    pinnedIds.clear();
+    if (pinModeActive) { pinModeActive = false; }
+    _updatePinUI();
+    applyFilters();
+  }
+
+  function togglePinMode() {
+    pinModeActive = !pinModeActive;
+    document.getElementById('pinModeBtn').classList.toggle('active', pinModeActive);
+    applyFilters();
+  }
+
+  function _updatePinUI() {
+    const count = pinnedIds.size;
+    const btn = document.getElementById('pinModeBtn');
+    if (btn) btn.textContent = `📌 ピン留め問題のみ表示 (${count}件)`;
+    if (pinModeActive) btn && btn.classList.add('active');
+    const wrap = document.getElementById('pinListWrap');
+    if (!wrap) return;
+    if (count === 0) {
+      wrap.innerHTML = '<div style="font-size:11px;color:#94a3b8;padding:2px 0;">まだ追加されていません</div>';
+    } else {
+      const ids = [...pinnedIds];
+      wrap.innerHTML = ids.map(id => {
+        const safe = id.replace(/'/g, "\\'");
+        return `<div class="pin-item"><span>${id}</span><button class="pin-remove" onclick="removePin('${safe}')">✕</button></div>`;
+      }).join('');
+    }
+  }
   function _sessSelectAll()   {
     document.querySelectorAll('#sessionList input[type="checkbox"]').forEach(cb => { cb.checked = true; });
     applyFilters();
@@ -3218,6 +3339,7 @@
     document.getElementById('mainContent').style.display = 'block';
     document.getElementById('practiceBar').style.display = 'flex';
     applyFilters();
+    _updatePinUI();
     loadAnnotations(); // 保存済みの書き込み（解説モード）を復元
   }
 
@@ -3315,6 +3437,7 @@
     const includeExcluded = document.getElementById('includeExcluded').checked;
 
     filteredData = allData.filter(q => {
+      if (pinModeActive && !pinnedIds.has(q.id)) return false;
       if (!includeExcluded && q.excludedHandling) return false;
       if (checkedSessions.length   && !checkedSessions.includes(q.examSession))   return false;
       if (checkedFields.length || checkedSubFields.length) {
@@ -3511,6 +3634,7 @@
       ? `<div class="card-excluded-note">【採点上の取扱い】${esc(q.excludedHandling)}${q.excludedReason ? '<br>【理由】' + esc(q.excludedReason) : ''}</div>`
       : '';
     const qidSafe = q.id.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    const isPinned = pinnedIds.has(q.id);
     return `
       <div class="question-card qcard-flex" style="animation-delay:${delay}s">
         <label class="qc-check-wrap" onclick="event.stopPropagation()">
@@ -3518,6 +3642,8 @@
                  ${_uncheckedIds.has(q.id)?'':'checked'}
                  onchange="_toggleQCheck('${qidSafe}',this.checked)">
         </label>
+        <button class="qc-pin-btn${isPinned?' pinned':''}" title="${isPinned?'ピンを外す':'ピンに追加'}"
+          onclick="event.stopPropagation();togglePin('${qidSafe}')">📌</button>
         <div class="qc-body" onclick="openModal(${globalIdx})">
           <div class="card-meta">
             <span class="badge badge-session">${esc(q.examSession)}</span>
