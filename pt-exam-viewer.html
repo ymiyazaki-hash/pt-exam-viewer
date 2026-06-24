@@ -473,10 +473,10 @@
     .search-wrap::before { content: '🔍'; position: absolute; left: 10px; top: 8px; font-size: 13px; }
 
     /* ── Pin section ──────────────────────────────────── */
-    .pin-input-row { display:flex; gap:6px; margin-bottom:6px; }
-    .pin-input-row input { flex:1; padding:6px 10px; border:1px solid #e2e8f0; border-radius:6px; font-size:13px; background:#f8fafc; }
-    .pin-input-row input:focus { outline:none; border-color:#2563eb; background:white; box-shadow:0 0 0 3px rgba(37,99,235,.1); }
-    .btn-pin-add { padding:6px 12px; background:#059669; color:white; border:none; border-radius:6px; font-size:13px; font-weight:600; cursor:pointer; white-space:nowrap; }
+    .pin-select-row { display:flex; gap:4px; margin-bottom:6px; align-items:center; }
+    .pin-sel { flex:1; padding:6px 4px; border:1px solid #e2e8f0; border-radius:6px; font-size:13px; background:#f8fafc; color:#1e293b; min-width:0; cursor:pointer; }
+    .pin-sel:focus { outline:none; border-color:#2563eb; background:white; }
+    .btn-pin-add { padding:6px 10px; background:#059669; color:white; border:none; border-radius:6px; font-size:13px; font-weight:600; cursor:pointer; white-space:nowrap; flex-shrink:0; }
     .btn-pin-add:hover { background:#047857; }
     .btn-pin-mode { width:100%; margin-top:6px; padding:7px; border:2px solid #94a3b8; border-radius:8px; background:white; color:#475569; font-size:13px; font-weight:600; cursor:pointer; transition:.2s; }
     .btn-pin-mode:hover { border-color:#2563eb; color:#2563eb; }
@@ -2379,9 +2379,14 @@
 
       <div class="filter-section">
         <h3>📌 問題番号で追加</h3>
-        <div class="pin-input-row">
-          <input type="text" id="pinInput" placeholder="例: 58A-3　58P21" onkeydown="if(event.key==='Enter')addPinnedQuestion()">
-          <button class="btn-pin-add" onclick="addPinnedQuestion()">追加</button>
+        <div class="pin-select-row">
+          <select id="pinSelSession" class="pin-sel"></select>
+          <select id="pinSelAP" class="pin-sel">
+            <option value="A">午前</option>
+            <option value="P">午後</option>
+          </select>
+          <select id="pinSelNum" class="pin-sel"></select>
+          <button class="btn-pin-add" onclick="addPinnedFromDropdown()">追加</button>
         </div>
         <div class="pin-status-msg" id="pinStatusMsg"></div>
         <div class="pin-list-wrap" id="pinListWrap"></div>
@@ -2878,41 +2883,36 @@
   function _qDeselectAll() { filteredData.forEach(q => _uncheckedIds.add(q.id)); renderPage(); _updateCheckBar(); }
 
   // ── Pin functions ─────────────────────────────────────────────────
-  function _parseQuestionIdInput(raw) {
-    // 入力例: "58A-3", "58A3", "58AM3", "58AM-3", "58回AM3番", "第58回午前3問", "58P21"
-    let s = raw.trim()
-      .replace(/第|回|番|問/g, '')
-      .replace(/午前|ＡＭ/g, 'A').replace(/am/gi, 'A')
-      .replace(/午後|ＰＭ/g, 'P').replace(/pm/gi, 'P')
-      .replace(/[ーー－]/g, '-')
-      .toUpperCase();
-    // "58A-3" or "58A3" or "58AM-3" → "58A-3"
-    const m = s.match(/^(\d+)\s*([AP])M?\s*-?\s*(\d+)$/);
-    if (m) return `${parseInt(m[1])}${m[2]}-${parseInt(m[3])}`;
-    return null;
+  function _initPinDropdowns() {
+    const sessions = [...new Set(allData.map(q => parseInt(q.id)))].sort((a,b)=>a-b);
+    const selS = document.getElementById('pinSelSession');
+    const selN = document.getElementById('pinSelNum');
+    if (!selS || !selN) return;
+    selS.innerHTML = sessions.map(s => `<option value="${s}">${s}回</option>`).join('');
+    selN.innerHTML = Array.from({length:100},(_,i)=>`<option value="${i+1}">${i+1}番</option>`).join('');
   }
 
-  function addPinnedQuestion() {
-    const input = document.getElementById('pinInput');
+  function addPinnedFromDropdown() {
+    const session = document.getElementById('pinSelSession').value;
+    const ap      = document.getElementById('pinSelAP').value;
+    const num     = document.getElementById('pinSelNum').value;
+    const qid     = `${session}${ap}-${parseInt(num)}`;
     const statusEl = document.getElementById('pinStatusMsg');
-    const parts = input.value.split(/[,、\s　]+/).filter(Boolean);
-    let added = 0, notFound = [];
-    for (const part of parts) {
-      const qid = _parseQuestionIdInput(part);
-      if (!qid) { notFound.push(part); continue; }
-      const found = allData.find(q => q.id === qid);
-      if (found) { pinnedIds.add(qid); added++; }
-      else notFound.push(qid);
-    }
-    input.value = '';
-    if (added > 0) {
-      statusEl.className = 'pin-status-msg ok';
-      statusEl.textContent = `✓ ${added}件追加${notFound.length ? '　見つからず: '+notFound.join(', ') : ''}`;
+    const found = allData.find(q => q.id === qid);
+    if (found) {
+      if (pinnedIds.has(qid)) {
+        statusEl.className = 'pin-status-msg err';
+        statusEl.textContent = `${qid} はすでに追加済みです`;
+      } else {
+        pinnedIds.add(qid);
+        statusEl.className = 'pin-status-msg ok';
+        statusEl.textContent = `✓ ${qid} を追加しました`;
+      }
     } else {
       statusEl.className = 'pin-status-msg err';
-      statusEl.textContent = notFound.length ? `見つからず: ${notFound.join(', ')}` : '入力してください';
+      statusEl.textContent = `${qid} は見つかりませんでした`;
     }
-    setTimeout(() => { statusEl.textContent = ''; }, 3000);
+    setTimeout(() => { statusEl.textContent = ''; }, 2500);
     _updatePinUI();
     if (pinModeActive) applyFilters(); else renderPage();
   }
@@ -3340,6 +3340,7 @@
     document.getElementById('practiceBar').style.display = 'flex';
     applyFilters();
     _updatePinUI();
+    _initPinDropdowns();
     loadAnnotations(); // 保存済みの書き込み（解説モード）を復元
   }
 
