@@ -3777,9 +3777,10 @@
     const ceHtml = ce.length
       ? ce.map((text, i) => {
           const isCorrect = answers.includes(String(i + 1));
+          const cleanText = String(text).replace(/^[○〇◯✓✕×✗⭕❌]\s*/, '');
           return `<div class="expl-choice-item${isCorrect ? ' expl-correct' : ''}">
             <span class="expl-choice-num">${explPCIR[i] || (i+1)}</span>
-            <span>${esc(String(text))}</span>
+            <span>${esc(cleanText)}</span>
           </div>`;
         }).join('')
       : '<div style="color:#9ca3af;font-size:13px">（選択肢解説なし）</div>';
@@ -4641,7 +4642,7 @@ ${imgRelXml}
         }
         let explHtml = '';
         if (we && q.explanation) {
-          const ceHtml = (q.choiceExplanations||[]).map((ex,i)=>ex?`<div class="ce">${CIRCLED[i]||''}　${_e(ex)}</div>`:'').join('');
+          const ceHtml = (q.choiceExplanations||[]).map((ex,i)=>ex?`<div class="ce">${CIRCLED[i]||''}　${_e(ex.replace(/^[○×〇✕✗⭕️❌◯×]+[\s　]*/,''))}</div>`:'').join('');
           explHtml = `<div class="expl"><div class="expl-hd">【解説】</div><div class="expl-body">${_e(q.explanation)}</div>${ceHtml}</div>`;
         }
         const exclBadge = q.excludedHandling ? ' <span class="excl-badge">⚠採点除外</span>' : '';
@@ -8479,7 +8480,7 @@ function _showQuizReview() {
       const isCorr = correctNums.includes(ci + 1);
       return `<div class="review-ce-item${isCorr ? ' review-ce-corr' : ''}">` +
         `<span class="review-ce-num">${circled[ci]||ci+1}</span>` +
-        `<span>${_e(text)}</span></div>`;
+        `<span>${_e(String(text).replace(/^[○×〇✕✗⭕️❌◯×]+[\s　]*/,''))}</span></div>`;
     }).join('') + '</div>' : '';
 
     const hd = isOk
