@@ -5547,9 +5547,10 @@ ${tables}
     const choicesHtml = ce.length ? ce.map((text, i) => {
       const num = String(i + 1);
       const isCorrect = revealed && answers.includes(num);
+      const cleanText = String(text).replace(/^[\d０-９]+[.．][\s　]*[○×〇✕✗⭕️❌◯✓]+[\s　]*/, '').replace(/^[○×〇✕✗⭕️❌◯✓]+[\s　]*/, '');
       return `<div class="expl-choice-item${isCorrect ? ' expl-correct' : ''}">
         <span class="expl-choice-num">${PCIR[i] || num}</span>
-        <span>${esc(String(text))}</span>
+        <span>${esc(cleanText)}</span>
       </div>`;
     }).join('') : '<div style="color:#9ca3af;font-size:13px">（選択肢解説なし）</div>';
 
