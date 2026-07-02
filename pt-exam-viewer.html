@@ -3239,7 +3239,7 @@
 
     // ── 1. data.json を fetch（主経路：GitHub Pages / ローカルサーバー） ──
     try {
-      const resp = await fetch('./data.json');
+      const resp = await fetch('./data.json', { cache: 'no-cache' });
       if (!resp.ok) throw new Error('HTTP ' + resp.status);
       _startLoadingQuiz();
 
@@ -8226,7 +8226,7 @@ async function _initQuizStudent(code) {
     if (!snap.exists()) throw new Error('クイズが見つかりません（コード: ' + code + '）');
     const quiz = snap.val();
 
-    const resp = await fetch('data.json');
+    const resp = await fetch('data.json', { cache: 'no-cache' });
     const allQ = await resp.json();
     const qMap = {};
     allQ.forEach(q => { qMap[q.id] = q; });
@@ -8296,7 +8296,7 @@ async function _initScheduleStudent(code) {
     const qpd   = sch.questionsPerDay;
     const ids   = (sch.questionIds || []).slice(dayIdx * qpd, (dayIdx + 1) * qpd);
 
-    const resp  = await fetch('data.json');
+    const resp  = await fetch('data.json', { cache: 'no-cache' });
     const allQ  = await resp.json();
     const qMap  = {};
     allQ.forEach(q => { qMap[q.id] = q; });
