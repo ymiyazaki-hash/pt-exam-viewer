@@ -993,10 +993,10 @@
     ],
     "explanationCreatedAt": "2026-06-23T20:42:44",
     "new_fields": [
-      "③理学療法評価学"
+      "①運動器障害"
     ],
     "new_sub_fields": [
-      "MMT"
+      "整形外科的テスト・運動器評価"
     ],
     "_orig_field": [
       "③理学療法評価学"
@@ -15366,10 +15366,10 @@
     ],
     "explanationCreatedAt": "2026-06-24T00:30:13",
     "new_fields": [
-      "③理学療法評価学"
+      "⑨運動学・臨床運動学"
     ],
     "new_sub_fields": [
-      "MMT"
+      "歩行・姿勢制御"
     ],
     "_orig_field": [
       "③理学療法評価学"
@@ -52010,10 +52010,10 @@
     ],
     "explanationCreatedAt": "2026-06-24T05:47:49",
     "new_fields": [
-      "③理学療法評価学"
+      "⑨運動学・臨床運動学"
     ],
     "new_sub_fields": [
-      "ROM測定"
+      "運動療法"
     ],
     "_orig_field": [
       "③理学療法評価学"
@@ -70974,10 +70974,10 @@
     ],
     "explanationCreatedAt": "2026-06-24T11:08:43",
     "new_fields": [
-      "③理学療法評価学"
+      "⑨運動学・臨床運動学"
     ],
     "new_sub_fields": [
-      "MMT"
+      "骨・筋の解剖"
     ],
     "_orig_field": [
       "③理学療法評価学"
