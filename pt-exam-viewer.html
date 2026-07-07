@@ -874,12 +874,14 @@
     body.similar-mode .nav-btn { background: rgba(20,22,55,0.8); border-color: rgba(139,92,246,0.25); color: #cbd5e1; }
     body.similar-mode .nav-btn:hover:not(:disabled) { background: rgba(139,92,246,0.18); border-color: rgba(196,181,253,0.5); color: #ede9fe; }
     body.similar-mode .nav-pos { color: #8b8fb8; }
-    body.similar-mode .expl-panel { background: rgba(139,92,246,0.06); border-color: rgba(139,92,246,0.25); }
-    body.similar-mode .expl-section-label { color: #a5b4fc; }
-    body.similar-mode .expl-choice-item { background: rgba(255,255,255,0.04); border-color: rgba(139,92,246,0.15); color: #cbd5e1; }
-    body.similar-mode .expl-choice-item.expl-correct { background: rgba(34,197,94,0.15); border-color: rgba(74,222,128,0.4); }
-    body.similar-mode .expl-choice-num { color: #8b8fb8; }
-    body.similar-mode .expl-choice-item.expl-correct .expl-choice-num { color: #4ade80; }
+    /* #modal（類似問題モーダル）にのみ適用。プレゼンモード（#pracExpl）は
+       同じクラス名を使うが元の明るいテーマのままにするため対象外にする */
+    body.similar-mode #modal .expl-panel { background: rgba(139,92,246,0.06); border-color: rgba(139,92,246,0.25); }
+    body.similar-mode #modal .expl-section-label { color: #a5b4fc; }
+    body.similar-mode #modal .expl-choice-item { background: rgba(255,255,255,0.04); border-color: rgba(139,92,246,0.15); color: #cbd5e1; }
+    body.similar-mode #modal .expl-choice-item.expl-correct { background: rgba(34,197,94,0.15); border-color: rgba(74,222,128,0.4); }
+    body.similar-mode #modal .expl-choice-num { color: #8b8fb8; }
+    body.similar-mode #modal .expl-choice-item.expl-correct .expl-choice-num { color: #4ade80; }
 
     /* ── ローディング ── */
     #loadingOverlay {
