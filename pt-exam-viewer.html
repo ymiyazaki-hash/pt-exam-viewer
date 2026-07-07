@@ -2345,7 +2345,7 @@
       <div id="cacheBadge" class="cache-badge" style="display:none"></div>
     </div>
     <button class="btn-reload" id="reloadBtn" style="display:none" onclick="showHelpModal()">✨ 使い方</button>
-    <button class="btn-similar-mode" id="similarModeBtn" style="display:none" onclick="toggleSimilarMode()">🌓 類似問題モード</button>
+    <button class="btn-similar-mode" id="similarModeBtn" style="display:none" onclick="toggleSimilarMode()">🌙 類似問題モード</button>
     <button id="fullscreenBtn" onclick="handleFullscreen()" title="全画面表示"
       style="background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.4);color:white;
              border-radius:8px;padding:6px 10px;font-size:16px;cursor:pointer;line-height:1">⛶</button>
@@ -2977,7 +2977,7 @@
   let _uncheckedIds = new Set(); // チェックを外した問題ID（デフォルト全チェック）
   let pinnedList    = [];         // 📌 ピン留めした問題ID（順序付き配列）
   let pinModeActive = false;     // ピン留めモード中かどうか
-  let similarMode   = false;     // 🌓 類似問題モード中かどうか
+  let similarMode   = false;     // 🌙 類似問題モード中かどうか
   let simList       = [];        // 類似問題モードで表示する元問題の配列
   let _simStarsBuilt = false;
 
@@ -3680,7 +3680,7 @@
     renderPagination();
   }
 
-  // ══════════ 🌓 類似問題モード ══════════
+  // ══════════ 🌙 類似問題モード ══════════
   function _initSimilarStars() {
     if (_simStarsBuilt) return;
     _simStarsBuilt = true;
@@ -3720,7 +3720,7 @@
       currentPage = 1;
       document.body.classList.remove('similar-mode');
       const btn = document.getElementById('similarModeBtn');
-      if (btn) { btn.textContent = '🌓 類似問題モード'; btn.classList.remove('active'); }
+      if (btn) { btn.textContent = '🌙 類似問題モード'; btn.classList.remove('active'); }
     }
     renderPage();
     document.getElementById('mainScroll').scrollTo({ top: 0 });
@@ -3734,7 +3734,7 @@
     if (simList.length === 0) {
       container.innerHTML = `
         <div class="empty-state">
-          <div class="icon">🌓</div>
+          <div class="icon">🌙</div>
           <p>チェックした問題の中に類似問題がありません<br><small>類似問題モードをOFFにして別の問題をチェックしてください</small></p>
         </div>`;
       document.getElementById('pagination').innerHTML = '';
@@ -3749,7 +3749,7 @@
          </div>`
       : '';
     const topBar = `<div style="display:flex;flex-direction:column;gap:4px;padding:6px 4px 8px;">
-      <span style="font-size:12px;color:#c4b5fd;font-weight:700;">🌓 類似問題モード：${simList.length} 問（正答率など統計には反映されません）</span>
+      <span style="font-size:12px;color:#c4b5fd;font-weight:700;">🌙 類似問題モード：${simList.length} 問（正答率など統計には反映されません）</span>
       ${hint}
     </div>`;
     container.innerHTML = topBar + pageData.map((q, i) => renderSimilarCard(q, start + i)).join('');
@@ -3772,7 +3772,7 @@
       <div class="question-card qcard-flex sim-card" style="animation-delay:${delay}s">
         <div class="qc-body" style="cursor:pointer;width:100%;padding:13px 14px" onclick="openSimilarModal(${idx})">
           <div class="card-meta">
-            <span class="badge sim-badge">🌓 類似問題</span>
+            <span class="badge sim-badge">🌙 類似問題</span>
             <span class="sim-orig-id">元問題: ${esc(q.id)}</span>
           </div>
           <div class="card-text">${preview}</div>
@@ -3792,7 +3792,7 @@
     const total = simList.length;
 
     document.getElementById('modalMeta').innerHTML = `
-      <span class="badge sim-badge">🌓 類似問題</span>
+      <span class="badge sim-badge">🌙 類似問題</span>
       <span style="font-size:12px;color:#c4b5fd;margin-left:6px;font-weight:700">元問題: ${esc(q.id)}</span>`;
 
     const choicesHtml = (sim.choices || []).map((c, i) => {
@@ -5257,8 +5257,22 @@ ${tables}
   const PCIR = ['①','②','③','④','⑤'];
 
   function enterPractice(startIdx) {
-    practiceData = _getCheckedQuestions();
-    if (!practiceData.length) { alert('チェックされた問題がありません'); return; }
+    practiceData = similarMode
+      ? simList.map(q => {
+          const sim = q.ai_materials.similar_question;
+          return {
+            id: q.id,
+            examSession: q.examSession,
+            category: q.category,
+            new_fields: q.new_fields,
+            text: sim.text,
+            choices: sim.choices,
+            answer: sim.answer,
+            choiceExplanations: sim.choiceExplanations
+          };
+        })
+      : _getCheckedQuestions();
+    if (!practiceData.length) { alert(similarMode ? '類似問題モードで表示できる問題がありません' : 'チェックされた問題がありません'); return; }
     practiceIdx = startIdx || 0;
     practiceState = {};  // 解答表示状態をリセット
     setDrawTool('pointer');
@@ -5502,9 +5516,11 @@ ${tables}
     document.getElementById('pracProgress').textContent =
       `${practiceIdx + 1} / ${total}`;
     document.getElementById('pracMeta').innerHTML =
-      `<b>${esc(q.id)}</b>　${esc(q.examSession)}　${esc(q.category)}　${esc((q.new_fields||[])[0]||'')}`;
+      `${similarMode ? '<span class="badge sim-badge" style="margin-right:6px">🌙 類似問題</span>' : ''}<b>${esc(q.id)}</b>　${esc(q.examSession)}　${esc(q.category)}　${esc((q.new_fields||[])[0]||'')}`;
     document.getElementById('pracBarSub').textContent =
       `${total}問　解説中: ${practiceIdx + 1}問目`;
+    const pracEditBtnEl = document.getElementById('pracEditBtn');
+    if (pracEditBtnEl) pracEditBtnEl.style.display = similarMode ? 'none' : '';
 
     document.getElementById('pracText').textContent = q.text;
 
@@ -5554,10 +5570,13 @@ ${tables}
           ? `<div class="expln-excluded-reason">【採点上の取扱い】${esc(q.excludedHandling)}${q.excludedReason ? '<br>【理由】' + esc(q.excludedReason) : ''}</div>`
           : '';
         const aaHtml = buildAcceptedAnswersHtml(q);
+        const accuracyHtml = similarMode
+          ? '<div class="expln-accuracy" style="color:#8b8fb8">🌙 類似問題（正答率データなし）</div>'
+          : `<div class="expln-accuracy" style="color:${col}">正答率 ${rate}%</div>`;
         resultEl.innerHTML = `
           <div class="expln-answer-label">正答</div>
           <div class="expln-answer-value">${esc(displayAnswers.join('・'))}番　${esc(answerTexts)}</div>
-          <div class="expln-accuracy" style="color:${col}">正答率 ${rate}%</div>
+          ${accuracyHtml}
           ${aaHtml}
           ${exclNote}`;
       }
