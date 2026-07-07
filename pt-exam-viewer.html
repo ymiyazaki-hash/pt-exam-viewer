@@ -5126,12 +5126,29 @@ ${imgHtml}<div class="opts">${optsHtml}</div>${ansHtml}${explHtml}
 
       const qH = filteredData.map((q,i) => measureQ(q, i+1, imgSizes[i]));
 
+      // 列の物理的な最大高さ(mm)。.cols の height と同じ値。
+      // 選択肢別解説が極端に長い問題（1問だけで252mmを超える）は、絶対配置の
+      // 2段組では自動改ページができず内容が途中で切れてしまうため、
+      // 通常フロー（ブラウザ標準の自動改ページ）の全幅ページとして別扱いにする。
+      const COL_MAX_H = 252.0;
+
       // ③ ページ分割：左段→右段→次ページ左段→右段… の読み順（貪欲充填）
       //    FILL_H を超えたら次の段へ送る（column-fill:auto + break-inside:avoid と同じ挙動）
-      const pages = [];
+      const pages = [];   // { l:[idx], r:[idx] } または { overflow:idx }
       let lQ=[], rQ=[], lAcc=0, rAcc=0, onRight=false;
+      const flushCols = () => {
+        if (lQ.length || rQ.length) pages.push({ l: lQ, r: rQ });
+        lQ = []; rQ = []; lAcc = 0; rAcc = 0; onRight = false;
+      };
       for (let i = 0; i < filteredData.length; i++) {
         const h = qH[i];
+        if (h > COL_MAX_H) {
+          // 2段組（84.1mm幅）では収まらない：現在のページを確定し、
+          // この問題だけ全幅・自然フローの専用ページにする
+          flushCols();
+          pages.push({ overflow: i });
+          continue;
+        }
         if (!onRight) {
           if (lAcc + h <= FILL_H || lQ.length === 0) { lQ.push(i); lAcc += h; }
           else { onRight = true; rQ.push(i); rAcc += h; }
@@ -5143,13 +5160,18 @@ ${imgHtml}<div class="opts">${optsHtml}</div>${ansHtml}${explHtml}
           }
         }
       }
-      if (lQ.length || rQ.length) pages.push({ l: lQ, r: rQ });
+      flushCols();
 
       // ④ ページごとにdiv生成（page-break-before:always で明示改ページ）
       const bodyHtml = pages.map((pg, pi) => {
+        const pageStyle = pi>0 ? ' style="page-break-before:always"' : '';
+        if (pg.overflow !== undefined) {
+          // 全幅・自然フロー：はみ出した分はブラウザが自動で次ページへ送る
+          return `<div class="page"${pageStyle}><div class="qfull">${buildQ(filteredData[pg.overflow], pg.overflow+1)}</div></div>`;
+        }
         const lh = pg.l.map(qi => buildQ(filteredData[qi], qi+1)).join('');
         const rh = pg.r.map(qi => buildQ(filteredData[qi], qi+1)).join('');
-        return `<div class="page"${pi>0?' style="page-break-before:always"':''}>`
+        return `<div class="page"${pageStyle}>`
              + `<div class="cols"><div class="col col-l">${lh}</div><div class="col col-r">${rh}</div></div></div>`;
       }).join('\n');
 
@@ -5164,7 +5186,9 @@ ${imgHtml}<div class="opts">${optsHtml}</div>${ansHtml}${explHtml}
 .col{position:absolute;top:0;width:84.1mm}
 .col-l{left:0}
 .col-r{left:94.1mm}
-.q{margin-top:7pt;padding-bottom:2pt;border-bottom:.4pt solid #bbb}`;
+.q{margin-top:7pt;padding-bottom:2pt;border-bottom:.4pt solid #bbb}
+/* 極端に長い問題専用：全幅・通常フロー（自動改ページで内容が切れない） */
+.qfull{position:static;width:178.2mm}`;
 
       const html = `<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8">
 <title>${_e(filename)}</title>
