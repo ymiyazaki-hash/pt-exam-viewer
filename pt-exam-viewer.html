@@ -791,6 +791,9 @@
     body.similar-mode #simStars { display: block; }
 
     body.similar-mode { background: #050818; color: #e2e8f0; }
+    /* プレゼンモード（解説モード）は独自の明るいテーマを維持するため、
+       body の文字色継承をリセットする（背景は白系のまま） */
+    body.similar-mode #practiceMode { color: #1e293b; }
     body.similar-mode header {
       background: linear-gradient(135deg, #050e38 0%, #171580 55%, #2a1a7a 100%);
       box-shadow: 0 4px 20px rgba(2,6,26,0.6);
@@ -3727,6 +3730,11 @@
   }
 
   function renderSimilarPage() {
+    // フィルタ変更・チェック状態変更のたびに、現在の条件に合わせて再計算する
+    simList = _getCheckedQuestions().filter(q => q.ai_materials && q.ai_materials.similar_question);
+    const totalPages = Math.max(1, Math.ceil(simList.length / PAGE_SIZE));
+    if (currentPage > totalPages) currentPage = totalPages;
+
     const start     = (currentPage - 1) * PAGE_SIZE;
     const pageData  = simList.slice(start, start + PAGE_SIZE);
     const container = document.getElementById('questionList');
