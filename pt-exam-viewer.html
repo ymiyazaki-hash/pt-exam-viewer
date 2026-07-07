@@ -2489,7 +2489,7 @@
       <div class="filter-section">
         <h3>キーワード検索</h3>
         <div class="search-wrap">
-          <input type="text" id="searchInput" placeholder="問題文を検索...">
+          <input type="text" id="searchInput" placeholder="問題文・選択肢・分野を検索（スペース区切りでAND）">
         </div>
       </div>
 
@@ -3605,9 +3605,33 @@
     });
   }
 
+  // ── 検索用の文字正規化（全角英数→半角、ひらがな→カタカナ）────────────
+  function _normText(s) {
+    return String(s || '')
+      .toLowerCase()
+      .replace(/[Ａ-Ｚａ-ｚ０-９]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0))
+      .replace(/[ぁ-ゖ]/g, ch => String.fromCharCode(ch.charCodeAt(0) + 0x60));
+  }
+  // 問題ごとの検索対象文字列（問題文・選択肢・解説・分野・ID等）をキャッシュして生成
+  function _searchIdx(q) {
+    if (q._searchIdxCache) return q._searchIdxCache;
+    const parts = [
+      q.text, q.id, q.examSession, q.category,
+      ...(q.choices || []),
+      ...(q.new_fields || []),
+      ...(q.new_sub_fields || []),
+      ...(q.keywords || []),
+      q.explanation,
+      ...(q.choiceExplanations || [])
+    ];
+    q._searchIdxCache = _normText(parts.filter(Boolean).join(' '));
+    return q._searchIdxCache;
+  }
+
   // ── Filters ───────────────────────────────────────────────────────
   function applyFilters() {
-    const keyword         = document.getElementById('searchInput').value.toLowerCase().trim();
+    const keywordRaw  = document.getElementById('searchInput').value.trim();
+    const keywordTerms = keywordRaw ? _normText(keywordRaw).split(/[\s　]+/).filter(Boolean) : [];
     const checkedSessions   = getChecked('session');
     const checkedFields     = getChecked('field');
     const checkedSubFields  = getChecked('subfield');
@@ -3631,8 +3655,9 @@
       if (checkedCategories.length && !checkedCategories.includes(q.category))    return false;
       const rate = q.accuracyRate ?? 0;
       if (rate < accMin || rate > accMax) return false;
-      if (keyword) {
-        if (!(q.text + ' ' + (q.keywords || []).join(' ')).toLowerCase().includes(keyword)) return false;
+      if (keywordTerms.length) {
+        const idx = _searchIdx(q);
+        if (!keywordTerms.every(t => idx.includes(t))) return false;
       }
       return true;
     });
