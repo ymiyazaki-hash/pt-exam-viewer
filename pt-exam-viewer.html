@@ -5013,9 +5013,12 @@ ${imgRelXml}
           ansHtml = '<div class="ans-badge">＊不適切問題</div>';
         }
         let explHtml = '';
-        if (we && q.explanation) {
+        const hasMainExpl = q.explanation && String(q.explanation).trim();
+        const hasCeExpl   = q.choiceExplanations && q.choiceExplanations.some(Boolean);
+        if (we && (hasMainExpl || hasCeExpl)) {
           const ceHtml = (q.choiceExplanations||[]).map((ex,i)=>ex?`<div class="ce">${CIRCLED[i]||''}　${_e(String(ex).replace(/^[\d０-９]+[.．][\s　]*[○×〇✕✗⭕️❌◯✓]+[\s　]*/,'').replace(/^[○×〇✕✗⭕️❌◯✓]+[\s　]*/,''))}</div>`:'').join('');
-          explHtml = `<div class="expl"><div class="expl-hd">【解説】</div><div class="expl-body">${_e(q.explanation)}</div>${ceHtml}</div>`;
+          const mainHtml = hasMainExpl ? `<div class="expl-body">${_e(q.explanation)}</div>` : '';
+          explHtml = `<div class="expl"><div class="expl-hd">【解説】</div>${mainHtml}${ceHtml}</div>`;
         }
         const exclBadge = q.excludedHandling ? ' <span class="excl-badge">⚠採点除外</span>' : '';
         return `<div class="q">
@@ -5099,9 +5102,11 @@ ${imgHtml}<div class="opts">${optsHtml}</div>${ansHtml}${explHtml}
         }
         // 解説の高さ（解説付きモードのみ）
         let explH = 0;
-        if (we && q.explanation) {
+        const hHasMainExpl = q.explanation && String(q.explanation).trim();
+        const hHasCeExpl   = q.choiceExplanations && q.choiceExplanations.some(Boolean);
+        if (we && (hHasMainExpl || hHasCeExpl)) {
           const hdH    = 10.5 * 1.4 * PT + 1 * PT;   // expl-hd 1行 + margin-bottom
-          const bodyLines = Math.max(1, Math.ceil(ew(q.explanation) / CPL_EX));
+          const bodyLines = hHasMainExpl ? Math.max(1, Math.ceil(ew(q.explanation) / CPL_EX)) : 0;
           let ceH = 0;
           (q.choiceExplanations||[]).forEach(ex => {
             if (!ex) return;
