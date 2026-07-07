@@ -5077,8 +5077,8 @@ ${imgHtml}<div class="opts">${optsHtml}</div>${ansHtml}${explHtml}
       };
 
       // 1問の高さ(mm)を決定論的に見積もる（buildQ と同一の内容・CSSに基づく）
-      const LH_EXPL = 10.5 * 1.50 * PT;  // expl-body: 10.5pt × line-height 1.5
-      const LH_CE   = 10.5 * 1.40 * PT;  // ce: 10.5pt × line-height 1.4
+      const LH_EXPL = 10.5 * 1.40 * PT;  // expl-body: 10.5pt × line-height 1.4（Word同様に詰める）
+      const LH_CE   = 10.5 * 1.35 * PT;  // ce: 10.5pt × line-height 1.35（Word同様に詰める）
       const CPL_EX  = 20;               // 解説段（10.5ptで折り返し短め）
 
       const measureQ = (q, num, sz) => {
@@ -5105,14 +5105,14 @@ ${imgHtml}<div class="opts">${optsHtml}</div>${ansHtml}${explHtml}
         const hHasMainExpl = q.explanation && String(q.explanation).trim();
         const hHasCeExpl   = q.choiceExplanations && q.choiceExplanations.some(Boolean);
         if (we && (hHasMainExpl || hHasCeExpl)) {
-          const hdH    = 10.5 * 1.4 * PT + 1 * PT;   // expl-hd 1行 + margin-bottom
+          const hdH    = 10.5 * 1.4 * PT + 0.5 * PT;   // expl-hd 1行 + margin-bottom（Word同様に詰める）
           const bodyLines = hHasMainExpl ? Math.max(1, Math.ceil(ew(q.explanation) / CPL_EX)) : 0;
           let ceH = 0;
           (q.choiceExplanations||[]).forEach(ex => {
             if (!ex) return;
-            ceH += Math.max(1, Math.ceil((ew(ex) + 2) / CPL_EX)) * LH_CE + 1 * PT;
+            ceH += Math.max(1, Math.ceil((ew(ex) + 2) / CPL_EX)) * LH_CE + 0.5 * PT;
           });
-          explH = 3*PT + hdH + bodyLines*LH_EXPL + ceH + 3*PT + 3*PT; // padding top/bottom + margin-top
+          explH = 2*PT + hdH + bodyLines*LH_EXPL + ceH + 2*PT + 2*PT; // padding top/bottom + margin-top（Word同様に詰める）
         }
         const topGap = 7   * PT;               // .q margin-top
         const qhMb   = 2   * PT;               // qh↓qt（collapse後）
@@ -5191,10 +5191,10 @@ body{font-family:"游明朝","Yu Mincho","Hiragino Mincho Pro W3","ヒラギノ�
 .opts{padding-left:1mm}
 .opt{font-size:10.5pt;margin:0.9pt 0;line-height:1.4}
 .qimg{display:block;width:100%;height:auto;max-height:${IMG_MAXH}mm;object-fit:contain;margin:2pt 0}
-.expl{margin-top:3pt;padding:3pt 5pt;background:#eff6ff;border-left:2pt solid #3b82f6;border-radius:2pt}
-.expl-hd{font-size:10.5pt;font-weight:bold;color:#1e3a8a;margin-bottom:1pt}
-.expl-body{font-size:10.5pt;color:#1e293b;line-height:1.5}
-.ce{font-size:10.5pt;color:#374151;margin-top:1pt;padding-left:4pt}
+.expl{margin-top:2pt;padding:2pt 5pt;background:#eff6ff;border-left:2pt solid #3b82f6;border-radius:2pt}
+.expl-hd{font-size:10.5pt;font-weight:bold;color:#1e3a8a;margin-bottom:0.5pt}
+.expl-body{font-size:10.5pt;color:#1e293b;line-height:1.4}
+.ce{font-size:10.5pt;color:#374151;margin-top:0.5pt;padding-left:4pt;line-height:1.35}
 .ans{font-size:10.5pt;font-weight:bold;border-top:.4pt solid #333;
      margin-top:2pt;padding-top:1pt;color:#1a5c30}
 .ans.excl{color:#b45309;border-top-color:#f59e0b;background:#fffbeb;padding:3pt 5pt;border-radius:3pt}
