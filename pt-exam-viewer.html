@@ -774,6 +774,72 @@
     .nav-btn:disabled { opacity: 0.35; cursor: not-allowed; }
     .nav-pos { font-size: 13px; color: #a0aec0; font-weight: 600; }
 
+    /* ══════════ 類似問題モード（夜空の裏モード） ══════════ */
+    .btn-similar-mode {
+      background: linear-gradient(135deg,rgba(139,92,246,0.35),rgba(99,102,241,0.35));
+      border: 1px solid rgba(196,181,253,0.55);
+      color: white; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 700;
+      cursor: pointer; transition: all 0.2s; white-space: nowrap; backdrop-filter: blur(4px);
+    }
+    .btn-similar-mode:hover { background: linear-gradient(135deg,rgba(139,92,246,0.55),rgba(99,102,241,0.55)); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(139,92,246,0.4); }
+    .btn-similar-mode.active {
+      background: linear-gradient(135deg,#4c1d95,#312e81);
+      border-color: rgba(196,181,253,0.8);
+      box-shadow: 0 0 0 2px rgba(196,181,253,0.35) inset;
+    }
+    #simStars { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; display: none; }
+    body.similar-mode #simStars { display: block; }
+
+    body.similar-mode { background: #050818; color: #e2e8f0; }
+    body.similar-mode header {
+      background: linear-gradient(135deg, #050e38 0%, #171580 55%, #2a1a7a 100%);
+      box-shadow: 0 4px 20px rgba(2,6,26,0.6);
+    }
+    body.similar-mode .sidebar {
+      background: rgba(8,12,32,0.88); backdrop-filter: blur(12px);
+      border-right-color: rgba(139,92,246,0.18); color: #cbd5e1;
+    }
+    body.similar-mode .filter-section h3 { color: #8b8fb8; border-bottom-color: rgba(139,92,246,0.2); }
+    body.similar-mode .main { background: transparent; }
+    body.similar-mode #mainContent { background: transparent; }
+    body.similar-mode .layout { position: relative; z-index: 1; }
+    body.similar-mode .empty-state { color: #8b8fb8; }
+    body.similar-mode .question-card, body.similar-mode .sim-card {
+      background: rgba(20,22,55,0.88); border-color: rgba(139,92,246,0.25);
+      color: #e2e8f0; box-shadow: 0 4px 20px rgba(0,0,0,0.45), 0 0 0 1px rgba(139,92,246,0.06);
+    }
+    body.similar-mode .question-card:hover { border-left-color: #a78bfa; border-color: rgba(196,181,253,0.5); box-shadow: 0 8px 28px rgba(124,58,237,0.25); }
+    body.similar-mode .card-text { color: #cbd5e1; }
+    body.similar-mode .card-id { color: #a5b4fc; }
+    body.similar-mode .sim-badge { background: linear-gradient(135deg,#4c1d95,#6d28d9); color: #ede9fe; }
+    body.similar-mode .sim-orig-id { font-size: 11px; color: #c4b5fd; margin-left: auto; font-family: monospace; font-weight: 700; }
+    body.similar-mode .pag-btn { background: rgba(20,22,55,0.8); border-color: rgba(139,92,246,0.25); color: #cbd5e1; }
+    body.similar-mode .pag-btn.active { background: linear-gradient(135deg,#4c1d95,#6d28d9); }
+    body.similar-mode .pag-info, body.similar-mode .pag-ellipsis { color: #8b8fb8; }
+    body.similar-mode .modal { background: #0b0f2e; box-shadow: 0 32px 80px rgba(0,0,0,0.6); }
+    body.similar-mode .modal-header { background: #0b0f2e; border-bottom-color: rgba(139,92,246,0.2); }
+    body.similar-mode .modal-close { background: rgba(139,92,246,0.15); color: #cbd5e1; }
+    body.similar-mode .modal-close:hover { background: rgba(139,92,246,0.28); }
+    body.similar-mode .question-text { color: #f1f5f9; }
+    body.similar-mode .choice { background: rgba(255,255,255,0.04); border-color: rgba(139,92,246,0.2); color: #e2e8f0; }
+    body.similar-mode .choice-num { color: #8b8fb8; }
+    body.similar-mode .choice.correct { background: rgba(34,197,94,0.15); border-color: rgba(74,222,128,0.5); }
+    body.similar-mode .choice.correct .choice-num { color: #4ade80; }
+    body.similar-mode .answer-section { background: rgba(139,92,246,0.08); border-color: rgba(139,92,246,0.3); }
+    body.similar-mode .answer-label { color: #8b8fb8; }
+    body.similar-mode .answer-value { color: #c4b5fd; }
+    body.similar-mode .answer-text { color: #cbd5e1; }
+    body.similar-mode .modal-nav { border-top-color: rgba(139,92,246,0.2); }
+    body.similar-mode .nav-btn { background: rgba(20,22,55,0.8); border-color: rgba(139,92,246,0.25); color: #cbd5e1; }
+    body.similar-mode .nav-btn:hover:not(:disabled) { background: rgba(139,92,246,0.18); border-color: rgba(196,181,253,0.5); color: #ede9fe; }
+    body.similar-mode .nav-pos { color: #8b8fb8; }
+    body.similar-mode .expl-panel { background: rgba(139,92,246,0.06); border-color: rgba(139,92,246,0.25); }
+    body.similar-mode .expl-section-label { color: #a5b4fc; }
+    body.similar-mode .expl-choice-item { background: rgba(255,255,255,0.04); border-color: rgba(139,92,246,0.15); color: #cbd5e1; }
+    body.similar-mode .expl-choice-item.expl-correct { background: rgba(34,197,94,0.15); border-color: rgba(74,222,128,0.4); }
+    body.similar-mode .expl-choice-num { color: #8b8fb8; }
+    body.similar-mode .expl-choice-item.expl-correct .expl-choice-num { color: #4ade80; }
+
     /* ── ローディング ── */
     #loadingOverlay {
       position: fixed; inset: 0; background: rgba(238,242,247,0.92);
@@ -2241,6 +2307,7 @@
       <div id="cacheBadge" class="cache-badge" style="display:none"></div>
     </div>
     <button class="btn-reload" id="reloadBtn" style="display:none" onclick="showHelpModal()">✨ 使い方</button>
+    <button class="btn-similar-mode" id="similarModeBtn" style="display:none" onclick="toggleSimilarMode()">🌓 類似問題モード</button>
     <button id="fullscreenBtn" onclick="handleFullscreen()" title="全画面表示"
       style="background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.4);color:white;
              border-radius:8px;padding:6px 10px;font-size:16px;cursor:pointer;line-height:1">⛶</button>
@@ -2373,6 +2440,7 @@
 
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 <div id="mainContent">
+  <div id="simStars"></div>
   <div class="layout">
     <div class="sidebar">
       <div class="filter-section">
@@ -2871,6 +2939,9 @@
   let _uncheckedIds = new Set(); // チェックを外した問題ID（デフォルト全チェック）
   let pinnedList    = [];         // 📌 ピン留めした問題ID（順序付き配列）
   let pinModeActive = false;     // ピン留めモード中かどうか
+  let similarMode   = false;     // 🌓 類似問題モード中かどうか
+  let simList       = [];        // 類似問題モードで表示する元問題の配列
+  let _simStarsBuilt = false;
 
   function _getCheckedQuestions() { return filteredData.filter(q => !_uncheckedIds.has(q.id)); }
   function _updateCheckBar() {
@@ -3047,6 +3118,7 @@
         document.getElementById('cacheBadge').textContent = `保存データ（${fmt}）`;
         document.getElementById('cacheBadge').style.display = 'block';
         document.getElementById('reloadBtn').style.display  = 'block';
+        document.getElementById('similarModeBtn').style.display = 'block';
         initApp();
         _onAppReady(); // パスワード画面ローディング解除
         return true;
@@ -3180,6 +3252,7 @@
           document.getElementById('cacheBadge').textContent = `保存データ（${now}）`;
           document.getElementById('cacheBadge').style.display = 'block';
           document.getElementById('reloadBtn').style.display  = 'block';
+        document.getElementById('similarModeBtn').style.display = 'block';
         } catch(idbErr) {
           console.warn('キャッシュ保存スキップ（IndexedDB利用不可）:', idbErr.message);
         }
@@ -3214,6 +3287,7 @@
           document.getElementById('cacheBadge').textContent = `保存データ（${now}）`;
           document.getElementById('cacheBadge').style.display = 'block';
           document.getElementById('reloadBtn').style.display  = 'block';
+        document.getElementById('similarModeBtn').style.display = 'block';
         } catch(idbErr) {
           console.warn('キャッシュ保存スキップ（IndexedDB利用不可）:', idbErr.message);
         }
@@ -3282,6 +3356,7 @@
       document.getElementById('cacheBadge').textContent = `読み込み完了（${allData.length.toLocaleString()}問）`;
       document.getElementById('cacheBadge').style.display = 'block';
       document.getElementById('reloadBtn').style.display  = 'block';
+      document.getElementById('similarModeBtn').style.display = 'block';
       initApp();
       loadAnnotations();
       showLoading(false);
@@ -3311,6 +3386,7 @@
       document.getElementById('cacheBadge').textContent = `埋め込みデータ（${allData.length.toLocaleString()}問）`;
       document.getElementById('cacheBadge').style.display = 'block';
       document.getElementById('reloadBtn').style.display  = 'block';
+      document.getElementById('similarModeBtn').style.display = 'block';
       initApp();
       loadAnnotations();
       showLoading(false);
@@ -3542,6 +3618,7 @@
 
   // ── Render list ───────────────────────────────────────────────────
   function renderPage() {
+    if (similarMode) { renderSimilarPage(); return; }
     const start     = (currentPage - 1) * PAGE_SIZE;
     const pageData  = filteredData.slice(start, start + PAGE_SIZE);
     const container = document.getElementById('questionList');
@@ -3563,6 +3640,155 @@
     </div>`;
     container.innerHTML = topBar + pageData.map((q, i) => renderCard(q, start + i)).join('');
     renderPagination();
+  }
+
+  // ══════════ 🌓 類似問題モード ══════════
+  function _initSimilarStars() {
+    if (_simStarsBuilt) return;
+    _simStarsBuilt = true;
+    const el = document.getElementById('simStars');
+    if (!el) return;
+    for (let i = 0; i < 130; i++) {
+      const s = document.createElement('div');
+      s.className = 'ls-star';
+      const size = (Math.random() * 2.0 + 0.5).toFixed(1);
+      s.style.left              = (Math.random() * 100).toFixed(1) + '%';
+      s.style.top               = (Math.random() * 100).toFixed(1) + '%';
+      s.style.width             = size + 'px';
+      s.style.height            = size + 'px';
+      s.style.animationDuration = (Math.random() * 3.5 + 1.5).toFixed(2) + 's';
+      s.style.animationDelay    = (-Math.random() * 5).toFixed(2) + 's';
+      el.appendChild(s);
+    }
+  }
+
+  function toggleSimilarMode() {
+    if (!similarMode) {
+      const withSim = _getCheckedQuestions().filter(q => q.ai_materials && q.ai_materials.similar_question);
+      if (withSim.length === 0) {
+        alert('チェックされている問題の中に類似問題がありません。\n問題をチェックしてから、もう一度お試しください。');
+        return;
+      }
+      simList = withSim;
+      similarMode = true;
+      currentPage = 1;
+      document.body.classList.add('similar-mode');
+      const btn = document.getElementById('similarModeBtn');
+      if (btn) { btn.textContent = '☀️ 通常モードに戻る'; btn.classList.add('active'); }
+      _initSimilarStars();
+    } else {
+      similarMode = false;
+      simList = [];
+      currentPage = 1;
+      document.body.classList.remove('similar-mode');
+      const btn = document.getElementById('similarModeBtn');
+      if (btn) { btn.textContent = '🌓 類似問題モード'; btn.classList.remove('active'); }
+    }
+    renderPage();
+    document.getElementById('mainScroll').scrollTo({ top: 0 });
+  }
+
+  function renderSimilarPage() {
+    const start     = (currentPage - 1) * PAGE_SIZE;
+    const pageData  = simList.slice(start, start + PAGE_SIZE);
+    const container = document.getElementById('questionList');
+
+    if (simList.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="icon">🌓</div>
+          <p>チェックした問題の中に類似問題がありません<br><small>類似問題モードをOFFにして別の問題をチェックしてください</small></p>
+        </div>`;
+      document.getElementById('pagination').innerHTML = '';
+      return;
+    }
+    const topBar = `<div style="display:flex;align-items:center;gap:8px;padding:6px 4px 8px;flex-wrap:wrap;">
+      <span style="font-size:12px;color:#c4b5fd;font-weight:700;">🌓 類似問題モード：${simList.length} 問（正答率など統計には反映されません）</span>
+    </div>`;
+    container.innerHTML = topBar + pageData.map((q, i) => renderSimilarCard(q, start + i)).join('');
+    renderPagination();
+  }
+
+  function renderSimilarCard(q, idx) {
+    const sim     = q.ai_materials.similar_question;
+    const preview = esc(sim.text.substring(0, 110)) + (sim.text.length > 110 ? '…' : '');
+    const delay   = (idx % PAGE_SIZE) * 0.04;
+    return `
+      <div class="question-card qcard-flex sim-card" style="animation-delay:${delay}s">
+        <div class="qc-body" style="cursor:pointer;width:100%;padding:13px 14px" onclick="openSimilarModal(${idx})">
+          <div class="card-meta">
+            <span class="badge sim-badge">🌓 類似問題</span>
+            <span class="sim-orig-id">元問題: ${esc(q.id)}</span>
+          </div>
+          <div class="card-text">${preview}</div>
+        </div>
+      </div>`;
+  }
+
+  function openSimilarModal(idx) {
+    currentModalIdx = idx;
+    renderSimilarModal(idx);
+    document.getElementById('modalOverlay').classList.add('open');
+  }
+
+  function renderSimilarModal(idx) {
+    const q     = simList[idx];
+    const sim   = q.ai_materials.similar_question;
+    const total = simList.length;
+
+    document.getElementById('modalMeta').innerHTML = `
+      <span class="badge sim-badge">🌓 類似問題</span>
+      <span style="font-size:12px;color:#c4b5fd;margin-left:6px;font-weight:700">元問題: ${esc(q.id)}</span>`;
+
+    const choicesHtml = (sim.choices || []).map((c, i) => {
+      const num     = String(i + 1);
+      const correct = String(sim.answer) === num;
+      return `
+        <li class="choice ${correct ? 'correct' : ''}">
+          <span class="choice-num">${num}</span>
+          <span style="flex:1">${esc(c)}</span>
+          ${correct ? '<span class="choice-check">✓</span>' : ''}
+        </li>`;
+    }).join('');
+
+    const explPCIR = ['①','②','③','④','⑤'];
+    const ce = Array.isArray(sim.choiceExplanations) ? sim.choiceExplanations : [];
+    const ceHtml = ce.length
+      ? ce.map((text, i) => {
+          const isCorrect = String(sim.answer) === String(i + 1);
+          const cleanText = String(text).replace(/^[\d０-９]+[.．][\s　]*[○×〇✕✗⭕️❌◯✓]+[\s　]*/, '').replace(/^[○×〇✕✗⭕️❌◯✓]+[\s　]*/, '');
+          return `<div class="expl-choice-item${isCorrect ? ' expl-correct' : ''}">
+            <span class="expl-choice-num">${explPCIR[i] || (i+1)}</span>
+            <span>${esc(cleanText)}</span>
+          </div>`;
+        }).join('')
+      : '<div style="color:#9ca3af;font-size:13px">（選択肢解説なし）</div>';
+
+    const answerText = (sim.choices || [])[parseInt(sim.answer) - 1] || '';
+
+    document.getElementById('modalBody').innerHTML = `
+      <div class="question-text">${esc(sim.text)}</div>
+      <ul class="choices">${choicesHtml}</ul>
+      <div class="answer-section">
+        <div class="answer-grid">
+          <div class="answer-item">
+            <div class="answer-label">正答</div>
+            <div class="answer-value">${esc(String(sim.answer))}</div>
+            <div class="answer-text">${esc(answerText)}</div>
+          </div>
+        </div>
+      </div>
+      <div class="expl-panel" style="margin-top:16px">
+        <div>
+          <div class="expl-section-label">🔢 選択肢別解説</div>
+          <div class="expl-choices-list">${ceHtml}</div>
+        </div>
+      </div>`;
+
+    document.getElementById('prevBtn').disabled = idx === 0;
+    document.getElementById('nextBtn').disabled = idx === total - 1;
+    document.getElementById('navPos').textContent = `${idx + 1} / ${total} 問（元問題: ${q.id}）`;
+    document.getElementById('modal').scrollTo({ top: 0 });
   }
 
   function accColor(rate) {
@@ -3695,7 +3921,7 @@
 
   // ── Pagination ────────────────────────────────────────────────────
   function renderPagination() {
-    const totalPages = Math.ceil(filteredData.length / PAGE_SIZE);
+    const totalPages = Math.ceil((similarMode ? simList.length : filteredData.length) / PAGE_SIZE);
     const pag = document.getElementById('pagination');
     if (totalPages <= 1) { pag.innerHTML = ''; return; }
 
@@ -3841,9 +4067,11 @@
   }
 
   document.getElementById('prevBtn').addEventListener('click', () => {
+    if (similarMode) { if (currentModalIdx > 0) { currentModalIdx--; renderSimilarModal(currentModalIdx); } return; }
     if (currentModalIdx > 0) { currentModalIdx--; renderModal(currentModalIdx); }
   });
   document.getElementById('nextBtn').addEventListener('click', () => {
+    if (similarMode) { if (currentModalIdx < simList.length - 1) { currentModalIdx++; renderSimilarModal(currentModalIdx); } return; }
     if (currentModalIdx < filteredData.length - 1) { currentModalIdx++; renderModal(currentModalIdx); }
   });
 
@@ -3853,6 +4081,11 @@
   document.addEventListener('keydown', e => {
     if (!document.getElementById('modalOverlay').classList.contains('open')) return;
     if (e.key === 'Escape') closeModal();
+    if (similarMode) {
+      if (e.key === 'ArrowLeft'  && currentModalIdx > 0)                 { currentModalIdx--; renderSimilarModal(currentModalIdx); }
+      if (e.key === 'ArrowRight' && currentModalIdx < simList.length - 1) { currentModalIdx++; renderSimilarModal(currentModalIdx); }
+      return;
+    }
     if (e.key === 'ArrowLeft'  && currentModalIdx > 0)                          { currentModalIdx--; renderModal(currentModalIdx); }
     if (e.key === 'ArrowRight' && currentModalIdx < filteredData.length - 1)    { currentModalIdx++; renderModal(currentModalIdx); }
   });
