@@ -5051,8 +5051,9 @@ ${imgHtml}<div class="opts">${optsHtml}</div>${ansHtml}${explHtml}
       // ② レイアウト定数（PDF専用・固定値。画面に一切依存しない）
       const PT       = 0.352777778;   // 1pt = 0.3528mm
       const COL_W    = 84.1;          // 段の幅(mm) = (210 - 15.9×2 - 10) / 2
-      // 解説付きは解説テキスト分だけ実高さがブレやすいため安全余白を大きく取る
-      const FILL_H   = we ? 220.0 : 245.0;
+      // 解説付きは解説テキスト分だけ実高さがブレやすいため安全余白を取るが、
+      // 詰めて出力するため列の実高さ(252mm)に近づける
+      const FILL_H   = we ? 238.0 : 245.0;
       const IMG_MAXH = we ? 110.0 : 150.0;  // 横いっぱい表示・自然な縦横比
 
       // 1行あたりの全角文字数。実際の折返し(約22字)よりやや少なめの保守値にして
@@ -5062,7 +5063,7 @@ ${imgHtml}<div class="opts">${optsHtml}</div>${ansHtml}${explHtml}
       const CPL_QH  = 20;  // ヘッダー(11pt)
       // 行の高さ(mm) = フォントpt × line-height × PT
       const LH_QT  = 10.5 * 1.45 * PT;
-      const LH_OPT = 10.5 * 1.40 * PT;
+      const LH_OPT = 10.5 * 1.35 * PT;  // .opt line-height 1.35（Word同様に詰める）
       const LH_QH  = 11   * 1.35 * PT;
       const LH_ANS = 10.5 * 1.40 * PT;
 
@@ -5077,9 +5078,9 @@ ${imgHtml}<div class="opts">${optsHtml}</div>${ansHtml}${explHtml}
       };
 
       // 1問の高さ(mm)を決定論的に見積もる（buildQ と同一の内容・CSSに基づく）
-      const LH_EXPL = 10.5 * 1.40 * PT;  // expl-body: 10.5pt × line-height 1.4（Word同様に詰める）
-      const LH_CE   = 10.5 * 1.35 * PT;  // ce: 10.5pt × line-height 1.35（Word同様に詰める）
-      const CPL_EX  = 20;               // 解説段（10.5ptで折り返し短め）
+      const LH_EXPL = 9.5 * 1.30 * PT;  // expl-body: 9.5pt × line-height 1.3（さらに詰める）
+      const LH_CE   = 9.5 * 1.30 * PT;  // ce: 9.5pt × line-height 1.3（さらに詰める）
+      const CPL_EX  = 24;               // 解説段（9.5pt化に伴い折返し文字数を増加）
 
       const measureQ = (q, num, sz) => {
         const choices = q.choices || [];
@@ -5092,7 +5093,7 @@ ${imgHtml}<div class="opts">${optsHtml}</div>${ansHtml}${explHtml}
         let optH = 0;
         choices.forEach(c => {
           const lines = Math.max(1, Math.ceil((ew(c) + 2) / CPL_OPT)); // 「①　」≈2全角分
-          optH += lines * LH_OPT + 0.9 * PT;                           // 各opt margin 0.9pt
+          optH += lines * LH_OPT + 0.6 * PT;                           // 各opt margin 0.6pt（Word同様に詰める）
         });
         let ansH = 0;
         if (wa && q.answer) {
@@ -5110,7 +5111,7 @@ ${imgHtml}<div class="opts">${optsHtml}</div>${ansHtml}${explHtml}
           let ceH = 0;
           (q.choiceExplanations||[]).forEach(ex => {
             if (!ex) return;
-            ceH += Math.max(1, Math.ceil((ew(ex) + 2) / CPL_EX)) * LH_CE + 0.5 * PT;
+            ceH += Math.max(1, Math.ceil((ew(ex) + 2) / CPL_EX)) * LH_CE + 0.4 * PT;
           });
           explH = 2*PT + hdH + bodyLines*LH_EXPL + ceH + 2*PT + 2*PT; // padding top/bottom + margin-top（Word同様に詰める）
         }
@@ -5189,12 +5190,12 @@ body{font-family:"游明朝","Yu Mincho","Hiragino Mincho Pro W3","ヒラギノ�
 .qpct{font-size:9.5pt;font-weight:normal;color:#555}
 .qt{font-size:10.5pt;margin-top:2pt;margin-bottom:1.5pt;word-break:break-all;line-height:1.45}
 .opts{padding-left:1mm}
-.opt{font-size:10.5pt;margin:0.9pt 0;line-height:1.4}
+.opt{font-size:10.5pt;margin:0.6pt 0;line-height:1.35}
 .qimg{display:block;width:100%;height:auto;max-height:${IMG_MAXH}mm;object-fit:contain;margin:2pt 0}
 .expl{margin-top:2pt;padding:2pt 5pt;background:#eff6ff;border-left:2pt solid #3b82f6;border-radius:2pt}
 .expl-hd{font-size:10.5pt;font-weight:bold;color:#1e3a8a;margin-bottom:0.5pt}
-.expl-body{font-size:10.5pt;color:#1e293b;line-height:1.4}
-.ce{font-size:10.5pt;color:#374151;margin-top:0.5pt;padding-left:4pt;line-height:1.35}
+.expl-body{font-size:9.5pt;color:#1e293b;line-height:1.3}
+.ce{font-size:9.5pt;color:#374151;margin-top:0.4pt;padding-left:4pt;line-height:1.3}
 .ans{font-size:10.5pt;font-weight:bold;border-top:.4pt solid #333;
      margin-top:2pt;padding-top:1pt;color:#1a5c30}
 .ans.excl{color:#b45309;border-top-color:#f59e0b;background:#fffbeb;padding:3pt 5pt;border-radius:3pt}
