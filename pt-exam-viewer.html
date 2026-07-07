@@ -800,6 +800,44 @@
       border-right-color: rgba(139,92,246,0.18); color: #cbd5e1;
     }
     body.similar-mode .filter-section h3 { color: #8b8fb8; border-bottom-color: rgba(139,92,246,0.2); }
+    body.similar-mode .search-wrap input,
+    body.similar-mode .sort-select,
+    body.similar-mode .pin-sel {
+      background: rgba(255,255,255,0.06); border-color: rgba(139,92,246,0.25); color: #e2e8f0;
+    }
+    body.similar-mode .search-wrap input::placeholder { color: #8b8fb8; }
+    body.similar-mode .search-wrap input:focus,
+    body.similar-mode .sort-select:focus { background: rgba(255,255,255,0.1); border-color: #a78bfa; }
+    body.similar-mode .checkbox-list label:hover,
+    body.similar-mode .ft-parent-label:hover,
+    body.similar-mode .ft-sub-label:hover { background: rgba(139,92,246,0.12); }
+    body.similar-mode .cb-label,
+    body.similar-mode .ft-parent-label .cb-label,
+    body.similar-mode .ft-sub-label .cb-label,
+    body.similar-mode .ft-name-click { color: #e2e8f0 !important; }
+    body.similar-mode .cb-count,
+    body.similar-mode .ft-parent-label .cb-count,
+    body.similar-mode .ft-sub-label .cb-count { color: #8b8fb8 !important; }
+    body.similar-mode .ft-toggle { color: #8b8fb8; }
+    body.similar-mode .ft-toggle:hover { color: #e2e8f0; }
+    body.similar-mode .ft-subs { border-left-color: rgba(139,92,246,0.25); }
+    body.similar-mode .checkbox-list input[type="checkbox"],
+    body.similar-mode .ft-parent-label input,
+    body.similar-mode .ft-sub-label input { accent-color: #8b5cf6; }
+    body.similar-mode .range-row { color: #8b8fb8; }
+    body.similar-mode .range-val { color: #e2e8f0; }
+    body.similar-mode .qcheck-btn { background: rgba(139,92,246,0.15); border-color: rgba(139,92,246,0.4); color: #c4b5fd; }
+    body.similar-mode .qcheck-btn:hover { background: rgba(139,92,246,0.28); }
+    body.similar-mode .btn-reset { background: rgba(255,255,255,0.06); border-color: rgba(139,92,246,0.25); color: #cbd5e1; }
+    body.similar-mode .btn-reset:hover { background: rgba(139,92,246,0.15); }
+    body.similar-mode .radio-group { border-color: rgba(139,92,246,0.25); }
+    body.similar-mode .radio-option label { background: rgba(255,255,255,0.04); color: #cbd5e1; }
+    body.similar-mode .radio-option:first-child label { border-right-color: rgba(139,92,246,0.25); }
+    body.similar-mode .result-count { color: #c4b5fd; }
+    body.similar-mode .export-note { color: #8b8fb8; }
+    body.similar-mode #qCheckCount { color: #c4b5fd; }
+    body.similar-mode .pin-status-msg { color: #cbd5e1; }
+    body.similar-mode .pin-item { background: rgba(139,92,246,0.15); color: #ddd6fe; }
     body.similar-mode .main { background: transparent; }
     body.similar-mode #mainContent { background: transparent; }
     body.similar-mode .layout { position: relative; z-index: 1; }
@@ -3702,11 +3740,28 @@
       document.getElementById('pagination').innerHTML = '';
       return;
     }
-    const topBar = `<div style="display:flex;align-items:center;gap:8px;padding:6px 4px 8px;flex-wrap:wrap;">
+    const filteredWithSim = filteredData.filter(q => q.ai_materials && q.ai_materials.similar_question);
+    const uncheckedButFilteredCount = filteredWithSim.length - simList.length;
+    const hint = uncheckedButFilteredCount > 0
+      ? `<div style="margin-top:4px;font-size:11.5px;color:#fbbf24;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+           <span>現在の絞り込み条件に該当する問題は${filteredWithSim.length}問ありますが、チェックされているのは${simList.length}問だけです。</span>
+           <button onclick="_simCheckAllFiltered()" style="font-size:11px;padding:3px 10px;border-radius:7px;border:1px solid rgba(251,191,36,0.5);background:rgba(251,191,36,0.15);color:#fde68a;cursor:pointer;font-weight:700;white-space:nowrap;">絞り込み内を全てチェックして表示</button>
+         </div>`
+      : '';
+    const topBar = `<div style="display:flex;flex-direction:column;gap:4px;padding:6px 4px 8px;">
       <span style="font-size:12px;color:#c4b5fd;font-weight:700;">🌓 類似問題モード：${simList.length} 問（正答率など統計には反映されません）</span>
+      ${hint}
     </div>`;
     container.innerHTML = topBar + pageData.map((q, i) => renderSimilarCard(q, start + i)).join('');
     renderPagination();
+  }
+
+  function _simCheckAllFiltered() {
+    filteredData.forEach(q => _uncheckedIds.delete(q.id));
+    simList = filteredData.filter(q => q.ai_materials && q.ai_materials.similar_question);
+    currentPage = 1;
+    _updateCheckBar();
+    renderSimilarPage();
   }
 
   function renderSimilarCard(q, idx) {
