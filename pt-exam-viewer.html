@@ -8130,7 +8130,13 @@ ${body}</body></html>`;
     }
     if (!active) return;
 
+    function isLoginScreenVisible() {
+      const el = document.getElementById('passwordScreen');
+      return !!el && getComputedStyle(el).display !== 'none';
+    }
+
     function spawnParticle() {
+      if (!isLoginScreenVisible()) return;
       const emoji = active.emojis[Math.floor(Math.random() * active.emojis.length)];
       const el = document.createElement('div');
       el.className = 'holiday-particle';
@@ -8141,14 +8147,20 @@ ${body}</body></html>`;
       const dur = 5 + Math.random() * 6;
       el.style.animationDuration = dur + 's';
       el.style.animationDelay = (Math.random() * 1.5) + 's';
-      document.body.appendChild(el);
+      document.getElementById('passwordScreen').appendChild(el);
       setTimeout(() => el.remove(), (dur + 2) * 1000);
     }
 
-    // 最初のバースト
+    // 最初のバースト（ログイン画面が表示されている場合のみ）
     for (let i = 0; i < 6; i++) setTimeout(spawnParticle, i * 200);
-    // 以後定期的に
-    setInterval(spawnParticle, 700);
+    // 以後定期的に（ログイン画面を離れたら自動的に停止）
+    const holidayIntervalId = setInterval(() => {
+      if (!isLoginScreenVisible()) {
+        clearInterval(holidayIntervalId);
+        return;
+      }
+      spawnParticle();
+    }, 700);
   })();
 </script>
 
