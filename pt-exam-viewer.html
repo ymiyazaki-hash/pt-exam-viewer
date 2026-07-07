@@ -2987,8 +2987,42 @@
   let _simStarsBuilt = false;
 
   function _getCheckedQuestions() { return filteredData.filter(q => !_uncheckedIds.has(q.id)); }
+
+  // 類似問題モード用：元問題オブジェクトから「通常問題と同じ形」のオブジェクトを作る
+  // （Word/PDF書き出し・クイズ配信など、通常モードの機能をそのまま使い回すための変換）
+  function _buildSimShadow(q) {
+    const sim = q.ai_materials.similar_question;
+    return {
+      id: q.id,
+      examSession: q.examSession,
+      category: q.category,
+      new_fields: q.new_fields,
+      new_sub_fields: q.new_sub_fields,
+      text: sim.text,
+      choices: sim.choices,
+      answer: sim.answer,
+      choiceExplanations: sim.choiceExplanations
+    };
+  }
+  // プレゼンモード（解説モード）用：id を元問題と別名にして practiceState 等の
+  // 保存データが元問題のものと衝突しないようにする
+  function _buildSimPracticeShadow(q) {
+    const shadow = _buildSimShadow(q);
+    shadow.id = q.id + '_sim';
+    shadow._origId = q.id;
+    return shadow;
+  }
+  // Word/PDF書き出し・解答一覧・クイズ配信など「チェック済み問題」を使う機能全般で、
+  // 類似問題モード中は類似問題データを対象にするための共通入口
+  function _getExportableQuestions() {
+    return similarMode ? simList.map(_buildSimShadow) : _getCheckedQuestions();
+  }
+
   function _updateCheckBar() {
-    const n = _getCheckedQuestions().length, total = filteredData.length;
+    const total = similarMode
+      ? filteredData.filter(q => q.ai_materials && q.ai_materials.similar_question).length
+      : filteredData.length;
+    const n = similarMode ? simList.length : _getCheckedQuestions().length;
     const el = document.getElementById('qCheckCount');
     if (el) el.textContent = n + ' / ' + total + ' 問チェック中';
     const en = document.getElementById('exportNote');
@@ -3622,7 +3656,9 @@
 
     currentPage = 1;
     _uncheckedIds = new Set();
-    const n = filteredData.length;
+    const n = similarMode
+      ? filteredData.filter(q => q.ai_materials && q.ai_materials.similar_question).length
+      : filteredData.length;
     document.getElementById('resultCount').textContent = `${n.toLocaleString()} 件該当`;
     const qcb = document.getElementById('qCheckBar'); if (qcb) qcb.classList.toggle('visible', n > 0);
     ['exportBtn','exportPdfBtn','exportListBtn','exportListPdfBtn'].forEach(id => {
@@ -3759,7 +3795,11 @@
          </div>`
       : '';
     const topBar = `<div style="display:flex;flex-direction:column;gap:4px;padding:6px 4px 8px;">
-      <span style="font-size:12px;color:#c4b5fd;font-weight:700;">🌙 類似問題モード：${simList.length} 問（正答率など統計には反映されません）</span>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <span style="font-size:12px;color:#c4b5fd;font-weight:700;">🌙 類似問題モード：${simList.length} 問（正答率など統計には反映されません）</span>
+        <button class="qcheck-btn" onclick="_qSelectAll()">全選択</button>
+        <button class="qcheck-btn" onclick="_qDeselectAll()">全解除</button>
+      </div>
       ${hint}
     </div>`;
     container.innerHTML = topBar + pageData.map((q, i) => renderSimilarCard(q, start + i)).join('');
@@ -3778,9 +3818,18 @@
     const sim     = q.ai_materials.similar_question;
     const preview = esc(sim.text.substring(0, 110)) + (sim.text.length > 110 ? '…' : '');
     const delay   = (idx % PAGE_SIZE) * 0.04;
+    const qidSafe = q.id.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    const isPinned = pinnedList.includes(q.id);
     return `
       <div class="question-card qcard-flex sim-card" style="animation-delay:${delay}s">
-        <div class="qc-body" style="cursor:pointer;width:100%;padding:13px 14px" onclick="openSimilarModal(${idx})">
+        <label class="qc-check-wrap" onclick="event.stopPropagation()">
+          <input type="checkbox" class="qc-checkbox" data-qid="${esc(q.id)}"
+                 ${_uncheckedIds.has(q.id)?'':'checked'}
+                 onchange="_toggleQCheck('${qidSafe}',this.checked)">
+        </label>
+        <button class="qc-pin-btn${isPinned?' pinned':''}" title="${isPinned?'ピンを外す':'ピンに追加'}"
+          onclick="event.stopPropagation();togglePin('${qidSafe}')">📌</button>
+        <div class="qc-body" style="cursor:pointer" onclick="openSimilarModal(${idx})">
           <div class="card-meta">
             <span class="badge sim-badge">🌙 類似問題</span>
             <span class="sim-orig-id">元問題: ${esc(q.id)}</span>
@@ -4599,7 +4648,7 @@
 
     try {
       // filteredData の表示順をそのまま使用（問1,問2,...の順）
-      const data = _getCheckedQuestions();
+      const data = _getExportableQuestions();
       const today = new Date().toLocaleDateString('ja-JP');
       const categories = [...new Set(data.map(d=>d.category).filter(Boolean))].sort().join('・');
       // 試験回は「第N回〜第M回」形式に短縮（サブタイトル折り返し防止）
@@ -4811,7 +4860,7 @@ ${imgRelXml}
   }
 
   async function exportToWord() {
-    const _chk = _getCheckedQuestions();
+    const _chk = _getExportableQuestions();
     if (!_chk.length) { alert('チェックされた問題がありません'); return; }
     const mode = document.querySelector('input[name="answerMode"]:checked').value;
     const we = mode === 'explain';
@@ -4848,7 +4897,7 @@ ${imgRelXml}
 
   // ── 問題 PDF 出力（ブラウザ印刷 / サーバー不要・iPad 対応）──────
   async function exportToPDF() {
-    const _chkPdf = _getCheckedQuestions();
+    const _chkPdf = _getExportableQuestions();
     if (!_chkPdf.length) { alert('チェックされた問題がありません'); return; }
     const _origFDpdf = filteredData; filteredData = _chkPdf;
     const _pdfMode = document.querySelector('input[name="answerMode"]:checked').value;
@@ -5185,7 +5234,7 @@ function closeBack(){
   function exportAnswerPDF() {
     if (!filteredData.length) { alert('データがありません'); return; }
 
-    const data = _getCheckedQuestions();
+    const data = _getExportableQuestions();
     const today = new Date().toLocaleDateString('ja-JP');
     const categories = [...new Set(data.map(d=>d.category).filter(Boolean))].sort().join('・');
     const sessList   = [...new Set(data.map(d=>d.examSession).filter(Boolean))].sort();
@@ -5268,19 +5317,7 @@ ${tables}
 
   function enterPractice(startIdx) {
     practiceData = similarMode
-      ? simList.map(q => {
-          const sim = q.ai_materials.similar_question;
-          return {
-            id: q.id,
-            examSession: q.examSession,
-            category: q.category,
-            new_fields: q.new_fields,
-            text: sim.text,
-            choices: sim.choices,
-            answer: sim.answer,
-            choiceExplanations: sim.choiceExplanations
-          };
-        })
+      ? simList.map(_buildSimPracticeShadow)
       : _getCheckedQuestions();
     if (!practiceData.length) { alert(similarMode ? '類似問題モードで表示できる問題がありません' : 'チェックされた問題がありません'); return; }
     practiceIdx = startIdx || 0;
@@ -5526,7 +5563,7 @@ ${tables}
     document.getElementById('pracProgress').textContent =
       `${practiceIdx + 1} / ${total}`;
     document.getElementById('pracMeta').innerHTML =
-      `${similarMode ? '<span class="badge sim-badge" style="margin-right:6px">🌙 類似問題</span>' : ''}<b>${esc(q.id)}</b>　${esc(q.examSession)}　${esc(q.category)}　${esc((q.new_fields||[])[0]||'')}`;
+      `${similarMode ? '<span class="badge sim-badge" style="margin-right:6px">🌙 類似問題</span>' : ''}<b>${esc(q._origId || q.id)}</b>　${esc(q.examSession)}　${esc(q.category)}　${esc((q.new_fields||[])[0]||'')}`;
     document.getElementById('pracBarSub').textContent =
       `${total}問　解説中: ${practiceIdx + 1}問目`;
     const pracEditBtnEl = document.getElementById('pracEditBtn');
@@ -9346,6 +9383,10 @@ async function openScheduleProgress(code) {
 }
 
 async function createQuizFromChecked() {
+  if (similarMode) {
+    alert('🌙 類似問題モード中はクイズ配信を作成できません。\n配信は元の問題データを参照する仕組みのため、通常モードに戻してから作成してください。');
+    return;
+  }
   const db = _initFb();
   if (!db || FIREBASE_CONFIG.apiKey === 'REPLACE_API_KEY') {
     alert('Firebase設定が未完了です。\nFIREBASE_CONFIG を入力してください。');
