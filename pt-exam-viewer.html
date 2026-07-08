@@ -4739,7 +4739,7 @@
       const table = `<w:tbl><w:tblPr><w:tblW w:w="${totalW}" w:type="dxa"/><w:tblBorders><w:top w:val="single" w:sz="6" w:space="0" w:color="9CA3AF"/><w:left w:val="single" w:sz="6" w:space="0" w:color="9CA3AF"/><w:bottom w:val="single" w:sz="6" w:space="0" w:color="9CA3AF"/><w:right w:val="single" w:sz="6" w:space="0" w:color="9CA3AF"/><w:insideH w:val="single" w:sz="4" w:space="0" w:color="CBD5E0"/><w:insideV w:val="single" w:sz="4" w:space="0" w:color="CBD5E0"/></w:tblBorders><w:tblCellMar><w:top w:w="20" w:type="dxa"/><w:left w:w="80" w:type="dxa"/><w:bottom w:w="20" w:type="dxa"/><w:right w:w="80" w:type="dxa"/></w:tblCellMar></w:tblPr><w:tblGrid>${gridXml}</w:tblGrid>${headerRow}${dataRows}</w:tbl>`;
 
       // タイトル・サブタイトル（極力コンパクトに）
-      const titleP = pEl(rEl('PT国家試験　解答一覧', {b:true, col:'111827', sz:24}), {sb:0, sa:20});
+      const titleP = pEl(rEl(similarMode ? 'PT国家試験　解答一覧（類似問題）' : 'PT国家試験　解答一覧', {b:true, col:'111827', sz:24}), {sb:0, sa:20});
       const subP   = pEl(
         rEl(`${today}　全${data.length}問`, {col:'6B7280', sz:21}) +
         (categories ? rEl('　' + categories, {col:'374151', sz:21}) : '') +
@@ -4765,7 +4765,7 @@
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `PT解答_${sessShort}${fieldStr ? '_'+fieldStr : ''}_${data.length}件.docx`;
+      a.download = `PT解答${similarMode?'_類似問題':''}_${sessShort}${fieldStr ? '_'+fieldStr : ''}_${data.length}件.docx`;
       a.click();
       URL.revokeObjectURL(url);
 
@@ -4836,8 +4836,8 @@
 
     const cover = [
       pEl('', {sb:2200, sa:0}),
-      pEl(rEl('PT国家試験', {b:true, col:'0C2461', sz:48}), {sb:0, sa:100, jc:'center'}),
-      pEl(rEl('問　題　集', {b:true, col:'1A4A8A', sz:64}), {sb:0, sa:240, jc:'center'}),
+      pEl(rEl(similarMode ? 'PT国家試験（類似問題）' : 'PT国家試験', {b:true, col:'0C2461', sz:48}), {sb:0, sa:100, jc:'center'}),
+      pEl(rEl(similarMode ? '類似問題集' : '問　題　集', {b:true, col:'1A4A8A', sz:64}), {sb:0, sa:240, jc:'center'}),
       pEl('', {bb:{sz:12,c:'1A4A8A'}, sb:0, sa:180}),
       categories ? pEl(rEl('【分類】　' + categories, {b:true, col:'1A4A8A', sz:28}), {sb:80, sa:60, jc:'center'}) : '',
       fields     ? pEl(rEl('【分野】　' + fields,     {col:'374151',         sz:24}), {sb:40, sa:40, jc:'center'}) : '',
@@ -4880,7 +4880,7 @@ ${imgRelXml}
 
     const blob = await zip.generateAsync({type:'blob', mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document', compression:'DEFLATE', compressionOptions:{level:6}});
     const d = today.replace(/\//g,'');
-    const filename = `PT国家試験問題_${d}_${we?'解説付き':wa?'解答付き':'解答なし'}_${filteredData.length}件`;
+    const filename = `PT国家試験問題${similarMode?'_類似問題':''}_${d}_${we?'解説付き':wa?'解答付き':'解答なし'}_${filteredData.length}件`;
     return { blob, filename, today };
   }
 
@@ -4955,7 +4955,7 @@ ${imgRelXml}
       const sessions   = [...new Set(filteredData.map(d=>d.examSession).filter(Boolean))].sort().join('・');
       const fields     = [...new Set(filteredData.flatMap(d=>d.new_fields||[]).filter(Boolean))].sort().join('・');
       const d          = today.replace(/\//g,'');
-      const filename   = `PT国家試験問題_${d}_${we?'解説付き':wa?'解答付き':'解答なし'}_${filteredData.length}件`;
+      const filename   = `PT国家試験問題${similarMode?'_類似問題':''}_${d}_${we?'解説付き':wa?'解答付き':'解答なし'}_${filteredData.length}件`;
 
       const CIRCLED = ['①','②','③','④','⑤'];
 
@@ -5243,8 +5243,8 @@ html,body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
   <button class="tb-print" onclick="window.print()">🖨 印刷 / PDF保存</button>
 </div>
 <div class="cover">
-  <div class="ct1">PT国家試験</div>
-  <div class="ct2">問　題　集</div>
+  <div class="ct1">${similarMode ? 'PT国家試験（類似問題）' : 'PT国家試験'}</div>
+  <div class="ct2">${similarMode ? '類似問題集' : '問　題　集'}</div>
   <div class="cm">${categories?'【分類】　'+_e(categories)+'<br>':''}${fields?'【分野】　'+_e(fields)+'<br>':''}${sessions?'【試験回】　'+_e(sessions)+'<br>':''}</div>
   <div class="cc">全　${filteredData.length}　問　（${wa?'解答付き':'解答なし'}）</div>
   <div class="cd">出力日：${_e(today)}</div>
@@ -5332,7 +5332,7 @@ function closeBack(){
     const subText = `${today}　全${data.length}問${categories ? '　' + eh(categories) : ''}${fieldStr ? '　' + eh(fieldStr) : ''}${sessStr ? '　' + eh(sessStr) : ''}`;
 
     const html = `<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8">
-<title>PT国家試験解答一覧</title><style>
+<title>PT国家試験解答一覧${similarMode?'（類似問題）':''}</title><style>
 @page{size:A4 portrait;margin:12mm 10mm}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Hiragino Sans','Meiryo','Yu Gothic',sans-serif;font-size:10pt;
@@ -5352,7 +5352,7 @@ td.qid{color:#4a5568;font-size:10.5pt}
 td.empty{background:#f8fafc}
 th.hn{width:4.5%}th.ha{width:5.5%}th.hi{width:8%}
 </style></head><body>
-<h1>PT国家試験　解答一覧</h1>
+<h1>PT国家試験　解答一覧${similarMode?'（類似問題）':''}</h1>
 <div class="sub">${subText}</div>
 ${tables}
 <script>window.onload=()=>{window.print();}<\/script>
