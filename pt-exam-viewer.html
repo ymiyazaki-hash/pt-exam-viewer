@@ -854,6 +854,10 @@
     body.similar-mode .card-id { color: #a5b4fc; }
     body.similar-mode .sim-badge { background: linear-gradient(135deg,#4c1d95,#6d28d9); color: #ede9fe; }
     body.similar-mode .sim-orig-id { font-size: 11px; color: #c4b5fd; margin-left: auto; font-family: monospace; font-weight: 700; }
+    /* ピン留めボタンは暗い背景で不透明度35%だとほぼ見えないため引き上げる */
+    body.similar-mode .qc-pin-btn { opacity: .75; filter: drop-shadow(0 0 2px rgba(0,0,0,0.6)); }
+    body.similar-mode .qc-pin-btn:hover, body.similar-mode .qc-pin-btn.pinned { opacity: 1; }
+    body.similar-mode .qc-checkbox { accent-color: #a78bfa; }
     body.similar-mode .pag-btn { background: rgba(20,22,55,0.8); border-color: rgba(139,92,246,0.25); color: #cbd5e1; }
     body.similar-mode .pag-btn.active { background: linear-gradient(135deg,#4c1d95,#6d28d9); }
     body.similar-mode .pag-info, body.similar-mode .pag-ellipsis { color: #8b8fb8; }
