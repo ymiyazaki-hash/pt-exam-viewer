@@ -734,6 +734,15 @@
       transition: all 0.15s;
     }
     .modal-close:hover { background: #e2e8f0; transform: rotate(90deg); }
+    .modal-header-nav { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+    .modal-header-nav-btn {
+      background: #f0f4f8; border: none; width: 32px; height: 32px; border-radius: 50%;
+      cursor: pointer; color: #1e3a8a; font-size: 16px; font-weight: 700;
+      flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s;
+    }
+    .modal-header-nav-btn:hover:not(:disabled) { background: #dbeafe; transform: scale(1.08); }
+    .modal-header-nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
     .modal-body { padding: 24px; }
     .question-text { font-size: 16px; line-height: 1.8; margin-bottom: 20px; color: #111827; font-weight: 500; }
     .question-image { max-width: 100%; border-radius: 10px; margin-bottom: 20px; display: block; border: 1px solid #e2e8f0; }
@@ -865,6 +874,8 @@
     body.similar-mode .modal-header { background: #0b0f2e; border-bottom-color: rgba(139,92,246,0.2); }
     body.similar-mode .modal-close { background: rgba(139,92,246,0.15); color: #cbd5e1; }
     body.similar-mode .modal-close:hover { background: rgba(139,92,246,0.28); }
+    body.similar-mode .modal-header-nav-btn { background: rgba(139,92,246,0.15); color: #ede9fe; }
+    body.similar-mode .modal-header-nav-btn:hover:not(:disabled) { background: rgba(139,92,246,0.28); }
     body.similar-mode .question-text { color: #f1f5f9; }
     body.similar-mode .choice { background: rgba(255,255,255,0.04); border-color: rgba(139,92,246,0.2); color: #e2e8f0; }
     body.similar-mode .choice-num { color: #8b8fb8; }
@@ -2634,7 +2645,11 @@
   <div class="modal" id="modal">
     <div class="modal-header">
       <div class="meta" id="modalMeta"></div>
-      <button class="modal-close" id="modalCloseBtn">✕</button>
+      <div class="modal-header-nav">
+        <button class="modal-header-nav-btn" id="prevBtnTop" title="前の問題">←</button>
+        <button class="modal-header-nav-btn" id="nextBtnTop" title="次の問題">→</button>
+        <button class="modal-close" id="modalCloseBtn">✕</button>
+      </div>
     </div>
     <div class="modal-body" id="modalBody"></div>
     <div class="modal-nav">
@@ -3930,6 +3945,8 @@
 
     document.getElementById('prevBtn').disabled = idx === 0;
     document.getElementById('nextBtn').disabled = idx === total - 1;
+    document.getElementById('prevBtnTop').disabled = idx === 0;
+    document.getElementById('nextBtnTop').disabled = idx === total - 1;
     document.getElementById('navPos').textContent = `${idx + 1} / ${total} 問（元問題: ${q.id}）`;
     document.getElementById('modal').scrollTo({ top: 0 });
   }
@@ -4205,6 +4222,8 @@
 
     document.getElementById('prevBtn').disabled = globalIdx === 0;
     document.getElementById('nextBtn').disabled = globalIdx === total - 1;
+    document.getElementById('prevBtnTop').disabled = globalIdx === 0;
+    document.getElementById('nextBtnTop').disabled = globalIdx === total - 1;
     document.getElementById('navPos').textContent = `${globalIdx + 1} / ${total} 問`;
     document.getElementById('modal').scrollTo({ top: 0 });
   }
@@ -4217,6 +4236,9 @@
     if (similarMode) { if (currentModalIdx < simList.length - 1) { currentModalIdx++; renderSimilarModal(currentModalIdx); } return; }
     if (currentModalIdx < filteredData.length - 1) { currentModalIdx++; renderModal(currentModalIdx); }
   });
+  // ヘッダー固定の前へ/次へボタン（スクロールしなくても連打できるよう、下部ナビと同じボタンをクリックしたことにする）
+  document.getElementById('prevBtnTop').addEventListener('click', () => document.getElementById('prevBtn').click());
+  document.getElementById('nextBtnTop').addEventListener('click', () => document.getElementById('nextBtn').click());
 
   function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
   document.getElementById('modalCloseBtn').addEventListener('click', closeModal);
