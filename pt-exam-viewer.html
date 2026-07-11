@@ -2570,10 +2570,12 @@
 
       <div class="filter-section">
         <h3>分野</h3>
-        <div style="margin-bottom:6px;">
-          <button class="qcheck-btn" onclick="applyAnatomyPhysiologyPreset()" title="解剖学・生理学に該当する小項目のみをまとめてON">🦴 解剖学・生理学のみ表示</button>
-        </div>
         <div class="checkbox-list" id="fieldTree"></div>
+      </div>
+
+      <div class="filter-section">
+        <h3>🦴 解剖学・生理学</h3>
+        <div class="checkbox-list" id="anatPhysioTree"></div>
       </div>
 
       <div class="filter-section">
@@ -3527,6 +3529,23 @@
     buildCheckboxList('categoryList', categories, 'category', counts);
     buildFieldTree('fieldTree', fieldSubMap, counts);
 
+    // 解剖学・生理学：既存の new_sub_fields をそのまま2グループに束ねて表示するだけ
+    // （data.json のタグ構造・総数は不変。表示上の再グルーピング）
+    const anatPhysioGroups = {
+      '解剖学': ['神経基礎・機能解剖', '骨・筋の解剖'],
+      '生理学': ['循環器', '呼吸器', '代謝・腎・消化器', '運動生理・代謝', '生体力学', '反射・感覚・筋緊張', '染色体・遺伝性疾患', '正常発達']
+    };
+    const apFieldSubMap = {};
+    const apCounts = Object.assign({}, counts);
+    Object.keys(anatPhysioGroups).forEach(g => {
+      apFieldSubMap[g] = {};
+      const ids = new Set();
+      anatPhysioGroups[g].forEach(s => { apFieldSubMap[g][s] = counts[s] || 0; });
+      allData.forEach(d => { if ((d.new_sub_fields || []).some(s => anatPhysioGroups[g].includes(s.trim()))) ids.add(d.id); });
+      apCounts[g] = ids.size;
+    });
+    buildFieldTree('anatPhysioTree', apFieldSubMap, apCounts);
+
     let searchTimer;
     document.getElementById('searchInput').addEventListener('input', () => {
       clearTimeout(searchTimer);
@@ -3565,7 +3584,7 @@
       const subs = Object.keys(fieldSubMap[f])
         .filter(s => fieldSubMap[f][s] >= 2)
         .sort((a,b) => fieldSubMap[f][b] - fieldSubMap[f][a]);
-      const fid = 'ft_' + fi;
+      const fid = containerId + '_ft_' + fi;
       const subHtml = subs.map(s => `
         <label class="ft-sub-label">
           <input type="checkbox" data-filter="subfield" value="${esc(s)}">
@@ -3721,37 +3740,6 @@
     return [...document.querySelectorAll(`input[data-filter="${filterKey}"]:checked`)].map(el => el.value);
   }
 
-  // ── 解剖学・生理学プリセット ─────────────────────────────
-  // 既存の new_fields / new_sub_fields は一切変更せず、
-  // 解剖・生理に相当する小項目のチェックボックスをまとめてONにするだけの絞り込みショートカット
-  const ANATOMY_PHYSIOLOGY_SUBFIELDS = [
-    '神経基礎・機能解剖', '骨・筋の解剖', '循環器', '呼吸器',
-    '代謝・腎・消化器', '運動生理・代謝', '生体力学',
-    '反射・感覚・筋緊張', '染色体・遺伝性疾患', '正常発達'
-  ];
-
-  function applyAnatomyPhysiologyPreset() {
-    document.querySelectorAll('input[data-filter="field"]').forEach(cb => { cb.checked = false; cb.indeterminate = false; });
-    document.querySelectorAll('input[data-filter="subfield"]').forEach(cb => {
-      cb.checked = ANATOMY_PHYSIOLOGY_SUBFIELDS.includes(cb.value);
-    });
-    // 親分野の開閉・チェック表示を同期
-    document.querySelectorAll('#fieldTree .ft-parent').forEach(parentDiv => {
-      const subCbs = [...parentDiv.querySelectorAll('input[data-filter="subfield"]')];
-      if (!subCbs.length) return;
-      const anyChecked = subCbs.some(cb => cb.checked);
-      const allChecked = subCbs.every(cb => cb.checked);
-      const parentCb = parentDiv.querySelector('input[data-filter="field"]');
-      if (parentCb) {
-        parentCb.checked = allChecked;
-        parentCb.indeterminate = anyChecked && !allChecked;
-      }
-      const subsEl = parentDiv.querySelector('.ft-subs');
-      const toggleBtn = parentDiv.querySelector('.ft-toggle');
-      if (anyChecked && subsEl) { subsEl.style.display = ''; if (toggleBtn) toggleBtn.textContent = '▼'; }
-    });
-    applyFilters();
-  }
 
   function resetFilters() {
     document.getElementById('searchInput').value = '';
@@ -3760,8 +3748,8 @@
       cb.indeterminate = false;
     });
     // 分野の小項目を全て閉じる
-    document.querySelectorAll('#fieldTree .ft-subs').forEach(sub => sub.style.display = 'none');
-    document.querySelectorAll('#fieldTree .ft-toggle').forEach(btn => btn.textContent = '▶');
+    document.querySelectorAll('#fieldTree .ft-subs, #anatPhysioTree .ft-subs').forEach(sub => sub.style.display = 'none');
+    document.querySelectorAll('#fieldTree .ft-toggle, #anatPhysioTree .ft-toggle').forEach(btn => btn.textContent = '▶');
     document.getElementById('accMin').value = 0;
     document.getElementById('accMax').value = 100;
     document.getElementById('accMinVal').textContent = '0%';
