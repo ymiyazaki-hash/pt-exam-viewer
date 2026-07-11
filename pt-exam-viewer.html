@@ -3029,6 +3029,10 @@
     '58A-39': { group: '運動学（基礎）', leaf: '運動生理・代謝' }, // 運動負荷後に低下するのは
   };
 
+  // 生理学＝正常な機能・働きの問題に限定するための除外パターン
+  // （疾患の病態・診断・治療・薬剤・運動療法適応などの臨床医学的内容を除外）
+  const _AP_CLINICAL_PAT = /患者|症で|病で|症候群|症について|疾患|障害で|ガイドライン|治療|薬|運動療法|禁忌|合併症|ウイルス|感染|不全|貧血|骨髄腫|狭心症|COPD|検査を行った|エックス線|CT|所見|喘息|吸引|指導|リハビリ/;
+
   // 🦴 解剖学・生理学の細分類（必修ポイントの粒度を参考にキーワードで再分類。data.json は不変）
   function _classifyAnatPhysio(q) {
     if (q.category === '実地') return null; // 各回1〜20番の症例形式は基礎知識対象外
@@ -3036,37 +3040,45 @@
     const subs = q.new_sub_fields || [];
     const t = (q.text || '') + ' ' + (q.choices || []).join(' ');
     const has = (arr) => arr.some(k => t.includes(k));
+    let result = null;
 
     if (subs.includes('神経基礎・機能解剖')) {
       const peri = has(['末梢神経', '神経叢', '脳神経', 'デルマトーム', '自律神経', '交感神経', '副交感神経', '神経筋接合部', '有髄', '無髄', '伝導速度']);
-      return { group: '解剖学', leaf: peri ? '末梢神経系の解剖' : '中枢神経系の解剖' };
-    }
-    if (subs.includes('骨・筋の解剖')) {
+      result = { group: '解剖学', leaf: peri ? '末梢神経系の解剖' : '中枢神経系の解剖' };
+    } else if (subs.includes('骨・筋の解剖')) {
       const musc = has(['起始', '停止', '筋線維', '筋紡錘', '運動単位', 'ＭＭＴ', 'MMT', '神経支配比']);
-      return { group: '解剖学', leaf: musc ? '筋の解剖' : '骨・関節の解剖' };
-    }
-    if (subs.includes('循環器')) return { group: '生理学', leaf: '循環器' };
-    if (subs.includes('呼吸器')) return { group: '生理学', leaf: '呼吸器' };
-    if (subs.includes('代謝・腎・消化器')) {
-      if (has(['消化', '嚥下', '肝', '胆', '小腸', '大腸', '胃', '膵液'])) return { group: '生理学', leaf: '消化器' };
-      if (has(['腎', '排尿', '膀胱', 'ネフロン', '糸球体', '尿路', '蓄尿', '尿失禁', '尿道', '泌尿器'])) return { group: '生理学', leaf: '腎・泌尿器' };
-      return { group: '生理学', leaf: '代謝・内分泌' };
-    }
-    if (subs.includes('反射・感覚・筋緊張')) {
+      result = { group: '解剖学', leaf: musc ? '筋の解剖' : '骨・関節の解剖' };
+    } else if (subs.includes('循環器')) {
+      result = { group: '生理学', leaf: '循環器' };
+    } else if (subs.includes('呼吸器')) {
+      result = { group: '生理学', leaf: '呼吸器' };
+    } else if (subs.includes('代謝・腎・消化器')) {
+      if (has(['消化', '嚥下', '肝', '胆', '小腸', '大腸', '胃', '膵液'])) result = { group: '生理学', leaf: '消化器' };
+      else if (has(['腎', '排尿', '膀胱', 'ネフロン', '糸球体', '尿路', '蓄尿', '尿失禁', '尿道', '泌尿器'])) result = { group: '生理学', leaf: '腎・泌尿器' };
+      else result = { group: '生理学', leaf: '代謝・内分泌' };
+    } else if (subs.includes('反射・感覚・筋緊張')) {
       const sens = has(['視覚', '聴覚', '眼', '耳', '網膜', '角膜', '鼓膜', '半規管', '蝸牛', '味覚', '嗅覚']);
-      return { group: '生理学', leaf: sens ? '感覚器の生理' : '中枢神経の機能・反射' };
+      result = { group: '生理学', leaf: sens ? '感覚器の生理' : '中枢神経の機能・反射' };
+    } else if (subs.includes('染色体・遺伝性疾患')) {
+      result = { group: '生理学', leaf: '発生・遺伝' };
+    } else if (subs.includes('生体力学')) {
+      result = { group: '運動学（基礎）', leaf: '生体力学・力学' };
+    } else if (subs.includes('運動生理・代謝')) {
+      result = { group: '運動学（基礎）', leaf: '運動生理・代謝' };
+    } else if (subs.includes('歩行・姿勢制御')) {
+      result = { group: '運動学（基礎）', leaf: '歩行・姿勢制御' };
+    } else if (subs.includes('運動学習')) {
+      result = { group: '運動学（基礎）', leaf: '運動学習' };
+    } else if (subs.includes('正常発達')) {
+      result = { group: '運動学（基礎）', leaf: '発達（乳幼児・原始反射）' };
+    } else if (subs.includes('重症管理・血液・免疫')) {
+      if (has(['重症', 'ショック', '人工呼吸', 'ＩＣＵ', 'ICU', '集中治療'])) result = null;
+      else result = { group: '生理学', leaf: '血液・免疫' };
     }
-    if (subs.includes('染色体・遺伝性疾患')) return { group: '生理学', leaf: '発生・遺伝' };
-    if (subs.includes('生体力学')) return { group: '運動学（基礎）', leaf: '生体力学・力学' };
-    if (subs.includes('運動生理・代謝')) return { group: '運動学（基礎）', leaf: '運動生理・代謝' };
-    if (subs.includes('歩行・姿勢制御')) return { group: '運動学（基礎）', leaf: '歩行・姿勢制御' };
-    if (subs.includes('運動学習')) return { group: '運動学（基礎）', leaf: '運動学習' };
-    if (subs.includes('正常発達')) return { group: '運動学（基礎）', leaf: '発達（乳幼児・原始反射）' };
-    if (subs.includes('重症管理・血液・免疫')) {
-      if (has(['重症', 'ショック', '人工呼吸', 'ＩＣＵ', 'ICU', '集中治療'])) return null;
-      return { group: '生理学', leaf: '血液・免疫' };
-    }
-    return null;
+
+    // 生理学に分類されたものは、疾患・治療など臨床医学的内容なら対象外とする
+    if (result && result.group === '生理学' && _AP_CLINICAL_PAT.test(t)) return null;
+    return result;
   }
 
   function _getCheckedQuestions() { return filteredData.filter(q => !_uncheckedIds.has(q.id)); }
