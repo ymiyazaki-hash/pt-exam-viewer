@@ -3009,6 +3009,43 @@
   let similarMode   = false;     // 🌙 類似問題モード中かどうか
   let simList       = [];        // 類似問題モードで表示する元問題の配列
   let _simStarsBuilt = false;
+  let _apLeafMap = new Map();    // 🦴 解剖学・生理学ツリー：問題id → {group, leaf}
+
+  // 🦴 解剖学・生理学の細分類（必修ポイントの粒度を参考にキーワードで再分類。data.json は不変）
+  function _classifyAnatPhysio(q) {
+    if (q.category === '実地') return null; // 各回1〜20番の症例形式は基礎知識対象外
+    const subs = q.new_sub_fields || [];
+    const t = (q.text || '') + ' ' + (q.choices || []).join(' ');
+    const has = (arr) => arr.some(k => t.includes(k));
+
+    if (subs.includes('神経基礎・機能解剖')) {
+      const peri = has(['末梢神経', '神経叢', '脳神経', 'デルマトーム', '自律神経', '交感神経', '副交感神経', '神経筋接合部', '有髄', '無髄', '伝導速度']);
+      return { group: '解剖学', leaf: peri ? '末梢神経系の解剖' : '中枢神経系の解剖' };
+    }
+    if (subs.includes('骨・筋の解剖')) {
+      const musc = has(['起始', '停止', '筋線維', '筋紡錘', '運動単位', 'ＭＭＴ', 'MMT', '神経支配比']);
+      return { group: '解剖学', leaf: musc ? '筋の解剖' : '骨・関節の解剖' };
+    }
+    if (subs.includes('循環器')) return { group: '生理学', leaf: '循環器' };
+    if (subs.includes('呼吸器')) return { group: '生理学', leaf: '呼吸器' };
+    if (subs.includes('代謝・腎・消化器')) {
+      if (has(['消化', '嚥下', '肝', '胆', '小腸', '大腸', '胃', '膵液'])) return { group: '生理学', leaf: '消化器' };
+      if (has(['腎', '排尿', '膀胱', 'ネフロン', '糸球体', '尿路', '蓄尿', '尿失禁', '尿道', '泌尿器'])) return { group: '生理学', leaf: '腎・泌尿器' };
+      return { group: '生理学', leaf: '代謝・内分泌' };
+    }
+    if (subs.includes('運動生理・代謝') || subs.includes('生体力学')) return { group: '生理学', leaf: '運動学・生体力学' };
+    if (subs.includes('反射・感覚・筋緊張')) {
+      const sens = has(['視覚', '聴覚', '眼', '耳', '網膜', '角膜', '鼓膜', '半規管', '蝸牛', '味覚', '嗅覚']);
+      return { group: '生理学', leaf: sens ? '感覚器の生理' : '中枢神経の機能・反射' };
+    }
+    if (subs.includes('染色体・遺伝性疾患')) return { group: '生理学', leaf: '発生・遺伝' };
+    if (subs.includes('正常発達')) return { group: '生理学', leaf: '発達（乳幼児・原始反射）' };
+    if (subs.includes('重症管理・血液・免疫')) {
+      if (has(['重症', 'ショック', '人工呼吸', 'ＩＣＵ', 'ICU', '集中治療'])) return null;
+      return { group: '生理学', leaf: '血液・免疫' };
+    }
+    return null;
+  }
 
   function _getCheckedQuestions() { return filteredData.filter(q => !_uncheckedIds.has(q.id)); }
 
@@ -3529,22 +3566,22 @@
     buildCheckboxList('categoryList', categories, 'category', counts);
     buildFieldTree('fieldTree', fieldSubMap, counts);
 
-    // 解剖学・生理学：既存の new_sub_fields をそのまま2グループに束ねて表示するだけ
-    // （data.json のタグ構造・総数は不変。表示上の再グルーピング）
-    const anatPhysioGroups = {
-      '解剖学': ['神経基礎・機能解剖', '骨・筋の解剖'],
-      '生理学': ['循環器', '呼吸器', '代謝・腎・消化器', '運動生理・代謝', '生体力学', '反射・感覚・筋緊張', '染色体・遺伝性疾患', '正常発達']
-    };
-    const apFieldSubMap = {};
-    const apCounts = Object.assign({}, counts);
-    Object.keys(anatPhysioGroups).forEach(g => {
-      apFieldSubMap[g] = {};
-      const ids = new Set();
-      anatPhysioGroups[g].forEach(s => { apFieldSubMap[g][s] = counts[s] || 0; });
-      allData.forEach(d => { if ((d.new_sub_fields || []).some(s => anatPhysioGroups[g].includes(s.trim()))) ids.add(d.id); });
-      apCounts[g] = ids.size;
+    // 解剖学・生理学：既存の new_sub_fields / new_fields は一切変更せず、
+    // 「必修ポイント」（植物機能・動物機能・運動機能学）の粒度を参考にキーワードで細分類し、
+    // 表示専用のツリーとして再構成する（data.json 側は不変）。実地問題（症例形式）は対象外。
+    _apLeafMap = new Map();
+    allData.forEach(d => {
+      const leaf = _classifyAnatPhysio(d);
+      if (leaf) _apLeafMap.set(d.id, leaf);
     });
-    buildFieldTree('anatPhysioTree', apFieldSubMap, apCounts);
+    const apFieldSubMap = { '解剖学': {}, '生理学': {} };
+    const apCounts = {};
+    _apLeafMap.forEach(({ group, leaf }) => {
+      apFieldSubMap[group][leaf] = (apFieldSubMap[group][leaf] || 0) + 1;
+      apCounts[leaf] = (apCounts[leaf] || 0) + 1;
+      apCounts[group] = (apCounts[group] || 0) + 1;
+    });
+    buildFieldTree('anatPhysioTree', apFieldSubMap, apCounts, 'apfield', 'apsubfield');
 
     let searchTimer;
     document.getElementById('searchInput').addEventListener('input', () => {
@@ -3576,7 +3613,9 @@
     `).join('');
   }
 
-  function buildFieldTree(containerId, fieldSubMap, counts) {
+  function buildFieldTree(containerId, fieldSubMap, counts, fieldFilterKey, subFilterKey) {
+    fieldFilterKey = fieldFilterKey || 'field';
+    subFilterKey   = subFilterKey   || 'subfield';
     const container = document.getElementById(containerId);
     const fields = Object.keys(fieldSubMap).sort();
     container.innerHTML = fields.map((f, fi) => {
@@ -3587,14 +3626,14 @@
       const fid = containerId + '_ft_' + fi;
       const subHtml = subs.map(s => `
         <label class="ft-sub-label">
-          <input type="checkbox" data-filter="subfield" value="${esc(s)}">
+          <input type="checkbox" data-filter="${subFilterKey}" value="${esc(s)}">
           <span class="cb-label">${esc(s)}</span>
           <span class="cb-count">${fieldSubMap[f][s]}</span>
         </label>`).join('');
       return `
         <div class="ft-parent" data-fi="${fi}">
           <div class="ft-parent-row">
-            <input type="checkbox" data-filter="field" value="${esc(f)}" style="flex-shrink:0;cursor:pointer;">
+            <input type="checkbox" data-filter="${fieldFilterKey}" value="${esc(f)}" style="flex-shrink:0;cursor:pointer;">
             <span class="cb-label ft-name-click" style="flex:1;cursor:pointer;font-size:13px;font-weight:600;color:#1e293b;padding:4px 4px;">${esc(f)}</span>
             <span class="cb-count" style="font-size:12px;color:#94a3b8;">${counts[f] || 0}</span>
             <button class="ft-toggle" id="btn_${fid}">▶</button>
@@ -3605,8 +3644,8 @@
 
     // イベントリスナーをDOM参照で付ける（CSS.escapeを使わない）
     container.querySelectorAll('.ft-parent').forEach(parentDiv => {
-      const parentCb  = parentDiv.querySelector('input[data-filter="field"]');
-      const subCbs    = [...parentDiv.querySelectorAll('input[data-filter="subfield"]')];
+      const parentCb  = parentDiv.querySelector(`input[data-filter="${fieldFilterKey}"]`);
+      const subCbs    = [...parentDiv.querySelectorAll(`input[data-filter="${subFilterKey}"]`)];
       const subsDiv   = parentDiv.querySelector('.ft-subs');
       const toggleBtn = parentDiv.querySelector('.ft-toggle');
       const nameSpan  = parentDiv.querySelector('.ft-name-click');
@@ -3676,6 +3715,7 @@
     const checkedSessions   = getChecked('session');
     const checkedFields     = getChecked('field');
     const checkedSubFields  = getChecked('subfield');
+    const checkedApSubFields = getChecked('apsubfield');
     const checkedCategories = getChecked('category');
     const accMin = parseInt(document.getElementById('accMin').value);
     const accMax = parseInt(document.getElementById('accMax').value);
@@ -3686,12 +3726,15 @@
       if (pinModeActive && !pinnedList.includes(q.id)) return false;
       if (!includeExcluded && q.excludedHandling) return false;
       if (checkedSessions.length   && !checkedSessions.includes(q.examSession))   return false;
-      if (checkedFields.length || checkedSubFields.length) {
+      if (checkedFields.length || checkedSubFields.length || checkedApSubFields.length) {
         const qFields = q.new_fields || [];
         const qSub   = q.new_sub_fields || [];
         const subMatch  = checkedSubFields.length && qSub.some(s => checkedSubFields.includes(s));
         const fieldOnly = checkedFields.some(f => qFields.includes(f)) && qSub.length === 0;
-        if (!subMatch && !fieldOnly) return false;
+        // 解剖学・生理学は _apLeafMap によるキーワード細分類でマッチ判定（実地問題は分類時点で除外済み）
+        const apLeaf = _apLeafMap.get(q.id);
+        const apMatch = checkedApSubFields.length && apLeaf && checkedApSubFields.includes(apLeaf.leaf);
+        if (!subMatch && !fieldOnly && !apMatch) return false;
       }
       if (checkedCategories.length && !checkedCategories.includes(q.category))    return false;
       const rate = q.accuracyRate ?? 0;
