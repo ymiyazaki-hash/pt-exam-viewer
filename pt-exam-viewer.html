@@ -2574,7 +2574,7 @@
       </div>
 
       <div class="filter-section">
-        <h3>🦴 解剖学・生理学</h3>
+        <h3>🦴 解剖学・生理学・運動学</h3>
         <div class="checkbox-list" id="anatPhysioTree"></div>
       </div>
 
@@ -3033,13 +3033,16 @@
       if (has(['腎', '排尿', '膀胱', 'ネフロン', '糸球体', '尿路', '蓄尿', '尿失禁', '尿道', '泌尿器'])) return { group: '生理学', leaf: '腎・泌尿器' };
       return { group: '生理学', leaf: '代謝・内分泌' };
     }
-    if (subs.includes('運動生理・代謝') || subs.includes('生体力学')) return { group: '生理学', leaf: '運動学・生体力学' };
     if (subs.includes('反射・感覚・筋緊張')) {
       const sens = has(['視覚', '聴覚', '眼', '耳', '網膜', '角膜', '鼓膜', '半規管', '蝸牛', '味覚', '嗅覚']);
       return { group: '生理学', leaf: sens ? '感覚器の生理' : '中枢神経の機能・反射' };
     }
     if (subs.includes('染色体・遺伝性疾患')) return { group: '生理学', leaf: '発生・遺伝' };
-    if (subs.includes('正常発達')) return { group: '生理学', leaf: '発達（乳幼児・原始反射）' };
+    if (subs.includes('生体力学')) return { group: '運動学（基礎）', leaf: '生体力学・力学' };
+    if (subs.includes('運動生理・代謝')) return { group: '運動学（基礎）', leaf: '運動生理・代謝' };
+    if (subs.includes('歩行・姿勢制御')) return { group: '運動学（基礎）', leaf: '歩行・姿勢制御' };
+    if (subs.includes('運動学習')) return { group: '運動学（基礎）', leaf: '運動学習' };
+    if (subs.includes('正常発達')) return { group: '運動学（基礎）', leaf: '発達（乳幼児・原始反射）' };
     if (subs.includes('重症管理・血液・免疫')) {
       if (has(['重症', 'ショック', '人工呼吸', 'ＩＣＵ', 'ICU', '集中治療'])) return null;
       return { group: '生理学', leaf: '血液・免疫' };
@@ -3574,7 +3577,7 @@
       const leaf = _classifyAnatPhysio(d);
       if (leaf) _apLeafMap.set(d.id, leaf);
     });
-    const apFieldSubMap = { '解剖学': {}, '生理学': {} };
+    const apFieldSubMap = { '解剖学': {}, '生理学': {}, '運動学（基礎）': {} };
     const apCounts = {};
     _apLeafMap.forEach(({ group, leaf }) => {
       apFieldSubMap[group][leaf] = (apFieldSubMap[group][leaf] || 0) + 1;
