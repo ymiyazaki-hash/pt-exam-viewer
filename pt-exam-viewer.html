@@ -3011,9 +3011,28 @@
   let _simStarsBuilt = false;
   let _apLeafMap = new Map();    // 🦴 解剖学・生理学ツリー：問題id → {group, leaf}
 
+  // 解剖学の1問1問精査で発覚した誤分類の個別修正（構造・位置ではなく機能・機序の問題／無関係な問題）
+  const _AP_OVERRIDES = {
+    '51A-32': null, // 末梢性めまいに対する理学療法 → 治療内容の問題（対象外）
+    '52A-21': null, // アンマスキングの説明 → 回復機序（病態）の問題（対象外）
+    '51A-62': { group: '生理学', leaf: '筋・神経の生理' }, // 骨格筋の収縮
+    '57A-61': { group: '生理学', leaf: '筋・神経の生理' }, // 骨格筋の収縮
+    '51A-63': { group: '生理学', leaf: '筋・神経の生理' }, // 神経筋接合部の神経伝達物質
+    '55P-62': { group: '生理学', leaf: '筋・神経の生理' }, // 神経筋接合部の神経伝達物質
+    '52P-61': { group: '生理学', leaf: '筋・神経の生理' }, // 興奮伝導の説明
+    '52A-61': { group: '生理学', leaf: '細胞・生化学' },   // 細胞膜電位
+    '58A-61': { group: '生理学', leaf: '細胞・生化学' },   // 細胞内小器官の働き
+    '57A-76': { group: '生理学', leaf: '中枢神経の機能・反射' }, // 脳波検査
+    '61A-99': { group: '生理学', leaf: '中枢神経の機能・反射' }, // 安静閉眼時の基礎律動
+    '57P-61': { group: '生理学', leaf: '発生・遺伝' },       // 遺伝情報伝達
+    '57P-64': { group: '生理学', leaf: '代謝・内分泌' },     // 酸塩基平衡
+    '58A-39': { group: '運動学（基礎）', leaf: '運動生理・代謝' }, // 運動負荷後に低下するのは
+  };
+
   // 🦴 解剖学・生理学の細分類（必修ポイントの粒度を参考にキーワードで再分類。data.json は不変）
   function _classifyAnatPhysio(q) {
     if (q.category === '実地') return null; // 各回1〜20番の症例形式は基礎知識対象外
+    if (_AP_OVERRIDES.hasOwnProperty(q.id)) return _AP_OVERRIDES[q.id];
     const subs = q.new_sub_fields || [];
     const t = (q.text || '') + ' ' + (q.choices || []).join(' ');
     const has = (arr) => arr.some(k => t.includes(k));
