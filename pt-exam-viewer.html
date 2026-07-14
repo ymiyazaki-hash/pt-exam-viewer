@@ -496,8 +496,9 @@
     .pin-status-msg.ok { color:#059669; }
     .pin-status-msg.err { color:#ef4444; }
     /* pin button on each card */
-    .qc-pin-btn { background:none; border:none; cursor:pointer; font-size:16px; padding:4px 6px; opacity:.35; transition:.15s; border-radius:6px; flex-shrink:0; }
-    .qc-pin-btn:hover, .qc-pin-btn.pinned { opacity:1; }
+    .qc-pin-btn { background:#f1f3f5; border:1px solid #dee2e6; cursor:pointer; font-size:16px; padding:4px 8px; opacity:.6; transition:.15s; border-radius:6px; flex-shrink:0; }
+    .qc-pin-btn:hover { opacity:1; background:#e7f0ff; border-color:#4d8dff; transform:scale(1.12); }
+    .qc-pin-btn.pinned { opacity:1; background:#fff3cd; border-color:#ffc107; }
 
     .checkbox-list { display: flex; flex-direction: column; gap: 3px; max-height: 156px; overflow-y: auto; }
     #fieldTree.checkbox-list { max-height: 312px; }
