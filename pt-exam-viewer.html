@@ -3964,6 +3964,20 @@
     `).join('');
   }
 
+  // 主分類（field/subfield）と解剖生理オーバーレイ（apfield/apsubfield）は独立した分類系統で、
+  // 併用すると分野をまたいで無関係な問題が混ざってしまうため、片方を選んだらもう片方を自動解除する
+  function _clearOtherFilterGroup(thisSubKey) {
+    const isAp = thisSubKey === 'apsubfield';
+    const otherFieldKey = isAp ? 'field' : 'apfield';
+    const otherSubKey   = isAp ? 'subfield' : 'apsubfield';
+    const otherChecked = document.querySelectorAll(`input[data-filter="${otherFieldKey}"]:checked, input[data-filter="${otherSubKey}"]:checked`);
+    if (otherChecked.length) {
+      document.querySelectorAll(`input[data-filter="${otherFieldKey}"]`).forEach(cb => { cb.checked = false; cb.indeterminate = false; });
+      document.querySelectorAll(`input[data-filter="${otherSubKey}"]`).forEach(cb => cb.checked = false);
+      const label = isAp ? '分野' : '解剖学・生理学・運動学（基礎）';
+      _toast(`⚠️ ${label}の選択を解除しました（同時選択はできません）`);
+    }
+  }
   const _subfieldOrderIndex = {};   // 'subfield' 用: サブ分野名 → サイドバー表示順index（ジャンル順ソート時に分野横断で使用）
   const _apSubfieldOrderIndex = {}; // 'apsubfield' 用
   function buildFieldTree(containerId, fieldSubMap, counts, fieldFilterKey, subFilterKey) {
@@ -4027,6 +4041,7 @@
         e.stopPropagation();
         if (parentCb.checked) {
           // 全選択
+          _clearOtherFilterGroup(subFilterKey);
           parentCb.indeterminate = false;
           subCbs.forEach(cb => cb.checked = true);
           subsDiv.style.display = 'block';
@@ -4040,6 +4055,7 @@
       });
 
       subCbs.forEach(cb => cb.addEventListener('change', () => {
+        if (cb.checked) _clearOtherFilterGroup(subFilterKey);
         const checked = subCbs.filter(c => c.checked).length;
         parentCb.checked = checked > 0;
         parentCb.indeterminate = false;
