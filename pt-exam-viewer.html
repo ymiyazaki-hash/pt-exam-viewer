@@ -2530,7 +2530,7 @@
 
       <div class="filter-section">
         <h3>並び替え</h3>
-        <select class="sort-select" id="sortSelect" onchange="applyFilters()">
+        <select class="sort-select" id="sortSelect" onchange="_sortUserOverride=true;applyFilters()">
           <option value="id-asc">試験順（51回→61回）</option>
           <option value="id-desc">試験順（61回→51回）</option>
           <option value="acc-asc">正答率（低い順）</option>
@@ -4068,6 +4068,7 @@
 
   // ── ジャンル順ソート（表示専用。data.json の new_fields/new_sub_fields は不変） ──
   // 小項目ごとに「ジャンル順」を定義。ここに登録のない小項目は従来の試験順にフォールバック。
+  let _sortUserOverride = false; // ユーザーが並び替えを手動選択したらtrue（分野選択時の自動ジャンル順切替を抑止）
   const _GENRE_ORDER = {
     '脊椎・脊髄': ['脊柱・脊髄の解剖', '脊髄損傷｜ASIA評価法', '脊髄損傷｜機能残存レベルと動作', '脊髄損傷｜合併症・病態', '腰椎椎間板ヘルニア・腰痛', '脊柱管狭窄症・変性すべり症', '側弯症', '頸椎症・後縦靱帯骨化症'],
     '骨折・外傷': ['骨折総論・分類', '高齢者の骨折', '上肢の骨折・脱臼', '下肢・体幹の骨折', '靱帯損傷・スポーツ外傷', 'CRPS', '熱傷'],
@@ -4847,6 +4848,12 @@
     const checkedCategories = getChecked('category');
     const accMin = parseInt(document.getElementById('accMin').value);
     const accMax = parseInt(document.getElementById('accMax').value);
+    // 分野選択に応じて自動的に「ジャンル順」に切り替える（ユーザーが手動でソートを選んだ場合は上書きしない）
+    if (!_sortUserOverride) {
+      const sortEl = document.getElementById('sortSelect');
+      const autoGenre = checkedSubFields.length > 0 && checkedSubFields.every(s => _GENRE_ORDER[s]);
+      sortEl.value = autoGenre ? 'genre' : 'id-asc';
+    }
     const sortVal = document.getElementById('sortSelect').value;
     const includeExcluded = document.getElementById('includeExcluded').checked;
 
@@ -4930,6 +4937,7 @@
     document.getElementById('accMinVal').textContent = '0%';
     document.getElementById('accMaxVal').textContent = '100%';
     document.getElementById('sortSelect').value = 'id-asc';
+    _sortUserOverride = false;
     applyFilters();
   }
 
