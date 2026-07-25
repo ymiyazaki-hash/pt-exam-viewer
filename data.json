@@ -172611,9 +172611,9 @@
     "accuracyRate": 39.4,
     "lastSyncedAt": "2026-02-25T01:14:28.297Z",
     "answer": "2",
-    "explanation": "Kienböck病（キーンベック病）の好発：Kienböck病（月状骨無腐性壊死）は成人男性（20〜40歳代の労働者）に好発する。Ferinberg病は知識不足（整形外科には該当疾患名なし）。Osgood-Schlatter病は男子中学生。Perthes病は3〜10歳の男児。Sever病は男子小学生（踵骨骨端症）。",
+    "explanation": "Kienböck病（キーンベック病：月状骨無腐性壊死）は成人男性（20〜40歳代・大工など手をよく使う人）に好発する。Freiberg病は第2中足骨頭の阻血性骨壊死で思春期〜若年の女性に多い。Osgood-Schlatter病は成長期の男子中学生。Perthes病は3〜10歳の男児。Sever病は男子小学生（踵骨骨端症）。",
     "choiceExplanations": [
-      "Ferinberg病は一般的な整形外科疾患ではない×。",
+      "Freiberg病（選択肢のFerinbergは綴りの誤りと思われる）は第2中足骨頭の阻血性骨壊死で、思春期〜若年の女性に多く（男女比1:3〜1:5）成人男性ではない×。",
       "Kienböck病は成人男性（20〜40歳代）に好発するため正しい〇",
       "Osgood-Schlatter病は10〜14歳の男子成長期に好発×。",
       "Perthes病は3〜10歳の男児に好発×。",
