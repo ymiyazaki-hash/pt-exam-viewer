@@ -6192,21 +6192,25 @@
                        `${fields[0]}他`;
 
       // ── 5グループ/行 × 20行 = 100問/ページ ──
-      // 各グループ = 問(500) | 正(620) | 設問ID(901) = 2021 × 5 = 10105 twips
-      // WA=620 に広げて複数解答「1, 5」でも1行に収まるようにする
+      // 各グループ = 問(580) | 正(500) | 設問ID(941) = 2021 × 5 = 10105 twips
+      // 【重要】幅が足りないと2行目に折り返し、行高が固定だと隠れて欠ける。
+      //   最悪ケース：問「1000」(4桁) / 正「除外」(全角2字) / 設問ID「60A-100」(7字)・見出し「設問ID」
+      //   これらが 9pt(sz18)・セル余白40 で1行に収まる幅として実測決定（Word 実測で折り返し0を確認済み）
       const GRP = 5;
-      const WN  = 500, WA = 620, WI = 901;
+      const WN  = 580, WA = 500, WI = 941;
+      const CSZ = 18; // 表内フォント 9pt（折り返し防止のため本文より小さめ）
       const colWidths = Array(GRP).fill([WN, WA, WI]).flat();
       const totalW    = colWidths.reduce((a,b)=>a+b,0);
       const gridXml   = colWidths.map(w=>`<w:gridCol w:w="${w}"/>`).join('');
 
       // ヘッダー行（短いヘッダーで折り返し防止）
       const hdrCells = Array(GRP).fill(0).map(() =>
-        tcEl('問', WN, {b:true, center:true, fill:'1A4A8A', col:'FFFFFF', sz:21}) +
-        tcEl('正', WA, {b:true, center:true, fill:'1A4A8A', col:'FFFFFF', sz:21}) +
-        tcEl('設問ID', WI, {b:true, center:true, fill:'1A4A8A', col:'FFFFFF', sz:21})
+        tcEl('問', WN, {b:true, center:true, fill:'1A4A8A', col:'FFFFFF', sz:CSZ}) +
+        tcEl('正', WA, {b:true, center:true, fill:'1A4A8A', col:'FFFFFF', sz:CSZ}) +
+        tcEl('設問ID', WI, {b:true, center:true, fill:'1A4A8A', col:'FFFFFF', sz:CSZ})
       ).join('');
-      const headerRow = `<w:tr><w:trPr><w:tblHeader/><w:trHeight w:val="400" w:hRule="exact"/></w:trPr>${hdrCells}</w:tr>`;
+      // 行高は atLeast（最小値）。exact だと折り返した2行目が切れて見えなくなる
+      const headerRow = `<w:tr><w:trPr><w:tblHeader/><w:trHeight w:val="400" w:hRule="atLeast"/></w:trPr>${hdrCells}</w:tr>`;
 
       // データ行（行高固定600twips × 20行 = 100問/ページで改ページ）
       const ROWS_PER_PAGE = 20; // 20行 × 5グループ = 100問/ページ
@@ -6226,16 +6230,16 @@
             const klAns    = klIsExcl ? '除外' : String(q.answer || '');
             const klAnsCol = klIsExcl ? 'B45309' : '111827';
             const klFill   = klIsExcl ? 'FFFBEB' : bg;
-            return tcEl(String(idx+1), WN, {center:true,  fill:bg,     sz:21, col:'1A4A8A', b:true, pageBreak:pb}) +
-                   tcEl(klAns,         WA, {center:true,  fill:klFill, sz:21, col:klAnsCol, b:true}) +
-                   tcEl(q.id,          WI, {center:false, fill:bg,     sz:21, col:'4A5568'});
+            return tcEl(String(idx+1), WN, {center:true,  fill:bg,     sz:CSZ, col:'1A4A8A', b:true, pageBreak:pb}) +
+                   tcEl(klAns,         WA, {center:true,  fill:klFill, sz:CSZ, col:klAnsCol, b:true}) +
+                   tcEl(q.id,          WI, {center:false, fill:bg,     sz:CSZ, col:'4A5568'});
           }
           return tcEl('', WN, {fill:bg, pageBreak:pb}) + tcEl('', WA, {fill:bg}) + tcEl('', WI, {fill:bg});
         }).join('');
-        return `<w:tr><w:trPr><w:trHeight w:val="600" w:hRule="exact"/></w:trPr>${cells}</w:tr>`;
+        return `<w:tr><w:trPr><w:trHeight w:val="600" w:hRule="atLeast"/></w:trPr>${cells}</w:tr>`;
       }).join('');
 
-      const table = `<w:tbl><w:tblPr><w:tblW w:w="${totalW}" w:type="dxa"/><w:tblBorders><w:top w:val="single" w:sz="6" w:space="0" w:color="9CA3AF"/><w:left w:val="single" w:sz="6" w:space="0" w:color="9CA3AF"/><w:bottom w:val="single" w:sz="6" w:space="0" w:color="9CA3AF"/><w:right w:val="single" w:sz="6" w:space="0" w:color="9CA3AF"/><w:insideH w:val="single" w:sz="4" w:space="0" w:color="CBD5E0"/><w:insideV w:val="single" w:sz="4" w:space="0" w:color="CBD5E0"/></w:tblBorders><w:tblCellMar><w:top w:w="20" w:type="dxa"/><w:left w:w="80" w:type="dxa"/><w:bottom w:w="20" w:type="dxa"/><w:right w:w="80" w:type="dxa"/></w:tblCellMar></w:tblPr><w:tblGrid>${gridXml}</w:tblGrid>${headerRow}${dataRows}</w:tbl>`;
+      const table = `<w:tbl><w:tblPr><w:tblW w:w="${totalW}" w:type="dxa"/><w:tblBorders><w:top w:val="single" w:sz="6" w:space="0" w:color="9CA3AF"/><w:left w:val="single" w:sz="6" w:space="0" w:color="9CA3AF"/><w:bottom w:val="single" w:sz="6" w:space="0" w:color="9CA3AF"/><w:right w:val="single" w:sz="6" w:space="0" w:color="9CA3AF"/><w:insideH w:val="single" w:sz="4" w:space="0" w:color="CBD5E0"/><w:insideV w:val="single" w:sz="4" w:space="0" w:color="CBD5E0"/></w:tblBorders><w:tblCellMar><w:top w:w="20" w:type="dxa"/><w:left w:w="40" w:type="dxa"/><w:bottom w:w="20" w:type="dxa"/><w:right w:w="40" w:type="dxa"/></w:tblCellMar></w:tblPr><w:tblGrid>${gridXml}</w:tblGrid>${headerRow}${dataRows}</w:tbl>`;
 
       // タイトル・サブタイトル（極力コンパクトに）
       const titleP = pEl(rEl(similarMode ? 'PT国家試験　解答一覧（類似問題）' : 'PT国家試験　解答一覧', {b:true, col:'111827', sz:24}), {sb:0, sa:20});
