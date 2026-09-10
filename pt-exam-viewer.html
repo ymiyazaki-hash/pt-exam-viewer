@@ -6337,7 +6337,10 @@
     const fieldsArr  = [...new Set(filteredData.flatMap(d=>d.new_fields||[]).filter(Boolean))].sort();
     const fields     = fieldsArr.join('・');
     const fieldStr   = fieldsArr.length === 0 ? '' : fieldsArr.length <= 3 ? fieldsArr.join('・') : `${fieldsArr[0]}他`;
-    const sessions   = [...new Set(filteredData.map(d=>d.examSession).filter(Boolean))].sort().join('・');
+    const sessList   = [...new Set(filteredData.map(d=>d.examSession).filter(Boolean))].sort();
+    const sessions   = sessList.join('・');
+    const _cs        = s => s.replace('第','').replace('回AM','A').replace('回PM','P');
+    const sessShort  = sessList.length === 0 ? '' : sessList.length <= 2 ? sessList.map(_cs).join('・') : `${_cs(sessList[0])}-${_cs(sessList[sessList.length-1])}`;
 
     const cover = [
       pEl('', {sb:2200, sa:0}),
@@ -6385,7 +6388,7 @@ ${imgRelXml}
 
     const blob = await zip.generateAsync({type:'blob', mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document', compression:'DEFLATE', compressionOptions:{level:6}});
     const d = today.replace(/\//g,'');
-    const filename = `PT国家試験問題${similarMode?'_類似問題':''}_${d}${fieldStr?'_'+fieldStr:''}_${we?'解説付き':wa?'解答付き':'解答なし'}_${filteredData.length}件`;
+    const filename = `PT国家試験問題${similarMode?'_類似問題':''}_${d}${fieldStr?'_'+fieldStr:''}${sessShort?'_'+sessShort:''}_${we?'解説付き':wa?'解答付き':'解答なし'}_${filteredData.length}件`;
     return { blob, filename, today };
   }
 
@@ -6457,12 +6460,15 @@ ${imgRelXml}
 
       const today      = new Date().toLocaleDateString('ja-JP');
       const categories = [...new Set(filteredData.map(d=>d.category).filter(Boolean))].sort().join('・');
-      const sessions   = [...new Set(filteredData.map(d=>d.examSession).filter(Boolean))].sort().join('・');
       const fieldsArr  = [...new Set(filteredData.flatMap(d=>d.new_fields||[]).filter(Boolean))].sort();
       const fields     = fieldsArr.join('・');
       const fieldStr   = fieldsArr.length === 0 ? '' : fieldsArr.length <= 3 ? fieldsArr.join('・') : `${fieldsArr[0]}他`;
+      const sessList   = [...new Set(filteredData.map(d=>d.examSession).filter(Boolean))].sort();
+      const sessions   = sessList.join('・');
+      const _cs        = s => s.replace('第','').replace('回AM','A').replace('回PM','P');
+      const sessShort  = sessList.length === 0 ? '' : sessList.length <= 2 ? sessList.map(_cs).join('・') : `${_cs(sessList[0])}-${_cs(sessList[sessList.length-1])}`;
       const d          = today.replace(/\//g,'');
-      const filename   = `PT国家試験問題${similarMode?'_類似問題':''}_${d}${fieldStr?'_'+fieldStr:''}_${we?'解説付き':wa?'解答付き':'解答なし'}_${filteredData.length}件`;
+      const filename   = `PT国家試験問題${similarMode?'_類似問題':''}_${d}${fieldStr?'_'+fieldStr:''}${sessShort?'_'+sessShort:''}_${we?'解説付き':wa?'解答付き':'解答なし'}_${filteredData.length}件`;
 
       const CIRCLED = ['①','②','③','④','⑤'];
 
