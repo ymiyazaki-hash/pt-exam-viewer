@@ -6333,23 +6333,38 @@
       mediaMap[qi] = { rid: `rId_img_${imgCount}`, idx: imgCount, cx, cy, ext, b64, fname: `media/image${imgCount}.${ext}` };
     });
 
-    const categories = [...new Set(filteredData.map(d=>d.category).filter(Boolean))].sort().join('・');
-    const fieldsArr  = [...new Set(filteredData.flatMap(d=>d.new_fields||[]).filter(Boolean))].sort();
-    const fields     = fieldsArr.join('・');
-    const fieldStr   = fieldsArr.length === 0 ? '' : fieldsArr.length <= 3 ? fieldsArr.join('・') : `${fieldsArr[0]}他`;
-    const sessList   = [...new Set(filteredData.map(d=>d.examSession).filter(Boolean))].sort();
-    const sessions   = sessList.join('・');
-    const _cs        = s => s.replace('第','').replace('回AM','A').replace('回PM','P');
-    const sessShort  = sessList.length === 0 ? '' : sessList.length <= 2 ? sessList.map(_cs).join('・') : `${_cs(sessList[0])}-${_cs(sessList[sessList.length-1])}`;
+    const categories  = [...new Set(filteredData.map(d=>d.category).filter(Boolean))].sort().join('・');
+    const fieldsArr   = [...new Set(filteredData.flatMap(d=>d.new_fields||[]).filter(Boolean))].sort();
+    const fields      = fieldsArr.join('・');
+    const fieldStr    = fieldsArr.length === 0 ? '' : fieldsArr.length <= 3 ? fieldsArr.join('・') : `${fieldsArr[0]}他`;
+    const sessList    = [...new Set(filteredData.map(d=>d.examSession).filter(Boolean))].sort();
+    const sessions    = sessList.join('・');
+    const _cs         = s => s.replace('第','').replace('回AM','A').replace('回PM','P');
+    const sessShort   = sessList.length === 0 ? '' : sessList.length <= 2 ? sessList.map(_cs).join('・') : `${_cs(sessList[0])}-${_cs(sessList[sessList.length-1])}`;
+    // 🦴 解剖・生理学ツリーの分類
+    const apGroupsArr = [...new Set(filteredData.map(q=>_apLeafMap.get(q.id)?.group).filter(Boolean))].sort();
+    const apLeavesArr = [...new Set(filteredData.map(q=>_apLeafMap.get(q.id)?.leaf).filter(Boolean))].sort();
+    const apGroupStr  = apGroupsArr.join('・');
+    const apLeafCover = apLeavesArr.length <= 4 ? apLeavesArr.join('・') : `${apLeavesArr[0]}ほか${apLeavesArr.length-1}項目`;
+    const apLeafFn    = apLeavesArr.length <= 2 ? apLeavesArr.join('・') : `${apLeavesArr[0]}他`;
+    // 通常小分野（AP以外）
+    const subFArr     = [...new Set(filteredData.flatMap(q=>q.new_sub_fields||[]).filter(Boolean))].sort();
+    const subFCover   = subFArr.length <= 4 ? subFArr.join('・') : `${subFArr[0]}ほか${subFArr.length-1}項目`;
+    const subFFn      = subFArr.length === 0 ? '' : subFArr.length <= 2 ? subFArr.join('・') : `${subFArr[0]}他`;
+    // ファイル名用（AP > 通常 の優先順）
+    const fnField     = apGroupsArr.length ? apGroupStr : fieldStr;
+    const fnDetail    = apLeavesArr.length ? apLeafFn : subFFn;
 
     const cover = [
       pEl('', {sb:2200, sa:0}),
       pEl(rEl(similarMode ? 'PT国家試験（類似問題）' : 'PT国家試験', {b:true, col:'0C2461', sz:48}), {sb:0, sa:100, jc:'center'}),
       pEl(rEl(similarMode ? '類似問題集' : '問　題　集', {b:true, col:'1A4A8A', sz:64}), {sb:0, sa:240, jc:'center'}),
       pEl('', {bb:{sz:12,c:'1A4A8A'}, sb:0, sa:180}),
-      categories ? pEl(rEl('【分類】　' + categories, {b:true, col:'1A4A8A', sz:28}), {sb:80, sa:60, jc:'center'}) : '',
-      fields     ? pEl(rEl('【分野】　' + fields,     {col:'374151',         sz:24}), {sb:40, sa:40, jc:'center'}) : '',
-      sessions   ? pEl(rEl('【試験回】　' + sessions, {col:'374151',         sz:22}), {sb:40, sa:80, jc:'center'}) : '',
+      categories  ? pEl(rEl('【分類】　' + categories,  {b:true, col:'1A4A8A', sz:28}), {sb:80,  sa:60,  jc:'center'}) : '',
+      apGroupStr  ? pEl(rEl('【解剖・生理】　' + apGroupStr + (apLeafCover ? '　▶　' + apLeafCover : ''), {col:'374151', sz:24}), {sb:40, sa:40, jc:'center'}) : '',
+      (!apGroupStr && fields)   ? pEl(rEl('【分野】　' + fields,     {col:'374151', sz:24}), {sb:40, sa:40, jc:'center'}) : '',
+      (!apGroupStr && subFCover) ? pEl(rEl('【小分野】　' + subFCover, {col:'6B7280', sz:22}), {sb:20, sa:40, jc:'center'}) : '',
+      sessions    ? pEl(rEl('【試験回】　' + sessions,  {col:'374151', sz:22}), {sb:40, sa:80, jc:'center'}) : '',
       pEl(rEl('全　' + filteredData.length + '　問　（' + (we?'解説付き':wa?'解答付き':'解答なし') + '）', {b:true, col:'374151', sz:26}), {sb:120, sa:80, jc:'center'}),
       pEl(rEl('出力日：' + today, {col:'9CA3AF', sz:20}), {sb:200, sa:0, jc:'center'}),
       `<w:p><w:pPr><w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="900" w:right="900" w:bottom="900" w:left="900" w:header="500" w:footer="500" w:gutter="0"/></w:sectPr></w:pPr></w:p>`,
@@ -6388,7 +6403,7 @@ ${imgRelXml}
 
     const blob = await zip.generateAsync({type:'blob', mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document', compression:'DEFLATE', compressionOptions:{level:6}});
     const d = today.replace(/\//g,'');
-    const filename = `PT国家試験問題${similarMode?'_類似問題':''}_${d}${fieldStr?'_'+fieldStr:''}${sessShort?'_'+sessShort:''}_${we?'解説付き':wa?'解答付き':'解答なし'}_${filteredData.length}件`;
+    const filename = `PT国家試験問題${similarMode?'_類似問題':''}_${d}${fnField?'_'+fnField:''}${fnDetail?'_'+fnDetail:''}${sessShort?'_'+sessShort:''}_${we?'解説付き':wa?'解答付き':'解答なし'}_${filteredData.length}件`;
     return { blob, filename, today };
   }
 
@@ -6458,17 +6473,25 @@ ${imgRelXml}
       const _e = s => String(s)
         .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
-      const today      = new Date().toLocaleDateString('ja-JP');
-      const categories = [...new Set(filteredData.map(d=>d.category).filter(Boolean))].sort().join('・');
-      const fieldsArr  = [...new Set(filteredData.flatMap(d=>d.new_fields||[]).filter(Boolean))].sort();
-      const fields     = fieldsArr.join('・');
-      const fieldStr   = fieldsArr.length === 0 ? '' : fieldsArr.length <= 3 ? fieldsArr.join('・') : `${fieldsArr[0]}他`;
-      const sessList   = [...new Set(filteredData.map(d=>d.examSession).filter(Boolean))].sort();
-      const sessions   = sessList.join('・');
-      const _cs        = s => s.replace('第','').replace('回AM','A').replace('回PM','P');
-      const sessShort  = sessList.length === 0 ? '' : sessList.length <= 2 ? sessList.map(_cs).join('・') : `${_cs(sessList[0])}-${_cs(sessList[sessList.length-1])}`;
-      const d          = today.replace(/\//g,'');
-      const filename   = `PT国家試験問題${similarMode?'_類似問題':''}_${d}${fieldStr?'_'+fieldStr:''}${sessShort?'_'+sessShort:''}_${we?'解説付き':wa?'解答付き':'解答なし'}_${filteredData.length}件`;
+      const today       = new Date().toLocaleDateString('ja-JP');
+      const categories  = [...new Set(filteredData.map(d=>d.category).filter(Boolean))].sort().join('・');
+      const fieldsArr   = [...new Set(filteredData.flatMap(d=>d.new_fields||[]).filter(Boolean))].sort();
+      const fields      = fieldsArr.join('・');
+      const fieldStr    = fieldsArr.length === 0 ? '' : fieldsArr.length <= 3 ? fieldsArr.join('・') : `${fieldsArr[0]}他`;
+      const sessList    = [...new Set(filteredData.map(d=>d.examSession).filter(Boolean))].sort();
+      const sessions    = sessList.join('・');
+      const _cs         = s => s.replace('第','').replace('回AM','A').replace('回PM','P');
+      const sessShort   = sessList.length === 0 ? '' : sessList.length <= 2 ? sessList.map(_cs).join('・') : `${_cs(sessList[0])}-${_cs(sessList[sessList.length-1])}`;
+      const apGroupsArr = [...new Set(filteredData.map(q=>_apLeafMap.get(q.id)?.group).filter(Boolean))].sort();
+      const apLeavesArr = [...new Set(filteredData.map(q=>_apLeafMap.get(q.id)?.leaf).filter(Boolean))].sort();
+      const apGroupStr  = apGroupsArr.join('・');
+      const apLeafFn    = apLeavesArr.length <= 2 ? apLeavesArr.join('・') : `${apLeavesArr[0]}他`;
+      const subFArr     = [...new Set(filteredData.flatMap(q=>q.new_sub_fields||[]).filter(Boolean))].sort();
+      const subFFn      = subFArr.length === 0 ? '' : subFArr.length <= 2 ? subFArr.join('・') : `${subFArr[0]}他`;
+      const fnField     = apGroupsArr.length ? apGroupStr : fieldStr;
+      const fnDetail    = apLeavesArr.length ? apLeafFn : subFFn;
+      const d           = today.replace(/\//g,'');
+      const filename    = `PT国家試験問題${similarMode?'_類似問題':''}_${d}${fnField?'_'+fnField:''}${fnDetail?'_'+fnDetail:''}${sessShort?'_'+sessShort:''}_${we?'解説付き':wa?'解答付き':'解答なし'}_${filteredData.length}件`;
 
       const CIRCLED = ['①','②','③','④','⑤'];
 
