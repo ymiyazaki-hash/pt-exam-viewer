@@ -6296,15 +6296,29 @@
     showLoading(true, '画像を処理中...');
     await new Promise(r => setTimeout(r, 40));
 
-    // dimMap: filteredData のインデックス（qi）をキーにして一意性を保証
-    const dimMap = {};
+    // imgMap: 寸法取得 + WebP→JPEG変換を同時に行う（Word on Windowsは拡張子不一致のWebPを表示できないため）
+    const imgMap = {};
     await Promise.all(
       filteredData.map((q, qi) => {
         if (!q.imageData) return Promise.resolve();
         return new Promise(resolve => {
           const img = new Image();
-          img.onload  = () => { dimMap[qi] = {w: img.naturalWidth, h: img.naturalHeight}; resolve(); };
-          img.onerror = () => { dimMap[qi] = {w: 4, h: 3}; resolve(); };
+          img.onload = () => {
+            const w = img.naturalWidth, h = img.naturalHeight;
+            try {
+              const cv = document.createElement('canvas');
+              cv.width = w; cv.height = h;
+              const ctx = cv.getContext('2d');
+              ctx.fillStyle = '#ffffff';
+              ctx.fillRect(0, 0, w, h);
+              ctx.drawImage(img, 0, 0);
+              imgMap[qi] = { w, h, dataUrl: cv.toDataURL('image/jpeg', 0.88) };
+            } catch(_) {
+              imgMap[qi] = { w, h, dataUrl: q.imageData };
+            }
+            resolve();
+          };
+          img.onerror = () => { imgMap[qi] = {w: 4, h: 3, dataUrl: q.imageData}; resolve(); };
           img.src = q.imageData;
         });
       })
@@ -6319,9 +6333,11 @@
     filteredData.forEach((q, qi) => {
       if (!q.imageData) return;
       imgCount++;
-      const ext  = (q.imageData.startsWith('data:image/jpeg') || q.imageData.startsWith('data:image/jpg')) ? 'jpg' : 'png';
-      const b64  = q.imageData.split(',')[1];
-      const dim  = dimMap[qi] || {w: 4, h: 3};
+      const entry  = imgMap[qi] || {};
+      const imgSrc = entry.dataUrl || q.imageData;
+      const ext    = imgSrc.startsWith('data:image/jpeg') ? 'jpg' : 'png';
+      const b64    = imgSrc.split(',')[1];
+      const dim    = { w: entry.w || 4, h: entry.h || 3 };
       const ratio = dim.h / dim.w;
       let cx = MAX_W;
       let cy = Math.round(cx * ratio);
