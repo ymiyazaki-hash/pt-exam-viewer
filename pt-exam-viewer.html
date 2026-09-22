@@ -2476,7 +2476,7 @@
     <div class="quiz-done-score"  id="quizDoneScore"></div>
     <div class="quiz-done-sub"    id="quizDoneSub"></div>
     <div class="quiz-done-status" id="quizDoneStatus">送信中...</div>
-    <button class="quiz-review-btn" onclick="_showQuizReview()">📖 解答をみる</button>
+    <button class="quiz-review-btn" id="quizReviewBtn" onclick="_showQuizReview()">📖 解答をみる</button>
   </div>
 
   <!-- 解説・回答確認ペイン -->
@@ -10393,6 +10393,19 @@ async function _submitQuizAnswers() {
   document.getElementById('quizDoneScore').textContent = `${score} / ${total}`;
   document.getElementById('quizDoneSub').textContent   = `正答率 ${Math.round(score/total*100)}%`;
   document.getElementById('quizDoneStatus').textContent = '送信中...';
+  const reviewBtn = document.getElementById('quizReviewBtn');
+  if (reviewBtn) reviewBtn.style.display = 'none';
+
+  // 先生が配信後に切り替えても反映されるよう、送信時点の設定を読み直す
+  let scoreOnly = !!(_qs.quiz && _qs.quiz.scoreOnly);
+  try {
+    const db0 = _initFb();
+    if (db0 && !_qs.quiz.questionsPerDay) {
+      const sn = await db0.ref('quizzes/' + _qs.code + '/scoreOnly').get();
+      scoreOnly = !!sn.val();
+    }
+  } catch(_) {}
+  if (reviewBtn) reviewBtn.style.display = scoreOnly ? 'none' : '';
 
   try {
     const db = _initFb();
@@ -10404,7 +10417,7 @@ async function _submitQuizAnswers() {
       submittedAt: Date.now()
     });
     const st = document.getElementById('quizDoneStatus');
-    st.textContent = '✓ 送信完了！先生に届きました';
+    st.textContent = `✓ 送信完了！先生に届きました（コード ${_qs.code}）`;
     st.style.background = '#dcfce7'; st.style.color = '#16a34a';
   } catch(e) {
     const st = document.getElementById('quizDoneStatus');
@@ -11005,31 +11018,66 @@ async function createQuizFromChecked() {
   if (checked.length > 300) {
     if (!confirm(`チェックした${checked.length}問のうち、先頭300問でクイズを作成します。\nよろしいですか？`)) return;
   }
+  const ids   = selected.map(q => q.id);
+  const sig   = ids.join(',');
+  // 配信ボタンを押し直すたびに別コードになり、学生が解いたQRと教員が見ているコードがずれる事故を防ぐ
+  const recent = JSON.parse(localStorage.getItem('ptQuizRecent') || '[]');
+  const dup = recent.find(r => r.sig === sig && Date.now() - (r.createdAt || 0) < 24 * 3600 * 1000);
+  if (dup && confirm(`同じ問題のクイズがすでに配信中です（コード：${dup.code}）。\n\n` +
+      `OK　　　→ そのクイズを表示する（学生の回答はこちらに集まります）\n` +
+      `キャンセル → 新しいコードで別のクイズとして作る`)) {
+    openQuizTeacher();
+    _showCreatedQuiz(dup.code, dup.title);
+    return;
+  }
   const code  = _genCode();
   const title = `絞り込みクイズ ${selected.length}問`;
+  const scoreOnly = _quizScoreOnlyPref();
   await db.ref('quizzes/' + code).set({
     title, field: '絞り込み',
-    questionIds: selected.map(q => q.id),
-    createdAt: Date.now(), isOpen: true
+    questionIds: ids,
+    createdAt: Date.now(), isOpen: true, scoreOnly
   });
+  recent.unshift({ code, title, sig, createdAt: Date.now() });
+  localStorage.setItem('ptQuizRecent', JSON.stringify(recent.slice(0, 8)));
+  openQuizTeacher();
+  _showCreatedQuiz(code, title, scoreOnly);
+}
+
+function _quizScoreOnlyPref() {
+  try { return localStorage.getItem('ptQuizScoreOnly') === '1'; } catch(_) { return false; }
+}
+
+async function _showCreatedQuiz(code, title, scoreOnly) {
   _currentQCode  = code;
   _currentQTitle = title;
   const url = location.origin + location.pathname + '?quiz=' + code;
   document.getElementById('qtmURLBox').textContent     = url;
   document.getElementById('qtmCodeDisplay').textContent = code;
-  const studentURL = location.origin + location.pathname + '?student=1';
-  document.getElementById('qtmStudentURL').textContent  = studentURL;
+  document.getElementById('qtmStudentURL').textContent  = location.origin + location.pathname + '?student=1';
   const qrEl = document.getElementById('qtmQRCode');
   qrEl.innerHTML = '';
   if (typeof QRCode !== 'undefined') {
     new QRCode(qrEl, { text: url, width: 180, height: 180, correctLevel: QRCode.CorrectLevel.M });
     qrEl.style.cursor = 'zoom-in'; qrEl.onclick = () => _showQrFull(url);
   }
-  const recent = JSON.parse(localStorage.getItem('ptQuizRecent') || '[]');
-  recent.unshift({ code, title, createdAt: Date.now() });
-  localStorage.setItem('ptQuizRecent', JSON.stringify(recent.slice(0, 8)));
-  openQuizTeacher();
+  const chk = document.getElementById('qtmScoreOnlyChk');
+  if (chk) {
+    chk.checked = scoreOnly !== undefined ? !!scoreOnly : _quizScoreOnlyPref();
+    if (scoreOnly === undefined) {
+      const db = _initFb();
+      if (db) db.ref('quizzes/' + code + '/scoreOnly').get().then(sn => { chk.checked = !!sn.val(); }).catch(() => {});
+    }
+  }
   showQtmPane('qtmCreatedPane', '📤 配信中');
+}
+
+async function _setQuizScoreOnly(on) {
+  try { localStorage.setItem('ptQuizScoreOnly', on ? '1' : '0'); } catch(_) {}
+  const db = _initFb();
+  if (!db || !_currentQCode) return;
+  try { await db.ref('quizzes/' + _currentQCode + '/scoreOnly').set(!!on); }
+  catch(e) { alert('設定の保存に失敗しました：' + e.message); }
 }
 
 async function createQuiz() {
@@ -11061,34 +11109,18 @@ async function createQuiz() {
   const code  = _genCode();
   const title = label + ' ' + count + '問テスト';
 
+  const scoreOnly = _quizScoreOnlyPref();
   await db.ref('quizzes/'+code).set({
     title, field:field||'全分野',
     questionIds: selected.map(q=>q.id),
-    createdAt: Date.now(), isOpen:true
+    createdAt: Date.now(), isOpen:true, scoreOnly
   });
-
-  _currentQCode  = code;
-  _currentQTitle = title;
-
-  const url = location.origin + location.pathname + '?quiz=' + code;
-  document.getElementById('qtmURLBox').textContent    = url;
-  document.getElementById('qtmCodeDisplay').textContent = code;
-  const studentURL = location.origin + location.pathname + '?student=1';
-  document.getElementById('qtmStudentURL').textContent = studentURL;
-
-  // QRコード生成
-  const qrEl = document.getElementById('qtmQRCode');
-  qrEl.innerHTML = '';
-  if (typeof QRCode !== 'undefined') {
-    new QRCode(qrEl, { text: url, width: 180, height: 180, correctLevel: QRCode.CorrectLevel.M });
-    qrEl.style.cursor = 'zoom-in'; qrEl.onclick = () => _showQrFull(url);
-  }
 
   const recent = JSON.parse(localStorage.getItem('ptQuizRecent')||'[]');
   recent.unshift({code, title, createdAt:Date.now()});
   localStorage.setItem('ptQuizRecent', JSON.stringify(recent.slice(0,8)));
 
-  showQtmPane('qtmCreatedPane','📤 配信中');
+  _showCreatedQuiz(code, title, scoreOnly);
 }
 
 function copyQuizURL() {
@@ -11270,9 +11302,17 @@ function _renderRecentQuizzes() {
     row.style.cssText = 'padding:10px 0;border-bottom:1px solid #f1f5f9;';
 
     const info = document.createElement('div');
+    const dt = r.createdAt ? new Date(r.createdAt) : null;
+    const dtTxt = dt ? `${dt.getMonth()+1}/${dt.getDate()} ${dt.getHours()}:${String(dt.getMinutes()).padStart(2,'0')}` : '';
     info.innerHTML =
       `<div style="font-size:13px;font-weight:700;color:#1e293b;margin-bottom:2px;">${esc(r.title||'クイズ')}</div>
-       <div style="font-size:11px;color:#64748b;">${r.code}</div>`;
+       <div style="font-size:11px;color:#64748b;">${r.code}${dtTxt ? '　' + dtTxt : ''}　<span data-cnt="${r.code}" style="font-weight:700;color:#1d4ed8;"></span></div>`;
+    const _db = _initFb();
+    if (_db) _db.ref('results/' + r.code).get().then(sn => {
+      const n = sn.exists() ? Object.keys(sn.val()).length : 0;
+      const el = info.querySelector('[data-cnt]');
+      if (el) { el.textContent = `回答 ${n}名`; if (!n) el.style.color = '#94a3b8'; }
+    }).catch(() => {});
 
     const btns = makeBtns(
       ['結果を見る','#dbeafe','#1e3a8a', () => openResults(r.code, r.title)],
@@ -11718,6 +11758,13 @@ function downloadResultsCSV() {
           style="margin-top:6px;padding:4px 10px;background:#0ea5e9;color:white;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;">
           📋 コピー
         </button>
+      </div>
+      <label style="margin-top:14px;display:flex;align-items:center;gap:10px;padding:10px 12px;background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;cursor:pointer;text-align:left;">
+        <input type="checkbox" id="qtmScoreOnlyChk" onchange="_setQuizScoreOnly(this.checked)" style="width:18px;height:18px;flex-shrink:0;">
+        <span style="font-size:13px;color:#9a3412;font-weight:700;line-height:1.5;">学生には点数だけ表示する<br><span style="font-weight:500;font-size:11px;color:#c2410c;">（解き終わった後の「解答をみる」を出さない。次回の配信にも引き継がれます）</span></span>
+      </label>
+      <div style="margin-top:10px;font-size:11px;color:#64748b;line-height:1.6;text-align:left;">
+        ⚠ 結果は<strong>このコード</strong>に集まります。配信ボタンを押し直すと別のコードになるので、学生に見せたQRと同じコードの結果を開いてください。
       </div>
       <button class="qtm-btn-primary" style="margin-top:14px;" onclick="openResults()">📊 結果をリアルタイムで見る</button>
       <button class="qtm-btn-secondary" onclick="showQtmPane('qtmCreatePane','📤 クイズ配信')">← 別のクイズを作る</button>
